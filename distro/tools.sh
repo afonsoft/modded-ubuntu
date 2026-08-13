@@ -274,7 +274,7 @@ interactive_mode() {
         apt autoremove -y || handle_error "Failed to clean up unnecessary packages."
         ;;
       pacman)
-        pacman -Rns $(pacman -Qdtq) --noconfirm || handle_error "Failed to clean up unnecessary packages."
+        pacman -Rns "$(pacman -Qdtq)" --noconfirm || handle_error "Failed to clean up unnecessary packages."
         ;;
       yum | dnf)
         echo "[+] Skipping cleanup for $PACKAGE_MANAGER as it doesn't require additional commands."

@@ -3,17 +3,17 @@
 R="$(printf '\033[1;31m')"
 G="$(printf '\033[1;32m')"
 Y="$(printf '\033[1;33m')"
-B="$(printf '\033[1;34m')"
 C="$(printf '\033[1;36m')"
 W="$(printf '\033[1;37m')"
 
-CURR_DIR=$(realpath "$(dirname "$BASH_SOURCE")")
+CURR_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 UBUNTU_DIR="$PREFIX/var/lib/proot-distro/containers/ubuntu/rootfs"
 
 # Logging function
 log() {
     local LOG_FILE="${PREFIX:-/data/data/com.termux/files/usr}/tmp/script.log"
-    local LOG_DIR=$(dirname "$LOG_FILE")
+    local LOG_DIR
+    LOG_DIR=$(dirname "$LOG_FILE")
     
     if [ ! -d "$LOG_DIR" ]; then
         mkdir -p "$LOG_DIR" || {
@@ -121,7 +121,7 @@ downloader() {
         exit 1
     fi
 
-    if ! curl --progress-bar --insecure --fail --retry-connrefused --retry 3 --retry-delay 2 --location --output "${path}" "$2"; then
+    if ! curl --progress-bar --fail --retry-connrefused --retry 3 --retry-delay 2 --location --output "${path}" "$2"; then
         echo -e "\n${R} [${W}-${R}]${G} Failed to download $(basename "$1")!${W}"
         exit 1
     fi
@@ -131,19 +131,23 @@ downloader() {
 setup_vnc() {
     if [[ -d "$CURR_DIR/distro" ]] && [[ -e "$CURR_DIR/distro/vncstart" ]]; then
         cp -f "$CURR_DIR/distro/vncstart" "$UBUNTU_DIR/usr/local/bin/vncstart"
+        cp -f "$CURR_DIR/distro/vncstop" "$UBUNTU_DIR/usr/local/bin/vncstop"
+        cp -f "$CURR_DIR/distro/vncstart-fhd" "$UBUNTU_DIR/usr/local/bin/vncstart-fhd" 2>/dev/null || true
+        cp -f "$CURR_DIR/distro/vncstart-qhd" "$UBUNTU_DIR/usr/local/bin/vncstart-qhd" 2>/dev/null || true
     else
         downloader "$CURR_DIR/vncstart" "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vncstart"
         mv -f "$CURR_DIR/vncstart" "$UBUNTU_DIR/usr/local/bin/vncstart"
-    fi
-
-    if [[ -d "$CURR_DIR/distro" ]] && [[ -e "$CURR_DIR/distro/vncstop" ]]; then
-        cp -f "$CURR_DIR/distro/vncstop" "$UBUNTU_DIR/usr/local/bin/vncstop"
-    else
         downloader "$CURR_DIR/vncstop" "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vncstop"
         mv -f "$CURR_DIR/vncstop" "$UBUNTU_DIR/usr/local/bin/vncstop"
     fi
     chmod +x "$UBUNTU_DIR/usr/local/bin/vncstart"
     chmod +x "$UBUNTU_DIR/usr/local/bin/vncstop"
+    if [[ -e "$UBUNTU_DIR/usr/local/bin/vncstart-fhd" ]]; then
+        chmod +x "$UBUNTU_DIR/usr/local/bin/vncstart-fhd"
+    fi
+    if [[ -e "$UBUNTU_DIR/usr/local/bin/vncstart-qhd" ]]; then
+        chmod +x "$UBUNTU_DIR/usr/local/bin/vncstart-qhd"
+    fi
 }
 
 permission() {
@@ -160,6 +164,20 @@ permission() {
     chmod +x "$UBUNTU_DIR/root/user.sh"
 
     setup_vnc
+
+    if [[ -e "$CURR_DIR/distro/s26-optimize.sh" ]]; then
+        cp -f "$CURR_DIR/distro/s26-optimize.sh" "$UBUNTU_DIR/usr/local/bin/s26-optimize"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/s26-optimize"
+    fi
+
+    # Optional Termux performance tweaks for Samsung S26 / high-end devices
+    if [[ -n "${TERMUX_VERSION:-}" ]]; then
+        mkdir -p "$HOME/.termux"
+        if [[ ! -f "$HOME/.termux/termux.properties" ]]; then
+            cp -f "$CURR_DIR/distro/termux-s26.properties" "$HOME/.termux/termux.properties" 2>/dev/null || true
+        fi
+    fi
+
     echo "$(getprop persist.sys.timezone)" > "$UBUNTU_DIR/etc/timezone"
     echo "proot-distro login ubuntu" > "$PREFIX/bin/ubuntu"
     chmod +x "$PREFIX/bin/ubuntu"

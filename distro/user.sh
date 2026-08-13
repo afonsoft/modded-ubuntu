@@ -2,14 +2,14 @@
 
 R="$(printf '\033[1;31m')"
 G="$(printf '\033[1;32m')"
-Y="$(printf '\033[1;33m')"
 W="$(printf '\033[1;37m')"
 C="$(printf '\033[1;36m')"
 
 # Logging function
 log() {
     local LOG_FILE="${PREFIX:-/data/data/com.termux/files/usr}/tmp/user-script.log"
-    local LOG_DIR=$(dirname "$LOG_FILE")
+    local LOG_DIR
+    LOG_DIR=$(dirname "$LOG_FILE")
     
     if [ ! -d "$LOG_DIR" ]; then
         mkdir -p "$LOG_DIR" || { echo "Failed to create log directory"; exit 1; }
@@ -58,8 +58,8 @@ login() {
         fi
     done
     echo -e "${W}"
-    useradd -m -s $(which bash) ${user} || { log "Failed to add user"; exit 1; }
-    usermod -aG sudo ${user} || { log "Failed to add user to sudo group"; exit 1; }
+    useradd -m -s "$(which bash)" "$user" || { log "Failed to add user"; exit 1; }
+    usermod -aG sudo "$user" || { log "Failed to add user to sudo group"; exit 1; }
     echo "${user}:${pass}" | chpasswd || { log "Failed to set password"; exit 1; }
     echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers || { log "Failed to update sudoers file"; exit 1; }
 
@@ -71,10 +71,14 @@ login() {
     if [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh' ]]; then
         cp /data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
+        cp /data/data/com.termux/files/home/modded-ubuntu/distro/vncstart-fhd /usr/local/bin/vncstart-fhd 2>/dev/null || true
+        cp /data/data/com.termux/files/home/modded-ubuntu/distro/vncstart-qhd /usr/local/bin/vncstart-qhd 2>/dev/null || true
+        cp /data/data/com.termux/files/home/modded-ubuntu/distro/s26-optimize.sh /usr/local/bin/s26-optimize 2>/dev/null || true
     else
         wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/gui.sh" -O "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
     fi
+    chmod +x /usr/local/bin/vncstart-fhd /usr/local/bin/vncstart-qhd /usr/local/bin/s26-optimize 2>/dev/null || true
 
     log "User login setup completed for user: $user"
     clear
