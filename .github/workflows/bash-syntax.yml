@@ -1,0 +1,31 @@
+name: Bash Syntax Check
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  syntax:
+    name: Validate Bash Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bash -n on all shell scripts
+        run: |
+          set -e
+          find . -type f -name '*.sh' -not -path './.git/*' -print0 | while IFS= read -r -d '' file; do
+            echo "Checking syntax: $file"
+            bash -n "$file"
+          done
+
+      - name: Check executable permissions on entrypoint scripts
+        run: |
+          set -e
+          for script in setup.sh remove.sh distro/user.sh distro/gui.sh distro/tools.sh distro/firefox.sh; do
+            if [ ! -x "$script" ]; then
+              echo "Warning: $script is not executable"; 
+            fi
+          done

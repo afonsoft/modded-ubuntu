@@ -1,5 +1,29 @@
 ## Changelog
 
+## [Unreleased]
+
+### Added
+- Development tools menu in `distro/gui.sh`:
+  - Git + GitHub CLI (`gh`)
+  - Essential dev stack (`build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`)
+  - .NET SDK 8.0 (amd64/arm64)
+- `detect_user()` helper to locate the correct non-root user inside `gui.sh`.
+- `distro/vncstop` now uses `${HOME}` instead of a hardcoded `/username/` path.
+
+### Changed
+- `install_vscode()` skips 32-bit ARM and uses `dpkg --print-architecture` for the APT repository.
+- `install_opencode()` installs Node.js 22.x from NodeSource and `@opencode-ai/cli`.
+- `install_sublime()` skips 32-bit ARM.
+- `sound_fix()` is now idempotent and no longer duplicates `export` entries in `/etc/profile`.
+- `downloader()` in `setup.sh` and `gui.sh` no longer uses `--insecure`.
+- `remove.sh` safely handles missing `~/.sound` and uses `$HOME`.
+
+### Fixed
+- Syntax error (extra closing brace) in `distro/gui.sh` after `install_opencode()`.
+- Broken 32-bit ARM exclusion logic in `distro/gui.sh` (`||` replaced by `!= arm*`).
+- Missing IDE installation logic in `distro/gui.sh`; IDE selection now triggers `install_sublime`, `install_vscode` or `install_opencode`.
+- ShellCheck warnings in `distro/gui.sh`, `distro/tools.sh` and `remove.sh`.
+
 ## [2.0.0] - 2023-01-20
 
 ### Added

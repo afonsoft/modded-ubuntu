@@ -22,8 +22,11 @@
 - 2 Browsers (Chromium & Mozilla Firefox)
 - Supports Bangla Fonts
 - VLC Media Player and MPV media player
-- Visual Studio Code (buggy on arm )
+- Visual Studio Code (buggy on armhf/armv7)
 - Sublime Text Editor (only for arm64/aarch64)
+- OpenCode CLI
+- Git + GitHub CLI (gh)
+- Essential Development Tools (build-essential, python3-pip, nodejs, npm, cmake, .NET SDK)
 - Easy for Beginners
 - Comes with some cool themes.
 - Kali linux tools installer. (Metasploit included)
@@ -79,6 +82,41 @@
 - Set the Picture Quality to High for better Quality
 - Click on Connect & Input the Password 
 - Enjoy :D
+
+### Performance and Quality on Samsung S26 / High-DPI Devices
+
+For high-resolution phones like the Samsung Galaxy S26, the default VNC geometry may look small or blurry.
+The `vncstart` script now reads the `VNC_GEOMETRY` environment variable and has two optimized presets:
+
+| Command | Resolution | Best for |
+|---------|------------|----------|
+| `vncstart` | `1440x720` (default) | Balanced performance |
+| `vncstart-fhd` | `2340x1080` | Full-HD+ devices |
+| `vncstart-qhd` | `3088x1440` | QHD+ screens like the S26 Ultra |
+
+You can also set a custom geometry manually:
+```bash
+VNC_GEOMETRY=2400x1080 vncstart
+```
+
+Tips to get the best quality and lowest latency on the Samsung S26:
+- Use the preset that matches your screen resolution in VNC Viewer.
+- In VNC Viewer set **Picture Quality** to **High** and **Color Level** to **Full**.
+- Run `s26-optimize` inside Ubuntu to apply XFCE performance tweaks (disables compositor, sets DPI).
+- Disable the XFCE compositor if window dragging feels slow: `Settings Manager → Window Manager Tweaks → Compositor` → uncheck `Enable display compositing`.
+- Disable XFCE animations: `Settings Manager → Settings Editor → xfwm4` set `general/vblank_mode` to `off`.
+- Use `-zliblevel 0` (already set) for local connections to reduce CPU usage.
+- Keep the Termux wake-lock active (`termux-wake-lock`) during long sessions.
+
+### Development Tools
+
+During `sudo bash gui.sh` you can install:
+
+- **Visual Studio Code:** install via Microsoft APT repository (skipped on 32-bit ARM).
+- **OpenCode CLI:** install Node.js 22.x from NodeSource and `@opencode-ai/cli` globally.
+- **Git + GitHub CLI (gh):** add Git and the official `gh` APT repository.
+- **Essential Dev Stack:** `build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`.
+- **.NET SDK 8.0:** installed on `amd64` and `arm64` via Microsoft repository.
 
 ### NOTE :
 

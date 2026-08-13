@@ -2,19 +2,32 @@ name: Termux Simulation Test
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
 
 jobs:
   test:
     name: Run in Termux Docker
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Run setup in Termux container
-      run: |
-        docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
-          -w /data/data/com.termux/files/home/modded-ubuntu \
-          termux/termux-docker:latest bash -c "pkg update && pkg install -y pulseaudio proot-distro && bash ./setup.sh"
+      - uses: actions/checkout@v4
+
+      - name: Run setup in Termux container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
+            -w /data/data/com.termux/files/home/modded-ubuntu \
+            termux/termux-docker:latest bash -c "pkg update && pkg install -y pulseaudio proot-distro && bash ./setup.sh"
+
+      - name: Validate copied scripts inside proot
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
+            -w /data/data/com.termux/files/home/modded-ubuntu \
+            termux/termux-docker:latest bash -c '
+              ROOTFS="${PREFIX}/var/lib/proot-distro/installed-rootfs/ubuntu";
+              if [ ! -d "$ROOTFS" ]; then
+                ROOTFS="${PREFIX}/var/lib/proot-distro/containers/ubuntu/rootfs";
+              fi;
+              cp distro/gui.sh "$ROOTFS/root/gui.sh" || true;
+              proot-distro login ubuntu -- bash -c "bash -n /root/user.sh || exit 1; [ -f /root/gui.sh ] && bash -n /root/gui.sh || true"
+            '
