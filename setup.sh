@@ -7,7 +7,18 @@ C="$(printf '\033[1;36m')"
 W="$(printf '\033[1;37m')"
 
 CURR_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-UBUNTU_DIR="$PREFIX/var/lib/proot-distro/containers/ubuntu/rootfs"
+
+resolve_ubuntu_dir() {
+    if [ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu" ]; then
+        printf '%s' "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu"
+    elif [ -d "$PREFIX/var/lib/proot-distro/containers/ubuntu/rootfs" ]; then
+        printf '%s' "$PREFIX/var/lib/proot-distro/containers/ubuntu/rootfs"
+    else
+        printf '%s' "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu"
+    fi
+}
+
+UBUNTU_DIR=$(resolve_ubuntu_dir)
 
 # Logging function
 log() {
@@ -71,6 +82,8 @@ distro() {
     echo -e "\n${R} [${W}-${R}]${C} Checking for Distro...${W}"
     termux-reload-settings
     
+    UBUNTU_DIR=$(resolve_ubuntu_dir)
+
     if [[ -d "$UBUNTU_DIR" ]]; then
         echo -e "\n${R} [${W}-${R}]${G} Distro already installed.${W}"
         return 0
@@ -81,7 +94,9 @@ distro() {
         fi
         termux-reload-settings
     fi
-    
+
+    UBUNTU_DIR=$(resolve_ubuntu_dir)
+
     if [[ -d "$UBUNTU_DIR" ]]; then
         echo -e "\n${R} [${W}-${R}]${G} Installed Successfully !!${W}"
     else
@@ -162,6 +177,8 @@ permission() {
         mv -f "$CURR_DIR/user.sh" "$UBUNTU_DIR/root/user.sh"
     fi
     chmod +x "$UBUNTU_DIR/root/user.sh"
+
+    UBUNTU_DIR=$(resolve_ubuntu_dir)
 
     setup_vnc
 
