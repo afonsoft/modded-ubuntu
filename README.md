@@ -40,7 +40,8 @@
 curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/install.sh | bash
 ```
 
-This command downloads, clones the repository and executes `setup.sh` automatically.
+This command updates Termux packages, installs `git`, `curl`, `wget`, `proot-distro` and `pulseaudio`, clones the repository and executes `setup.sh` automatically.
+The full log is saved to `~/modded-ubuntu-install.log` so you can check the progress if the terminal seems stuck.
 
 ### Installation (manual)
 If you prefer the manual method:
