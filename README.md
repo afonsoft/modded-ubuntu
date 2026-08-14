@@ -32,7 +32,19 @@
 - Kali linux tools installer. (Metasploit included)
 - Ghost Framework and Wireshark included
 
-### Installation
+### Installation (one-liner)
+- Firstly install [Termux](https://termux.com) apk from [HERE](https://f-droid.org/repo/com.termux_118.apk)
+- Then run the following single command in Termux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/install.sh | bash
+```
+
+This command downloads, clones the repository and executes `setup.sh` automatically.
+
+### Installation (manual)
+If you prefer the manual method:
+
 - Firstly install [Termux](https://termux.com) apk from [HERE](https://f-droid.org/repo/com.termux_118.apk)
 - Secondly Clone the Repository & Run the setup File
 
