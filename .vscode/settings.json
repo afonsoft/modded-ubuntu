@@ -1,1 +1,13 @@
-{}
+{
+    "shellcheck.enable": true,
+    "shellcheck.executablePath": "shellcheck",
+    "shellcheck.run": "onSave",
+    "shellcheck.severity": "warning",
+    "shellcheck.exclude": [
+        "SC2034",
+        "SC2154"
+    ],
+    "files.associations": {
+        "*.sh": "shellscript"
+    }
+}

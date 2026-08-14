@@ -2,19 +2,28 @@ name: Termux Simulation Test
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
 
 jobs:
   test:
     name: Run in Termux Docker
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Run setup in Termux container
-      run: |
-        docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
-          -w /data/data/com.termux/files/home/modded-ubuntu \
-          termux/termux-docker:latest bash -c "pkg update && pkg install -y pulseaudio proot-distro && bash ./setup.sh"
+      - uses: actions/checkout@v4
+
+      - name: Run setup in Termux container and validate scripts
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
+            -w /data/data/com.termux/files/home/modded-ubuntu \
+            termux/termux-docker:latest bash -c '
+              pkg update || exit 1
+              pkg install -y pulseaudio proot-distro || exit 1
+              bash ./setup.sh || exit 1
+              ROOTFS="${PREFIX}/var/lib/proot-distro/installed-rootfs/ubuntu"
+              [ -d "$ROOTFS" ] || ROOTFS="${PREFIX}/var/lib/proot-distro/containers/ubuntu/rootfs"
+              mkdir -p "$ROOTFS/root" || exit 1
+              cp distro/gui.sh "$ROOTFS/root/gui.sh" || exit 1
+              proot-distro login ubuntu -- bash -c "bash -n /root/user.sh || exit 1; bash -n /root/gui.sh || exit 1"
+            '

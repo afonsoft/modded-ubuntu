@@ -6,7 +6,25 @@ Y="$(printf '\033[1;33m')"
 W="$(printf '\033[1;37m')"
 C="$(printf '\033[1;36m')"
 arch=$(uname -m)
-username=$(getent passwd $(whoami) | cut -d: -f1)
+
+# Detect the target non-root user even when running under sudo.
+detect_user() {
+	local user_name=""
+	if [ -n "${SUDO_USER:-}" ] && getent passwd "$SUDO_USER" >/dev/null 2>&1; then
+		user_name="$SUDO_USER"
+	elif command -v logname >/dev/null 2>&1; then
+		user_name=$(logname 2>/dev/null) || true
+	fi
+	if [ -z "$user_name" ] || [ "$user_name" = "root" ]; then
+		user_name=$(awk -F: '$3 >= 1000 && $6 ~ /^\/home\// {print $1; exit}' /etc/passwd)
+	fi
+	if [ -z "$user_name" ]; then
+		user_name="ubuntu"
+	fi
+	echo "$user_name"
+}
+
+username=$(detect_user)
 
 check_root(){
 	if [ "$(id -u)" -ne 0 ]; then
@@ -20,7 +38,7 @@ banner() {
 	cat <<- EOF
 		${Y}    _  _ ___  _  _ _  _ ___ _  _    _  _ ____ ___  
 		${C}    |  | |__] |  | |\ |  |  |  |    |\/| |  | |  \ 
-		${G}    |__| |__] |__| | \|  |  |__|    |  | |__| |__/ 
+		${G}    |__| |__] |__| | \|  |  |__|    |  | |__| |__/
 
 	EOF
 	echo -e "${G}     A modded gui version of ubuntu for Termux\n"
@@ -59,7 +77,7 @@ package() {
 		dpkg --configure -a
 		apt-mark hold udisks2
 	fi
-	
+
 	packs=(sudo gnupg2 curl nano git xz-utils python3 at-spi2-core xfce4 xfce4-goodies xfce4-terminal librsvg2-common menu inetutils-tools dialog exo-utils tigervnc-standalone-server tigervnc-common tigervnc-tools dbus-x11 fonts-beng fonts-beng-extra gtk2-engines-murrine gtk2-engines-pixbuf apt-transport-https)
 	for hulu in "${packs[@]}"; do
 		type -p "$hulu" &>/dev/null || {
@@ -67,7 +85,7 @@ package() {
 			apt-get install "$hulu" -y --no-install-recommends
 		}
 	done
-	
+
 	apt-get update -y
 	apt-get upgrade -y
 }
@@ -121,20 +139,27 @@ install_kali_tools() {
 
 install_apt() {
 	for apt in "$@"; do
-		[[ `command -v $apt` ]] && echo "${Y}${apt} is already Installed!${W}" || {
+		[[ $(command -v "$apt") ]] && echo "${Y}${apt} is already Installed!${W}" || {
 			echo -e "${G}Installing ${Y}${apt}${W}"
-			apt install -y ${apt}
+			apt install -y "${apt}"
 		}
 	done
 }
 
 install_vscode() {
+	if [[ "$arch" == arm* ]]; then
+		echo -e "${Y} [!] VSCode is not supported on 32-bit ARM (armhf/armv7) in this setup. Skipping.${W}"
+		return 0
+	fi
 	[[ $(command -v code) ]] && echo "${Y}VSCode is already Installed!${W}" || {
 		echo -e "${G}Installing ${Y}VSCode${W}"
-		apt install -y gpg
-		wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/packages.microsoft.gpg
-		echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
-		apt update
+		apt update -y
+		apt install -y gpg curl
+		curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/packages.microsoft.gpg
+		local deb_arch
+		deb_arch=$(dpkg --print-architecture)
+		echo "deb [arch=${deb_arch} signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
+		apt update -y
 		apt install code -y
 		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/patches/code.desktop > /usr/share/applications/code.desktop
 		echo -e "${C} Visual Studio Code Installed Successfully\n${W}"
@@ -144,22 +169,26 @@ install_vscode() {
 install_opencode() {
 	[[ $(command -v opencode) ]] && echo "${Y}OpenCode is already Installed!${W}" || {
 		echo -e "${G}Installing ${Y}Node.js and OpenCode CLI${W}"
-		apt install -y curl
-		curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+		apt update -y
+		apt install -y curl ca-certificates gnupg
+		curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 		apt install -y nodejs
 		npm install -g @opencode-ai/cli
 		echo -e "${C} OpenCode Installed Successfully\n${W}"
 	}
 }
-}
 
 install_sublime() {
+	if [[ "$arch" == arm* ]]; then
+		echo -e "${Y} [!] Sublime Text is only available for arm64/aarch64 and x64 in this setup. Skipping.${W}"
+		return 0
+	fi
 	[[ $(command -v subl) ]] && echo "${Y}Sublime is already Installed!${W}" || {
 		apt install gnupg2 software-properties-common --no-install-recommends -y
 		echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list
 		curl -fsSL https://download.sublimetext.com/sublimehq-pub.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/sublime.gpg 2> /dev/null
 		apt update -y
-		apt install sublime-text -y 
+		apt install sublime-text -y
 		echo -e "${C} Sublime Text Editor Installed Successfully\n${W}"
 	}
 }
@@ -169,12 +198,12 @@ install_chromium() {
 		echo -e "${G}Installing ${Y}Chromium${W}"
 		apt purge chromium* chromium-browser* snapd -y
 		apt install gnupg2 software-properties-common --no-install-recommends -y
-		echo -e "deb http://ftp.debian.org/debian buster main\ndeb http://ftp.debian.org/debian buster-updates main" >> /etc/apt/sources.list
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DCC9EFBF77E11517
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AA8E81B4331F7F50
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+		echo -e "deb http://ftp.debian.org/debian stable main\ndeb http://ftp.debian.org/debian stable-updates main" >> /etc/apt/sources.list
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DCC9EFBF77E11517 || true
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138 || true
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AA8E81B4331F7F50 || true
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A || true
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 || true
 		apt update -y
 		apt install chromium -y
 		sed -i 's/chromium %U/chromium --no-sandbox %U/g' /usr/share/applications/chromium.desktop
@@ -190,6 +219,54 @@ install_firefox() {
 	}
 }
 
+install_git_gh() {
+	if [[ $(command -v git) && $(command -v gh) ]]; then
+		echo -e "${Y}Git and GitHub CLI (gh) are already Installed!${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Git and GitHub CLI (gh)${W}"
+	apt update -y
+	apt install -y git curl
+	curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+	chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+	apt update -y
+	apt install gh -y
+	echo -e "${C} Git and GitHub CLI (gh) Installed Successfully\n${W}"
+}
+
+install_devtools() {
+	echo -e "${G}Installing ${Y}Essential Development Tools${W}"
+	apt update -y
+	apt install -y build-essential python3-pip python3-venv python3-dev nodejs npm cmake make gcc g++ git curl wget nano vim
+	echo -e "${C} Essential Development Tools Installed Successfully\n${W}"
+}
+
+install_dotnet() {
+	echo -e "${G}Installing ${Y}.NET SDK${W}"
+	apt update -y
+	apt install -y curl wget
+	local deb_arch
+	deb_arch=$(dpkg --print-architecture)
+	case "$deb_arch" in
+		amd64|arm64)
+			local ubuntu_version
+			ubuntu_version=$(grep -oP '^VERSION_ID="\K[0-9]+\.[0-9]+' /etc/os-release || true)
+			if [ -z "$ubuntu_version" ]; then
+				ubuntu_version="24.04"
+			fi
+			curl -fsSL "https://packages.microsoft.com/config/ubuntu/${ubuntu_version}/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
+			dpkg -i /tmp/packages-microsoft-prod.deb
+			apt update -y
+			apt install -y dotnet-sdk-8.0
+			;;
+		*)
+			echo -e "${Y} [!] .NET SDK official package is not available for architecture ${deb_arch}. Skipping.${W}"
+			;;
+	esac
+	echo -e "${C} .NET SDK installation finished (skipped if unsupported)\n${W}"
+}
+
 install_tools() {
 	banner
 	cat <<- EOF
@@ -203,21 +280,32 @@ install_tools() {
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" BROWSER_OPTION
 	banner
 
-	[[ ("$arch" != 'armhf') || ("$arch" != *'armv7'*) ]] && {
+	if [[ "$arch" != arm* ]]; then
 		cat <<- EOF
-			${Y} ---${G} Select IDE & Tools ${Y}---
-			${C} [${W}1${C}] Sublime Text Editor (Recommended)
+			${Y} ---${G} Select IDE & Code Editor ${Y}---
+
+			${C} [${W}1${C}] Sublime Text Editor
 			${C} [${W}2${C}] Visual Studio Code
 			${C} [${W}3${C}] OpenCode CLI
 			${C} [${W}4${C}] All (Sublime, VSCode, OpenCode)
 			${C} [${W}5${C}] Skip! (Default)
+
 		EOF
-		read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" IDE_OPTION
-		banner
-	}
-	
+	else
+		cat <<- EOF
+			${Y} ---${G} Select IDE & Code Editor ${Y}---
+
+			${C} [${W}1${C}] OpenCode CLI
+			${C} [${W}2${C}] Skip! (Default)
+			${Y} [!] VSCode/Sublime are not available on 32-bit ARM.${W}
+
+		EOF
+	fi
+	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" IDE_OPTION
+	banner
+
 	cat <<- EOF
-		${Y} ---${G} Media Player ${Y}---
+		${Y} ---${G} Select Media Player ${Y}---
 
 		${C} [${W}1${C}] MPV Media Player (Recommended)
 		${C} [${W}2${C}] VLC Media Player
@@ -226,6 +314,19 @@ install_tools() {
 
 	EOF
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" PLAYER_OPTION
+	banner
+
+	cat <<- EOF
+		${Y} ---${G} Select Development Tools ${Y}---
+
+		${C} [${W}1${C}] Git + GitHub CLI (gh)
+		${C} [${W}2${C}] Essential Dev Stack (build-essential, python3-pip, nodejs, npm, cmake)
+		${C} [${W}3${C}] .NET SDK
+		${C} [${W}4${C}] All of the above
+		${C} [${W}5${C}] Skip! (Default)
+
+	EOF
+	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" DEV_OPTION
 	banner
 
 	cat <<- EOF
@@ -254,18 +355,24 @@ install_tools() {
 	fi
 
 	# Install IDEs
-	[[ ("$arch" != 'armhf') || ("$arch" != *'armv7'*) ]] && {
-		cat <<- EOF
-			${Y} ---${G} Select IDE & Tools ${Y}---
-			${C} [${W}1${C}] Sublime Text Editor (Recommended)
-			${C} [${W}2${C}] Visual Studio Code
-			${C} [${W}3${C}] OpenCode CLI
-			${C} [${W}4${C}] All (Sublime, VSCode, OpenCode)
-			${C} [${W}5${C}] Skip! (Default)
-		EOF
-		read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" IDE_OPTION
-		banner
-	}
+	if [[ "$arch" != arm* ]]; then
+		case $IDE_OPTION in
+			1) install_sublime ;;
+			2) install_vscode ;;
+			3) install_opencode ;;
+			4)
+				install_sublime
+				install_vscode
+				install_opencode
+				;;
+			*) echo -e "${Y} [!] Skipping IDE Installation\n" ;;
+		esac
+	else
+		case $IDE_OPTION in
+			1) install_opencode ;;
+			*) echo -e "${Y} [!] Skipping IDE Installation\n" ;;
+		esac
+	fi
 
 	# Install Media Players
 	if [[ ${PLAYER_OPTION} == 1 ]]; then
@@ -279,6 +386,19 @@ install_tools() {
 		sleep 1
 	fi
 
+	# Install Development Tools
+	case $DEV_OPTION in
+		1) install_git_gh ;;
+		2) install_devtools ;;
+		3) install_dotnet ;;
+		4)
+			install_git_gh
+			install_devtools
+			install_dotnet
+			;;
+		*) echo -e "${Y} [!] Skipping Development Tools Installation\n" ;;
+	esac
+
 	# Install Additional Tools
 	case $TOOLS_OPTION in
 		1) install_kali_tools ;;
@@ -286,7 +406,7 @@ install_tools() {
 		3) install_wireshark ;;
 		4) install_gimp ;;
 		5) install_htop ;;
-		6) 
+		6)
 			install_kali_tools
 			install_ghost_framework
 			install_wireshark
@@ -298,18 +418,26 @@ install_tools() {
 }
 
 downloader(){
-	path="$1"
+	local path="$1"
+	local url="$2"
 	[[ -e "$path" ]] && rm -rf "$path"
-	echo "Downloading $(basename $1)..."
-	curl --progress-bar --insecure --fail \
+	echo "Downloading $(basename "$path")..."
+	curl --progress-bar --fail \
 		 --retry-connrefused --retry 3 --retry-delay 2 \
-		  --location --output ${path} "$2"
+		  --location --output "${path}" "${url}"
 }
 
 sound_fix() {
-	echo "$(echo "bash ~/.sound" | cat - /data/data/com.termux/files/usr/bin/ubuntu)" > /data/data/com.termux/files/usr/bin/ubuntu
-	echo "export DISPLAY=":1"" >> /etc/profile
-	echo "export PULSE_SERVER=127.0.0.1" >> /etc/profile 
+	local ubuntu_bin="/data/data/com.termux/files/usr/bin/ubuntu"
+	if [ -f "$ubuntu_bin" ] && ! grep -q "bash ~/.sound" "$ubuntu_bin"; then
+		echo "$(echo "bash ~/.sound" | cat - "$ubuntu_bin")" > "$ubuntu_bin"
+	fi
+	if ! grep -q 'export DISPLAY=":1"' /etc/profile; then
+		echo 'export DISPLAY=":1"' >> /etc/profile
+	fi
+	if ! grep -q "export PULSE_SERVER=127.0.0.1" /etc/profile; then
+		echo "export PULSE_SERVER=127.0.0.1" >> /etc/profile
+	fi
 	source /etc/profile
 }
 
@@ -335,12 +463,12 @@ config() {
 	banner
 	sound_fix
 
-	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
-	yes | apt upgrade
-	yes | apt install gtk2-engines-murrine gtk2-engines-pixbuf sassc optipng inkscape libglib2.0-dev-bin
-	mv -vf /usr/share/backgrounds/xfce/xfce-verticals.png /usr/share/backgrounds/xfce/xfceverticals-old.png
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 || true
+	yes | apt upgrade || true
+	yes | apt install gtk2-engines-murrine gtk2-engines-pixbuf sassc optipng inkscape libglib2.0-dev-bin || true
+	mv -vf /usr/share/backgrounds/xfce/xfce-verticals.png /usr/share/backgrounds/xfce/xfceverticals-old.png || true
 	temp_folder=$(mktemp -d -p "$HOME")
-	{ banner; sleep 1; cd $temp_folder; }
+	{ banner; sleep 1; cd "$temp_folder" || exit 1; }
 
 	echo -e "${R} [${W}-${R}]${C} Downloading Required Files..\n"${W}
 	downloader "fonts.tar.gz" "https://github.com/afonsoft/modded-ubuntu/releases/download/config/fonts.tar.gz"
@@ -354,8 +482,8 @@ config() {
 	tar -xvzf icons.tar.gz -C "/usr/share/icons/"
 	tar -xvzf wallpaper.tar.gz -C "/usr/share/backgrounds/xfce/"
 	tar -xvzf gtk-themes.tar.gz -C "/usr/share/themes/"
-	tar -xvzf ubuntu-settings.tar.gz -C "/home/$username/"	
-	rm -fr $temp_folder
+	tar -xvzf ubuntu-settings.tar.gz -C "/home/$username/"
+	rm -fr "$temp_folder"
 
 	echo -e "${R} [${W}-${R}]${C} Purging Unnecessary Files.."${W}
 	rem_theme

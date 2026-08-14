@@ -17,5 +17,5 @@ jobs:
       uses: ludeeus/action-shellcheck@master
       with:
         scandir: './'
-        ignore: 'distro/proot-distro.sh'
+        ignore_names: 'proot-distro.sh'
         severity: warning

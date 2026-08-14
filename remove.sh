@@ -4,7 +4,6 @@
 R="$(printf '\033[1;31m')"
 G="$(printf '\033[1;32m')"
 Y="$(printf '\033[1;33m')"
-B="$(printf '\033[1;34m')"
 C="$(printf '\033[1;36m')"
 W="$(printf '\033[1;37m')"
 
@@ -40,14 +39,14 @@ package() {
     fi
 
     # Remove pulseaudio configurations from ~/.sound
-    if sed -i '/pulseaudio --start --exit-idle-time=-1/d' ~/.sound && \
-       sed -i '/pacmd load-module module-aaudio-sink/d' ~/.sound && \
-       sed -i '/pacmd load-module module-aaudio-source/d' ~/.sound && \
-       sed -i '/pacmd load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1/d' ~/.sound; then
+    if [ -f "$HOME/.sound" ]; then
+        sed -i '/pulseaudio --start --exit-idle-time=-1/d' "$HOME/.sound" || true
+        sed -i '/pacmd load-module module-aaudio-sink/d' "$HOME/.sound" || true
+        sed -i '/pacmd load-module module-aaudio-source/d' "$HOME/.sound" || true
+        sed -i '/pacmd load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1/d' "$HOME/.sound" || true
         echo -e "${G} [${W}+${G}]${C} Pulseaudio configurations removed successfully.""${W}"
     else
-        echo -e "${R} [${W}-${R}]${C} Failed to remove Pulseaudio configurations.""${W}"
-        exit 1
+        echo -e "${Y} [${W}!${Y}]${C} ~/.sound not found, skipping audio cleanup.""${W}"
     fi
 
     echo -e "${R} [${W}-${R}]${C} Purging Completed !""${W}"
