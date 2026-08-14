@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `install.sh` one-liner installer: download and run `curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/install.sh | bash` to clone the repo and execute `setup.sh` automatically.
 - Development tools menu in `distro/gui.sh`:
   - Git + GitHub CLI (`gh`)
   - Essential dev stack (`build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`)
