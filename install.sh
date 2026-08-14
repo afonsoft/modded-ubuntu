@@ -4,54 +4,52 @@
 
 set -e
 
-# Redireciona o stdin para o terminal quando o script é executado via pipe,
-# permitindo que prompts do Termux/proot-distro funcionem corretamente.
-if [ -r /dev/tty ]; then
-    exec 0</dev/tty
-fi
+LOG_FILE="${HOME}/modded-ubuntu-install.log"
+: > "${LOG_FILE}"
+
+log() {
+    local msg
+    msg="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+    printf '%s\n' "${msg}"
+    printf '%s\n' "${msg}" >> "${LOG_FILE}"
+}
 
 REPO_URL="https://github.com/afonsoft/modded-ubuntu.git"
 INSTALL_DIR="${HOME}/modded-ubuntu"
 
-echo "[+] Instalador modded-ubuntu"
-echo "[+] Diretório de instalação: ${INSTALL_DIR}"
+log "[+] Iniciando instalador modded-ubuntu"
+log "[+] Log: ${LOG_FILE}"
+log "[+] Diretório de instalação: ${INSTALL_DIR}"
 
+# Garante que o Termux esteja atualizado e com as dependências básicas.
+if command -v pkg >/dev/null 2>&1; then
+    log "[+] Atualizando lista de pacotes (pkg update -y)..."
+    pkg update -y
+
+    log "[+] Instalando dependências (git, curl, wget, proot-distro, pulseaudio)..."
+    pkg install -y git curl wget proot-distro pulseaudio
+else
+    log "[!] Gerenciador de pacotes 'pkg' não encontrado. Pulando instalação de dependências." >&2
+fi
+
+# Se o diretório de instalação já existir, faz backup ao invés de perguntar.
 if [ -d "${INSTALL_DIR}" ]; then
-    echo "[!] Diretório ${INSTALL_DIR} já existe."
-    read -r -p "Deseja remover e clonar novamente? [s/N] " confirm
-    if [[ "${confirm}" =~ ^[Ss]$ ]]; then
-        rm -rf "${INSTALL_DIR}"
-    else
-        echo "[+] Cancelado."
-        exit 0
-    fi
+    BACKUP_DIR="${INSTALL_DIR}.bak.$(date +%Y%m%d%H%M%S)"
+    log "[!] Diretório ${INSTALL_DIR} já existe. Fazendo backup para ${BACKUP_DIR}"
+    mv "${INSTALL_DIR}" "${BACKUP_DIR}"
 fi
 
-if ! command -v git >/dev/null 2>&1; then
-    echo "[+] Git não encontrado. Instalando..."
-    if command -v pkg >/dev/null 2>&1; then
-        pkg update -y || true
-        pkg install -y git || {
-            echo "[!] Falha ao instalar git via pkg." >&2
-            exit 1
-        }
-    else
-        echo "[!] Gerenciador de pacotes 'pkg' não encontrado. Instale o git manualmente." >&2
-        exit 1
-    fi
-fi
-
-echo "[+] Clonando repositório..."
+log "[+] Clonando repositório..."
 git clone --depth=1 "${REPO_URL}" "${INSTALL_DIR}"
 
 cd "${INSTALL_DIR}" || {
-    echo "[!] Falha ao entrar no diretório ${INSTALL_DIR}" >&2
+    log "[!] Falha ao entrar no diretório ${INSTALL_DIR}" >&2
     exit 1
 }
 
-echo "[+] Executando setup.sh..."
+log "[+] Executando setup.sh..."
 bash setup.sh
 
-echo "[+] Instalação concluída."
-echo "[+] Reinicie o Termux e execute: ubuntu"
-echo "[+] Depois execute: bash user.sh"
+log "[+] Instalação concluída."
+log "[+] Reinicie o Termux e execute: ubuntu"
+log "[+] Depois execute: bash user.sh"
