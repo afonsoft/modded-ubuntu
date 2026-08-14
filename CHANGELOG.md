@@ -24,6 +24,7 @@
 - Broken 32-bit ARM exclusion logic in `distro/gui.sh` (`||` replaced by `!= arm*`).
 - Missing IDE installation logic in `distro/gui.sh`; IDE selection now triggers `install_sublime`, `install_vscode` or `install_opencode`.
 - ShellCheck warnings in `distro/gui.sh`, `distro/tools.sh` and `remove.sh`.
+- VNC startup crash (`error: expected absolute path: "--shm-helper"`) by launching `proot-distro` with `--no-sysvipc` and passing `-extension MIT-SHM` to `vncserver`.
 
 ## [2.0.0] - 2023-01-20
 

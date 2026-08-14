@@ -64,7 +64,7 @@ login() {
     echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers || { log "Failed to update sudoers file"; exit 1; }
 
     # Create the ubuntu command for proot-distro
-    echo "proot-distro login --user $user ubuntu --bind /dev/null:/proc/sys/kernel/cap_last_last --shared-tmp --fix-low-ports" > /data/data/com.termux/files/usr/bin/ubuntu
+    echo "proot-distro login --user $user --no-sysvipc ubuntu --bind /dev/null:/proc/sys/kernel/cap_last_last --shared-tmp --fix-low-ports" > /data/data/com.termux/files/usr/bin/ubuntu
     chmod +x /data/data/com.termux/files/usr/bin/ubuntu || { log "Failed to set permissions for ubuntu command"; exit 1; }
 
     # Download and set up the GUI script
