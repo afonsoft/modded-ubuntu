@@ -196,7 +196,7 @@ permission() {
     fi
 
     echo "$(getprop persist.sys.timezone)" > "$UBUNTU_DIR/etc/timezone"
-    echo "proot-distro login ubuntu" > "$PREFIX/bin/ubuntu"
+    echo "proot-distro login --no-sysvipc ubuntu" > "$PREFIX/bin/ubuntu"
     chmod +x "$PREFIX/bin/ubuntu"
     termux-reload-settings
 
