@@ -42,7 +42,7 @@ nvm_env_string() {
 	local user="$1"
 	local home_dir
 	home_dir=$(user_home "$user")
-	echo "export NVM_DIR=\"$home_dir/.nvm\"; [ -s \"$home_dir/.nvm/nvm.sh\" ] && \\. \"$home_dir/.nvm/nvm.sh\" && nvm use default"
+	echo "export NVM_DIR=\"$home_dir/.nvm\"; [ -s \"$home_dir/.nvm/nvm.sh\" ] && \\. \"$home_dir/.nvm/nvm.sh\" && nvm use default >/dev/null 2>&1"
 }
 
 run_with_nvm() {
@@ -61,23 +61,27 @@ run_with_nvm() {
 ensure_nodejs() {
 	local target_user
 	target_user=$(detect_user)
-	local node_path
-	node_path=$(command -v node 2>/dev/null) || true
+	local home_dir
+	home_dir=$(user_home "$target_user")
+	local nvm_dir="$home_dir/.nvm"
 
-	# Se node não existe ou não vem do nvm, instala via node-setup
-	if [ -z "$node_path" ] || [[ "$node_path" != *".nvm"* ]]; then
-		warn "Node.js gerenciado pelo nvm não encontrado. Instalando..."
-		if [ -f /usr/local/bin/node-setup ]; then
-			bash /usr/local/bin/node-setup
-		elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh ]; then
-			bash /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh
-		else
-			local node_script
-			node_script=$(mktemp)
-			curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/nodejs.sh -o "$node_script"
-			bash "$node_script"
-			rm -f "$node_script"
-		fi
+	# Se node e npm existem e o nvm está disponível, não reinstala
+	if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 && [ -s "$nvm_dir/nvm.sh" ]; then
+		log "Node.js e npm já estão disponíveis gerenciados pelo nvm."
+		return 0
+	fi
+
+	warn "Node.js gerenciado pelo nvm não encontrado. Instalando..."
+	if [ -f /usr/local/bin/node-setup ]; then
+		bash /usr/local/bin/node-setup
+	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh ]; then
+		bash /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh
+	else
+		local node_script
+		node_script=$(mktemp)
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/nodejs.sh -o "$node_script"
+		bash "$node_script"
+		rm -f "$node_script"
 	fi
 }
 
