@@ -249,8 +249,14 @@ permission() {
 
     local timezone termux_prefix
     timezone=$(getprop persist.sys.timezone 2>/dev/null || true)
-    [ -z "$timezone" ] && timezone="${TZ:-UTC}"
+    [ -z "$timezone" ] && timezone="${TZ:-America/Sao_Paulo}"
     echo "$timezone" > "$UBUNTU_DIR/etc/timezone"
+
+    # Locale padrão em inglês americano; user.sh reforça a configuração
+    if [ ! -f "$UBUNTU_DIR/etc/default/locale" ]; then
+        mkdir -p "$UBUNTU_DIR/etc/default"
+        printf 'LANG=en_US.UTF-8\nLANGUAGE=en_US:en\n' > "$UBUNTU_DIR/etc/default/locale"
+    fi
 
     termux_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
     echo "proot-distro login --no-sysvipc ubuntu" > "$termux_prefix/bin/ubuntu"

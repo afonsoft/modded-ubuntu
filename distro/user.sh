@@ -37,6 +37,40 @@ install_sudo() {
     echo -e "\n${R} [${W}-${R}]${G} Sudo Successfully Installed!${W}"
 }
 
+configure_locale_timezone() {
+    log "Configurando locale padrão (en_US.UTF-8) e timezone (America/Sao_Paulo)..."
+    echo -e "\n${R} [${W}-${R}]${C} Configurando locale e fuso horário...${W}"
+
+    # Locale americano (inglês) como padrão do sistema
+    if command -v update-locale >/dev/null 2>&1; then
+        update-locale LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL= 2>/dev/null || true
+    else
+        echo 'LANG=en_US.UTF-8
+LANGUAGE=en_US:en' > /etc/default/locale
+    fi
+
+    # Fuso horário de São Paulo (Brasil)
+    ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+    echo "America/Sao_Paulo" > /etc/timezone
+
+    if command -v dpkg-reconfigure >/dev/null 2>&1; then
+        dpkg-reconfigure -f noninteractive tzdata 2>/dev/null || true
+    fi
+
+    # Aplica locale para a sessão atual e garante que .bashrc carregue o padrão
+    export LANG=en_US.UTF-8
+    export LANGUAGE=en_US:en
+
+    # Ajusta o .bashrc do root para manter o locale americano por padrão
+    if ! grep -q "^export LANG=" /root/.bashrc 2>/dev/null; then
+        echo 'export LANG=en_US.UTF-8
+export LANGUAGE=en_US:en' >> /root/.bashrc
+    fi
+
+    log "Locale e timezone configurados: LANG=en_US.UTF-8, TZ=America/Sao_Paulo"
+    echo -e "\n${R} [${W}-${R}]${G} Locale e fuso horário configurados.${W}"
+}
+
 read_credentials() {
     if [ -n "${MODDED_USER:-}" ]; then
         user="$MODDED_USER"
@@ -137,4 +171,5 @@ cleanup() {
 # Main script execution
 banner
 install_sudo
+configure_locale_timezone
 login
