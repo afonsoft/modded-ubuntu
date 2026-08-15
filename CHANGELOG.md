@@ -40,6 +40,7 @@
 - `install_opencode()` agora usa `install_node_nvm()` (Node.js via NVM) antes de instalar o `@opencode-ai/cli`.
 - `install_sublime()` skips 32-bit ARM.
 - `sound_fix()` is now idempotent and no longer duplicates `export` entries in `/etc/profile`.
+- `install_devin_desktop()` agora segue a ordem exata da documentação oficial: instala `wget/gpg`, adiciona o repositório `windsurf-stable`, instala `apt-transport-https`, atualiza e depois instala `devin-desktop`.
 - `downloader()` in `setup.sh` and `gui.sh` no longer uses `--insecure`.
 - `remove.sh` safely handles missing `~/.sound` and uses `$HOME`.
 
