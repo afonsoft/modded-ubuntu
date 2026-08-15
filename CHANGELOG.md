@@ -73,8 +73,10 @@
 - Corrigido travamento na instalação do Node.js/NVM em `distro/nodejs.sh`:
   - substitui o instalador oficial do NVM por clone direto do repositório (`git clone --depth=1 --branch v0.40.0`), evitando `nvm_check_global_modules`/`npm list -g` que travavam dentro do PRoot;
   - adiciona `coreutils` como dependência para garantir o comando `timeout`;
-  - usa `timeout 600` no `nvm install` para evitar compilação from-source infinita;
-  - não suprime mais a saída de erro (`stderr`) do instalador NVM nem do `nvm install`, permitindo diagnosticar progresso/erros;
+  - usa `nvm install -b <versão>` para forçar o download de binário e evitar compilação from-source;
+  - aumenta o timeout de cada instalação para 900s com `timeout --kill-after=60 900`;
+  - exibe o progresso do `curl` durante o download ao não setar `NVM_NO_PROGRESS=1`;
+  - loga a arquitetura, o comando exato e o status de cada instalação do Node.js;
   - pula Node.js 24 em arquiteturas `armv7l`/`armhf` onde binários oficiais geralmente não existem;
   - adiciona logs detalhados em cada etapa (instalação do NVM, instalação de cada versão do Node, criação de symlinks).
 - Captura do diretório de binários do NVM em `distro/nodejs.sh` e `distro/angular.sh` agora suprime a saída de `nvm use default`, garantindo a criação correta dos symlinks em `/usr/local/bin`.

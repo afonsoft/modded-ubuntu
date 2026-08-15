@@ -121,11 +121,13 @@ install_node_versions() {
 		return 1
 	fi
 
-	log "Instalando Node.js (versões: 20, 22 e 24 quando disponível) via NVM..."
+	log "Arquitetura detectada: $arch"
+	log "Instalando Node.js (versões: 20, 22 e 24 quando disponível) via NVM (somente binário)..."
 
 	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\""
 
-	# Evita compilação from-source em ARM 32-bit, onde binários recentes podem não existir
+	# Evita compilação from-source: usa o flag -b para baixar apenas binários.
+	# Se o binário não existir para a arquitetura, a instalação falha rapidamente.
 	local node_versions=(20 22)
 	if [[ "$arch" != armv7l && "$arch" != armhf ]]; then
 		node_versions+=(24)
@@ -135,17 +137,20 @@ install_node_versions() {
 
 	local timeout_prefix=()
 	if command -v timeout >/dev/null 2>&1; then
-		timeout_prefix=(timeout 600)
-		log "Timeout de 600s será usado para cada instalação de Node.js."
+		# 15 minutos para download + extração; força SIGKILL 60s após o prazo
+		timeout_prefix=(timeout --kill-after=60 900)
+		log "Timeout de 900s (com SIGKILL após 60s) será usado para cada instalação de Node.js."
 	else
 		warn "Comando 'timeout' não encontrado; instalação pode demorar sem limite."
 	fi
 
-	# Tenta instalar cada versão. Usa timeout para evitar travamentos longos em compilação from-source.
 	local version
 	for version in "${node_versions[@]}"; do
-		log "[Node $version] Iniciando instalação..."
-		local cmd=("${timeout_prefix[@]}" sudo -u "$target_user" -H bash -c "NVM_NO_PROGRESS=1; $nvm_env; nvm install $version")
+		log "[Node $version] Iniciando instalação (nvm install -b $version)..."
+		# NVM_NO_PROGRESS não é setado para que curl moste o progresso do download.
+		local install_cmd="$nvm_env; nvm install -b $version"
+		log "[Node $version] Comando: ${timeout_prefix[*]} sudo -u $target_user -H bash -c '... $install_cmd'"
+		local cmd=("${timeout_prefix[@]}" sudo -u "$target_user" -H bash -c "$install_cmd")
 		if "${cmd[@]}"; then
 			log "[Node $version] Instalação concluída."
 		else
