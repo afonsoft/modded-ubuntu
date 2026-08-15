@@ -242,29 +242,20 @@ install_devtools() {
 	echo -e "${C} Essential Development Tools Installed Successfully\n${W}"
 }
 
-install_dotnet() {
-	echo -e "${G}Installing ${Y}.NET SDK${W}"
-	apt update -y
-	apt install -y curl wget
-	local deb_arch
-	deb_arch=$(dpkg --print-architecture)
-	case "$deb_arch" in
-		amd64|arm64)
-			local ubuntu_version
-			ubuntu_version=$(grep -oP '^VERSION_ID="\K[0-9]+\.[0-9]+' /etc/os-release || true)
-			if [ -z "$ubuntu_version" ]; then
-				ubuntu_version="24.04"
-			fi
-			curl -fsSL "https://packages.microsoft.com/config/ubuntu/${ubuntu_version}/packages-microsoft-prod.deb" -o /tmp/packages-microsoft-prod.deb
-			dpkg -i /tmp/packages-microsoft-prod.deb
-			apt update -y
-			apt install -y dotnet-sdk-8.0
-			;;
-		*)
-			echo -e "${Y} [!] .NET SDK official package is not available for architecture ${deb_arch}. Skipping.${W}"
-			;;
-	esac
-	echo -e "${C} .NET SDK installation finished (skipped if unsupported)\n${W}"
+install_csharp_tools() {
+	echo -e "${G}Installing ${Y}.NET / C# Development Stack${W}"
+	if [ -f /usr/local/bin/csharp-setup ]; then
+		bash /usr/local/bin/csharp-setup
+	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/csharp.sh ]; then
+		bash /data/data/com.termux/files/home/modded-ubuntu/distro/csharp.sh
+	else
+		local csharp_script
+		csharp_script=$(mktemp)
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/csharp.sh -o "$csharp_script"
+		bash "$csharp_script"
+		rm -f "$csharp_script"
+	fi
+	echo -e "${C} .NET / C# Development Stack finished\n${W}"
 }
 
 install_tools() {
@@ -321,7 +312,7 @@ install_tools() {
 
 		${C} [${W}1${C}] Git + GitHub CLI (gh)
 		${C} [${W}2${C}] Essential Dev Stack (build-essential, python3-pip, nodejs, npm, cmake)
-		${C} [${W}3${C}] .NET SDK
+		${C} [${W}3${C}] .NET SDK 10.0 + C# tooling
 		${C} [${W}4${C}] All of the above
 		${C} [${W}5${C}] Skip! (Default)
 
@@ -390,11 +381,11 @@ install_tools() {
 	case $DEV_OPTION in
 		1) install_git_gh ;;
 		2) install_devtools ;;
-		3) install_dotnet ;;
+		3) install_csharp_tools ;;
 		4)
 			install_git_gh
 			install_devtools
-			install_dotnet
+			install_csharp_tools
 			;;
 		*) echo -e "${Y} [!] Skipping Development Tools Installation\n" ;;
 	esac

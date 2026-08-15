@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Stack de desenvolvimento C# / .NET para o modded-ubuntu
+# Pode ser executado standalone ou chamado por distro/gui.sh
+
+R="$(printf '\033[1;31m')"
+Y="$(printf '\033[1;33m')"
+C="$(printf '\033[1;36m')"
+W="$(printf '\033[1;37m')"
+
+log()  { echo -e "${C}[csharp]${W} $1"; }
+warn() { echo -e "${Y}[csharp]${W} $1"; }
+err()  { echo -e "${R}[csharp]${W} $1"; }
+
+detect_user() {
+	local user_name=""
+	if [ -n "${SUDO_USER:-}" ] && getent passwd "$SUDO_USER" >/dev/null 2>&1; then
+		user_name="$SUDO_USER"
+	elif command -v logname >/dev/null 2>&1; then
+		user_name=$(logname 2>/dev/null) || true
+	fi
+	if [ -z "$user_name" ] || [ "$user_name" = "root" ]; then
+		user_name=$(awk -F: '$3 >= 1000 && $6 ~ /^\/home\// {print $1; exit}' /etc/passwd)
+	fi
+	echo "$user_name"
+}
+
+install_prerequisites() {
+	log "Atualizando repositórios e instalando dependências nativas do .NET..."
+	apt-get update -yq
+	apt-get install -yq --no-install-recommends \
+		curl wget ca-certificates \
+		libc6-dev libicu-dev libssl3 libgdiplus \
+		unzip || true
+}
+
+install_dotnet_sdk() {
+	log "Instalando .NET SDK..."
+
+	local sdk_installed=false
+	for pkg in dotnet-sdk-10.0 dotnet-sdk-9.0 dotnet-sdk-8.0; do
+		if apt-cache show "$pkg" >/dev/null 2>&1; then
+			log "Pacote $pkg encontrado. Instalando..."
+			if apt-get install -yq "$pkg"; then
+				sdk_installed=true
+				break
+			fi
+		fi
+	done
+
+	if [ "$sdk_installed" != true ]; then
+		warn ".NET SDK não encontrado nos repositórios. Usando dotnet-install.sh como fallback..."
+		curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+		chmod +x /tmp/dotnet-install.sh
+		/tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
+		ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet
+	fi
+
+	if ! command -v dotnet >/dev/null 2>&1; then
+		err "Falha ao instalar o .NET SDK."
+		return 1
+	fi
+
+	log ".NET SDK instalado: $(dotnet --version)"
+}
+
+install_dotnet_global_tools() {
+	if ! command -v dotnet >/dev/null 2>&1; then
+		warn "dotnet não encontrado. Pulando ferramentas globais."
+		return 0
+	fi
+
+	log "Instalando ferramentas globais do .NET em /usr/local/bin..."
+
+	# dotnet-ef é essencial para projetos com Entity Framework Core
+	dotnet tool install --tool-path /usr/local/bin dotnet-ef || warn "Não foi possível instalar dotnet-ef"
+
+	# Scaffolding ASP.NET Core
+	dotnet tool install --tool-path /usr/local/bin dotnet-aspnet-codegenerator || warn "Não foi possível instalar dotnet-aspnet-codegenerator"
+}
+
+install_vscode_csharp_extensions() {
+	if ! command -v code >/dev/null 2>&1; then
+		warn "Visual Studio Code não instalado. Pulando extensões C#."
+		return 0
+	fi
+
+	local target_user
+	target_user=$(detect_user)
+	if [ -z "$target_user" ]; then
+		target_user="root"
+	fi
+
+	log "Instalando extensões C# do VS Code para o usuário: $target_user"
+
+	local extensions=(
+		"ms-dotnettools.vscode-dotnet-runtime"
+		"ms-dotnettools.csharp"
+		"ms-dotnettools.csdevkit"
+	)
+
+	for ext in "${extensions[@]}"; do
+		if sudo -u "$target_user" -H code --no-sandbox --install-extension "$ext" --force 2>/dev/null; then
+			log "Extensão $ext instalada."
+		else
+			warn "Não foi possível instalar a extensão $ext"
+		fi
+	done
+}
+
+main() {
+	install_prerequisites
+	install_dotnet_sdk
+	install_dotnet_global_tools
+	install_vscode_csharp_extensions
+	log "Stack de desenvolvimento C# / .NET configurada."
+}
+
+main "$@"

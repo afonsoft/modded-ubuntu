@@ -74,11 +74,12 @@ login() {
         cp /data/data/com.termux/files/home/modded-ubuntu/distro/vncstart-fhd /usr/local/bin/vncstart-fhd 2>/dev/null || true
         cp /data/data/com.termux/files/home/modded-ubuntu/distro/vncstart-qhd /usr/local/bin/vncstart-qhd 2>/dev/null || true
         cp /data/data/com.termux/files/home/modded-ubuntu/distro/s26-optimize.sh /usr/local/bin/s26-optimize 2>/dev/null || true
+        cp /data/data/com.termux/files/home/modded-ubuntu/distro/csharp.sh /usr/local/bin/csharp-setup 2>/dev/null || true
     else
         wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/gui.sh" -O "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
     fi
-    chmod +x /usr/local/bin/vncstart-fhd /usr/local/bin/vncstart-qhd /usr/local/bin/s26-optimize 2>/dev/null || true
+    chmod +x /usr/local/bin/vncstart-fhd /usr/local/bin/vncstart-qhd /usr/local/bin/s26-optimize /usr/local/bin/csharp-setup 2>/dev/null || true
 
     log "User login setup completed for user: $user"
     clear

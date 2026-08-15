@@ -187,6 +187,11 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/s26-optimize"
     fi
 
+    if [[ -e "$CURR_DIR/distro/csharp.sh" ]]; then
+        cp -f "$CURR_DIR/distro/csharp.sh" "$UBUNTU_DIR/usr/local/bin/csharp-setup"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/csharp-setup"
+    fi
+
     # Optional Termux performance tweaks for Samsung S26 / high-end devices
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         mkdir -p "$HOME/.termux"
