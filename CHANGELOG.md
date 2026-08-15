@@ -39,7 +39,9 @@
 - `README.md` atualizado para destacar a origem modificada no Brasil, reorganizar a documentação em seções bilíngues (pt-BR/en-US) e melhorar as instruções de instalação, requisitos e créditos.
 - `install.sh` verifica espaço livre (>= 5 GB), mantém a tela ligada durante o setup com `termux-wake-lock`/`termux-wake-unlock` e usa `pkg upgrade -y`.
 - `setup.sh` também mantém a tela ligada, adiciona fallback para timezone e usa `$PREFIX` ao criar o comando `ubuntu`.
+- `setup.sh` define o locale padrão como `en_US.UTF-8` e fallback de timezone para `America/Sao_Paulo` no rootfs, quando ainda não configurados.
 - `distro/user.sh` permite criação não interativa de usuário via variáveis `MODDED_USER`/`MODDED_PASS` e evita duplicar a entrada no `/etc/sudoers`.
+- `distro/user.sh` configura locale `en_US.UTF-8` e timezone `America/Sao_Paulo` como padrões do sistema, incluindo `/etc/default/locale`, `/etc/localtime`, `/etc/timezone` e `.bashrc`.
 - `install_vscode()` skips 32-bit ARM and uses `dpkg --print-architecture` for the APT repository.
 - `install_opencode()` agora usa `install_node_nvm()` (Node.js via NVM) antes de instalar o `@opencode-ai/cli`.
 - `install_sublime()` skips 32-bit ARM.
