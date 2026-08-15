@@ -21,16 +21,18 @@ log() {
 WAKE_LOCKED=false
 acquire_wake_lock() {
     if command -v termux-wake-lock >/dev/null 2>&1; then
-        termux-wake-lock
-        WAKE_LOCKED=true
-        log "[+] Tela mantida acesa (termux-wake-lock)"
+        if termux-wake-lock >/dev/null 2>&1; then
+            WAKE_LOCKED=true
+            log "[+] Tela mantida acesa (termux-wake-lock)"
+        fi
     fi
 }
 
 release_wake_lock() {
     if [ "${WAKE_LOCKED}" = "true" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
-        termux-wake-unlock
-        log "[+] Tela liberada (termux-wake-unlock)"
+        if termux-wake-unlock >/dev/null 2>&1; then
+            log "[+] Tela liberada (termux-wake-unlock)"
+        fi
     fi
 }
 
