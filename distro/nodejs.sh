@@ -43,7 +43,8 @@ install_prerequisites() {
 	log "Atualizando repositórios e instalando dependências do Node.js..."
 	apt-get update -yq
 	apt-get install -yq --no-install-recommends \
-		curl ca-certificates git || true
+		coreutils curl ca-certificates git || true
+	log "Dependências do Node.js instaladas."
 }
 
 install_nvm() {
@@ -54,22 +55,35 @@ install_nvm() {
 	local nvm_dir="$home_dir/.nvm"
 	local nvm_version="v0.40.0"
 
-	log "Instalando NVM $nvm_version para o usuário: $target_user"
+	log "Instalando NVM $nvm_version para o usuário: $target_user (home=$home_dir)"
 
-	if [ -d "$nvm_dir" ]; then
+	if [ -s "$nvm_dir/nvm.sh" ]; then
 		warn "NVM já instalado em $nvm_dir. Pulando nova instalação."
 		return 0
 	fi
 
-	curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/$nvm_version/install.sh" -o /tmp/nvm-install.sh
-	chmod +x /tmp/nvm-install.sh
-
-	# Executa o instalador como o usuário alvo para que .bashrc e $HOME estejam corretos
-	if ! sudo -u "$target_user" -H bash /tmp/nvm-install.sh; then
-		warn "Falha ao instalar o NVM com sudo; tentando como root..."
-		bash /tmp/nvm-install.sh
+	# Se o diretório existe mas está incompleto, remove para recomeçar
+	if [ -d "$nvm_dir" ]; then
+		warn "Diretório $nvm_dir existe mas parece incompleto; removendo..."
+		rm -rf "$nvm_dir" || {
+			err "Não foi possível remover $nvm_dir."
+			return 1
+		}
 	fi
 
+	# Clona diretamente o repositório como o usuário alvo, evitando o script
+	# oficial que pode travar em PRoot ao executar 'npm list -g' ou compilação.
+	log "Clonando NVM de https://github.com/nvm-sh/nvm.git (branch $nvm_version)..."
+	if ! sudo -u "$target_user" -H git clone --depth=1 --branch "$nvm_version" \
+		https://github.com/nvm-sh/nvm.git "$nvm_dir" 2>&1; then
+		err "Falha ao clonar o NVM via git. Verifique a conexão."
+		return 1
+	fi
+
+	log "NVM clonado em $nvm_dir."
+
+	# Configura o .bashrc do usuário para carregar o nvm
+	persist_nvm_default
 }
 
 persist_nvm_default() {
@@ -78,13 +92,19 @@ persist_nvm_default() {
 	local home_dir
 	home_dir=$(user_home "$target_user")
 
-	if [ -f "$home_dir/.bashrc" ] && ! grep -q "nvm use default" "$home_dir/.bashrc"; then
-		{
-			echo ''
-			echo '# Ativar a versão padrão do Node.js gerenciada pelo nvm'
-			echo 'export NVM_DIR="$HOME/.nvm"'
-			echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use default >/dev/null 2>&1'
-		} >> "$home_dir/.bashrc"
+	log "Configurando carregamento do NVM em $home_dir/.bashrc..."
+
+	# Escreve como o usuário alvo para manter a propriedade correta do arquivo
+	if ! sudo -u "$target_user" -H grep -q "nvm use default" "$home_dir/.bashrc" >/dev/null 2>&1; then
+		sudo -u "$target_user" -H bash -c 'cat >> "$HOME/.bashrc"' <<'EOF'
+
+# Ativar a versão padrão do Node.js gerenciada pelo nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use default >/dev/null 2>&1
+EOF
+		log "Carregamento do NVM adicionado ao .bashrc."
+	else
+		log ".bashrc já possui configuração do NVM."
 	fi
 }
 
@@ -95,14 +115,15 @@ install_node_versions() {
 	home_dir=$(user_home "$target_user")
 	local nvm_dir="$home_dir/.nvm"
 
+	log "Verificando instalação do NVM em $nvm_dir..."
 	if [ ! -s "$nvm_dir/nvm.sh" ]; then
 		err "NVM não encontrado em $nvm_dir. Pulando instalação do Node.js."
 		return 1
 	fi
 
-	log "Instalando Node.js 20, 22 e 24 (se disponível) via NVM..."
+	log "Instalando Node.js (versões: 20, 22 e 24 quando disponível) via NVM..."
 
-	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\" && nvm use default >/dev/null 2>&1"
+	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\""
 
 	# Evita compilação from-source em ARM 32-bit, onde binários recentes podem não existir
 	local node_versions=(20 22)
@@ -112,23 +133,34 @@ install_node_versions() {
 		warn "Arquitetura $arch detectada. Pulando Node.js 24 (binários geralmente indisponíveis)."
 	fi
 
-	# Tenta instalar cada versão usando binários pré-compilados (-b) para evitar
-	# compilação from-source que pode travar em ARM 32-bit. Mostra progresso.
+	local timeout_prefix=()
+	if command -v timeout >/dev/null 2>&1; then
+		timeout_prefix=(timeout 600)
+		log "Timeout de 600s será usado para cada instalação de Node.js."
+	else
+		warn "Comando 'timeout' não encontrado; instalação pode demorar sem limite."
+	fi
+
+	# Tenta instalar cada versão. Usa timeout para evitar travamentos longos em compilação from-source.
 	local version
 	for version in "${node_versions[@]}"; do
-		if sudo -u "$target_user" -H bash -c "$nvm_env; nvm install -b $version"; then
-			log "Node.js $version instalado."
+		log "[Node $version] Iniciando instalação..."
+		local cmd=("${timeout_prefix[@]}" sudo -u "$target_user" -H bash -c "NVM_NO_PROGRESS=1; $nvm_env; nvm install $version")
+		if "${cmd[@]}"; then
+			log "[Node $version] Instalação concluída."
 		else
-			warn "Não foi possível instalar Node.js $version (binário pode estar indisponível)."
+			warn "[Node $version] Não foi possível instalar (timeout, binário indisponível ou erro)."
 		fi
 	done
 
 	# Define Node 22 como padrão (LTS estável e compatível com Angular 20)
-	if sudo -u "$target_user" -H bash -c "$nvm_env; nvm alias default 22" 2>/dev/null; then
+	log "Definindo alias padrão do NVM para Node 22..."
+	if sudo -u "$target_user" -H bash -c "$nvm_env && nvm use default >/dev/null 2>&1; nvm alias default 22" 2>/dev/null; then
 		log "Versão padrão do Node.js definida como 22."
 	else
 		# Fallback: usa a última versão instalada
-		sudo -u "$target_user" -H bash -c "$nvm_env; nvm alias default node" 2>/dev/null || warn "Não foi possível definir o alias padrão do nvm"
+		log "Tentando fallback: alias default node..."
+		sudo -u "$target_user" -H bash -c "$nvm_env && nvm use default >/dev/null 2>&1; nvm alias default node" 2>/dev/null || warn "Não foi possível definir o alias padrão do nvm"
 	fi
 }
 
@@ -141,6 +173,7 @@ symlink_nvm_binaries() {
 
 	# Ativa a versão padrão para descobrir o caminho dos binários
 	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\" && nvm use default >/dev/null 2>&1"
+	log "Localizando binários do Node.js para symlinks..."
 	local node_bin
 	node_bin=$(sudo -u "$target_user" -H bash -c "$nvm_env; dirname \"\$(command -v node)\"")
 
@@ -153,6 +186,7 @@ symlink_nvm_binaries() {
 	for bin in node npm npx corepack; do
 		if [ -x "$node_bin/$bin" ]; then
 			ln -sf "$node_bin/$bin" "/usr/local/bin/$bin" 2>/dev/null || true
+			log "Symlink criado: /usr/local/bin/$bin -> $node_bin/$bin"
 		fi
 	done
 }
