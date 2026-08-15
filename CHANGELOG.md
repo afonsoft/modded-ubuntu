@@ -36,6 +36,7 @@
 - `distro/vncstop` now uses `${HOME}` instead of a hardcoded `/username/` path.
 
 ### Changed
+- `README.md` atualizado para destacar a origem modificada no Brasil, reorganizar a documentação em seções bilíngues (pt-BR/en-US) e melhorar as instruções de instalação, requisitos e créditos.
 - `install.sh` verifica espaço livre (>= 5 GB), mantém a tela ligada durante o setup com `termux-wake-lock`/`termux-wake-unlock` e usa `pkg upgrade -y`.
 - `setup.sh` também mantém a tela ligada, adiciona fallback para timezone e usa `$PREFIX` ao criar o comando `ubuntu`.
 - `distro/user.sh` permite criação não interativa de usuário via variáveis `MODDED_USER`/`MODDED_PASS` e evita duplicar a entrada no `/etc/sudoers`.
