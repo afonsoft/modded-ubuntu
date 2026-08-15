@@ -285,6 +285,29 @@ interactive_mode() {
     echo -e "${YELLOW}[+] Skipping cleanup.${NC}"
   fi
 
+  # Final cleanup
+  echo -e "${CYAN}[*] Limpando caches e temporários restantes...${NC}"
+  case $PACKAGE_MANAGER in
+    apt)
+      apt-get clean 2>/dev/null || true
+      ;;
+    pacman)
+      pacman -Sc --noconfirm 2>/dev/null || true
+      ;;
+    yum | dnf)
+      $PACKAGE_MANAGER clean all 2>/dev/null || true
+      ;;
+  esac
+
+  if command -v npm >/dev/null 2>&1; then
+    npm cache clean --force 2>/dev/null || true
+  fi
+  if command -v pip >/dev/null 2>&1; then
+    pip cache purge 2>/dev/null || true
+  fi
+
+  rm -f /tmp/tools.sh /tmp/install_ghost.sh msfinstall 2>/dev/null || true
+
   # Final message
   echo -e "${GREEN}[+] Installation complete! All selected tools are installed successfully.${NC}"
   echo -e "${GREEN}[+] You may want to restart your system for all changes to take effect.${NC}"

@@ -48,6 +48,15 @@
 - `downloader()` in `setup.sh` and `gui.sh` no longer uses `--insecure`.
 - `remove.sh` safely handles missing `~/.sound` and uses `$HOME`.
 
+### Added
+- Limpeza automática de arquivos temporários e caches no final das instalações:
+  - `distro/nodejs.sh`: remove `/tmp/nvm-install.sh` e o cache de downloads do NVM, além de executar `apt-get clean`, `npm cache clean --force` e `pip cache purge`;
+  - `distro/angular.sh`: remove scripts temporários e executa `apt-get clean`, `npm cache clean --force` e `pip cache purge`;
+  - `distro/csharp.sh`: remove `/tmp/dotnet-install.sh` e scripts temporários, executa `apt-get clean`, `dotnet nuget locals all --clear` e `pip cache purge`;
+  - `distro/tools.sh`: executa `apt-get clean`/`pacman -Sc`/`yum|dnf clean all`, `npm cache clean --force`, `pip cache purge` e remove arquivos temporários;
+  - `distro/gui.sh`: limpa APT, npm, pip, logs antigos e arquivos temporários conhecidos ao final do setup;
+  - `install.sh` e `setup.sh`: limpam caches do Termux (`pkg clean`) e, no `setup.sh`, também removem o cache de downloads do `proot-distro`.
+
 ### Fixed
 - Syntax error (extra closing brace) in `distro/gui.sh` after `install_opencode()`.
 - Broken 32-bit ARM exclusion logic in `distro/gui.sh` (`||` replaced by `!= arm*`).
@@ -55,6 +64,11 @@
 - ShellCheck warnings in `distro/gui.sh`, `distro/tools.sh` and `remove.sh`.
 - VNC startup crash (`error: expected absolute path: "--shm-helper"`) by launching `proot-distro` with `--no-sysvipc` and passing `-extension MIT-SHM` to `vncserver`.
 - `distro/csharp.sh` não tenta mais instalar `dotnet-sdk-8.0`/`dotnet-sdk-9.0` quando `dotnet-sdk-10.0` não está disponível, usando `dotnet-install.sh` como fallback para garantir a versão 10.0.
+- Corrigido travamento na instalação do Node.js/NVM em `distro/nodejs.sh`:
+  - remove `chown -R` recursivo sobre o diretório `.nvm` dentro do PRoot;
+  - não suprime mais a saída de erro (`stderr`) do instalador NVM nem do `nvm install`, permitindo diagnosticar progresso/erros;
+  - usa `nvm install -b` para forçar instalação por binário e evitar compilação from-source longa;
+  - pula Node.js 24 em arquiteturas `armv7l`/`armhf` onde binários oficiais geralmente não existem.
 - Captura do diretório de binários do NVM em `distro/nodejs.sh` e `distro/angular.sh` agora suprime a saída de `nvm use default`, garantindo a criação correta dos symlinks em `/usr/local/bin`.
 - `distro/angular.sh` `ensure_nodejs()` não reinstala o Node.js quando ele já está disponível e o NVM está instalado.
 - `distro/gui.sh` `install_opencode()` detecta o binário `opencode`, `opencode2` ou `lildax` no diretório ativo do Node.js (via `readlink` do `node`) e cria o symlink `/usr/local/bin/opencode`.

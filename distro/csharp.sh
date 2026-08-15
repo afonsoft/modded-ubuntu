@@ -108,11 +108,24 @@ install_vscode_csharp_extensions() {
 	done
 }
 
+cleanup() {
+	log "Limpando caches e arquivos temporários do .NET..."
+	rm -f /tmp/dotnet-install.sh /tmp/csharp-script-* 2>/dev/null || true
+	apt-get clean 2>/dev/null || true
+	if command -v dotnet >/dev/null 2>&1; then
+		dotnet nuget locals all --clear 2>/dev/null || true
+	fi
+	if command -v pip >/dev/null 2>&1; then
+		pip cache purge 2>/dev/null || true
+	fi
+}
+
 main() {
 	install_prerequisites
 	install_dotnet_sdk
 	install_dotnet_global_tools
 	install_vscode_csharp_extensions
+	cleanup
 	log "Stack de desenvolvimento C# / .NET configurada."
 }
 
