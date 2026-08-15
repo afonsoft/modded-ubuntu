@@ -105,6 +105,20 @@ If you prefer the manual method:
 - Click on Connect & Input the Password 
 - Enjoy :D
 
+### Dicas para o Termux
+
+Para que a instalação longa (rootfs, Node.js, Angular, .NET, CLIs de IA etc.) termine sem ser interrompida:
+
+- **Mantenha a tela ligada** durante o setup: o `install.sh` usa `termux-wake-lock`/`termux-wake-unlock` automaticamente quando o Termux:API está disponível.
+- **Desative a otimização de bateria** do Termux e do Termux:API nas configurações do Android; isso evita que o sistema mate o processo em instalações longas (Android 12+).
+- **Use Wi-Fi e carregador** — o download do rootfs e dos pacotes pode consumir bastante dados e bateria.
+- **Permissão de armazenamento**: o setup executa `termux-setup-storage` se necessário. Aceite a permissão quando o Android perguntar.
+- **Criação silenciosa de usuário** (opcional): evite o prompt interativo exportando as variáveis antes de rodar o `user.sh`:
+  ```bash
+  MODDED_USER=meuuser MODDED_PASS=minhasenha bash user.sh
+  ```
+- **Depois de instalar**, reinicie o Termux e use `ubuntu` para entrar no CLI, depois `sudo bash gui.sh` para o menu gráfico/ferramentas.
+
 ### Performance and Quality on Samsung S26 / High-DPI Devices
 
 For high-resolution phones like the Samsung Galaxy S26, the default VNC geometry may look small or blurry.

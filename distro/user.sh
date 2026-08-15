@@ -29,7 +29,7 @@ banner() {
 
 install_sudo() {
     log "Installing Sudo..."
-    echo -e "\n${R} [${W}-${R}]${C} Installing Sudo..."${W}
+    echo -e "\n${R} [${W}-${R}]${C} Installing Sudo...${W}"
     apt update -y || { log "Failed to update apt"; exit 1; }
     apt install sudo -y || { log "Failed to install sudo"; exit 1; }
     apt install wget apt-utils locales-all dialog tzdata -y || { log "Failed to install additional packages"; exit 1; }
@@ -37,35 +37,67 @@ install_sudo() {
     echo -e "\n${R} [${W}-${R}]${G} Sudo Successfully Installed!${W}"
 }
 
+read_credentials() {
+    if [ -n "${MODDED_USER:-}" ]; then
+        user="$MODDED_USER"
+        if ! [[ "$user" =~ ^[a-z]+$ ]]; then
+            echo -e "${R}MODDED_USER must be lowercase and contain no special characters.${W}" >&2
+            exit 1
+        fi
+    else
+        while true; do
+            read -p $' \e[1;31m[\e[0m\e[1;77m~\e[0m\e[1;31m]\e[0m\e[1;92m Input Username [Lowercase] : \e[0m\e[1;96m' user
+            if [[ "$user" =~ ^[a-z]+$ ]]; then
+                break
+            else
+                echo -e "${R}Username must be lowercase and contain no special characters.${W}"
+            fi
+        done
+    fi
+    echo -e "${W}"
+
+    if [ -n "${MODDED_PASS:-}" ]; then
+        pass="$MODDED_PASS"
+        if [ -z "$pass" ]; then
+            echo -e "${R}MODDED_PASS cannot be empty.${W}" >&2
+            exit 1
+        fi
+    else
+        while true; do
+            read -sp $' \e[1;31m[\e[0m\e[1;77m~\e[0m\e[1;31m]\e[0m\e[1;92m Input Password : \e[0m\e[1;96m' pass
+            if [ -n "$pass" ]; then
+                break
+            else
+                echo -e "${R}Password cannot be empty.${W}"
+            fi
+        done
+    fi
+    echo -e "${W}"
+}
+
 login() {
     banner
     log "Starting user login setup."
-    while true; do
-        read -p $' \e[1;31m[\e[0m\e[1;77m~\e[0m\e[1;31m]\e[0m\e[1;92m Input Username [Lowercase] : \e[0m\e[1;96m' user
-        if [[ "$user" =~ ^[a-z]+$ ]]; then
-            break
-        else
-            echo -e "${R}Username must be lowercase and contain no special characters.${W}"
-        fi
-    done
-    echo -e "${W}"
-    while true; do
-        read -sp $' \e[1;31m[\e[0m\e[1;77m~\e[0m\e[1;31m]\e[0m\e[1;92m Input Password : \e[0m\e[1;96m' pass
-        if [ -n "$pass" ]; then
-            break
-        else
-            echo -e "${R}Password cannot be empty.${W}"
-        fi
-    done
-    echo -e "${W}"
-    useradd -m -s "$(which bash)" "$user" || { log "Failed to add user"; exit 1; }
+    read_credentials
+
+    if id "$user" >/dev/null 2>&1; then
+        log "User '$user' already exists; skipping useradd."
+    else
+        useradd -m -s "$(command -v bash)" "$user" || { log "Failed to add user"; exit 1; }
+    fi
     usermod -aG sudo "$user" || { log "Failed to add user to sudo group"; exit 1; }
     echo "${user}:${pass}" | chpasswd || { log "Failed to set password"; exit 1; }
-    echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers || { log "Failed to update sudoers file"; exit 1; }
+
+    # Evita duplicar a linha no sudoers se o script for executado mais de uma vez.
+    if ! grep -q "^${user} ALL=(ALL:ALL) NOPASSWD:ALL" /etc/sudoers; then
+        echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers || { log "Failed to update sudoers file"; exit 1; }
+    fi
 
     # Create the ubuntu command for proot-distro
-    echo "proot-distro login --user $user --no-sysvipc ubuntu --bind /dev/null:/proc/sys/kernel/cap_last_last --shared-tmp --fix-low-ports" > /data/data/com.termux/files/usr/bin/ubuntu
-    chmod +x /data/data/com.termux/files/usr/bin/ubuntu || { log "Failed to set permissions for ubuntu command"; exit 1; }
+    local termux_prefix
+    termux_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
+    echo "proot-distro login --user $user --no-sysvipc ubuntu --bind /dev/null:/proc/sys/kernel/cap_last_last --shared-tmp --fix-low-ports" > "$termux_prefix/bin/ubuntu"
+    chmod +x "$termux_prefix/bin/ubuntu" || { log "Failed to set permissions for ubuntu command"; exit 1; }
 
     # Download and set up the GUI script
     if [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh' ]]; then

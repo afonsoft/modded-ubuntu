@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Script de instalação facilitado para o modded-ubuntu
 # Uso: curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/install.sh | bash
+#
+# No Termux, mantém a tela ligada durante a instalação e verifica espaço antes
+# de começar o download do rootfs.
 
 set -e
 
@@ -14,12 +17,54 @@ log() {
     printf '%s\n' "${msg}" >> "${LOG_FILE}"
 }
 
+# Mantém o dispositivo acordado durante instalações longas no Termux.
+WAKE_LOCKED=false
+acquire_wake_lock() {
+    if command -v termux-wake-lock >/dev/null 2>&1; then
+        termux-wake-lock
+        WAKE_LOCKED=true
+        log "[+] Tela mantida acesa (termux-wake-lock)"
+    fi
+}
+
+release_wake_lock() {
+    if [ "${WAKE_LOCKED}" = "true" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
+        termux-wake-unlock
+        log "[+] Tela liberada (termux-wake-unlock)"
+    fi
+}
+
+cleanup() {
+    release_wake_lock
+}
+trap cleanup EXIT
+
 REPO_URL="https://github.com/afonsoft/modded-ubuntu.git"
 INSTALL_DIR="${HOME}/modded-ubuntu"
+
+# Recomendação do README: pelo menos 5 GB livres.
+REQUIRED_KB=$((5 * 1024 * 1024))
+
+check_storage() {
+    local avail_kb
+    if command -v df >/dev/null 2>&1; then
+        avail_kb=$(df -P "$HOME" 2>/dev/null | awk 'NR==2 {print $4}')
+    fi
+
+    if [ -n "$avail_kb" ] && [ "$avail_kb" -lt "$REQUIRED_KB" ]; then
+        log "[!] Pouco espaço livre em $HOME: ${avail_kb} KB. É recomendado pelo menos 5 GB."
+        log "[!] Libere espaço ou use um cartão de memória antes de continuar."
+        exit 1
+    fi
+}
 
 log "[+] Iniciando instalador modded-ubuntu"
 log "[+] Log: ${LOG_FILE}"
 log "[+] Diretório de instalação: ${INSTALL_DIR}"
+
+acquire_wake_lock
+
+check_storage
 
 # Garante que o Termux esteja atualizado e com as dependências básicas.
 if command -v pkg >/dev/null 2>&1; then
