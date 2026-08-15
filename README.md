@@ -31,6 +31,11 @@
 - Node.js 20 / 22 / 24 via NVM (with `nvm` to switch versions)
 - Angular 20 CLI + VS Code: extensions
 - Full-Stack C# + Angular install option
+- AI Coding Assistants:
+  - **Claude Code CLI** (`claude`)
+  - **Antigravity CLI** (`agy`)
+  - **Devin CLI** (`devin`)
+  - **Devin Desktop** IDE (instalação via APT; sujeita à arquitetura do dispositivo)
 - Easy for Beginners
 - Comes with some cool themes.
 - Kali linux tools installer. (Metasploit included)
@@ -134,6 +139,11 @@ During `sudo bash gui.sh` you can install:
 - **Git + GitHub CLI (gh):** add Git and the official `gh` APT repository.
 - **Essential Dev Stack:** `build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`.
 - **.NET SDK 10.0 + C# tooling:** instala o SDK 10.0 (se o pacote Ubuntu não estiver disponível, usa `dotnet-install.sh` para baixar a versão 10.0), adiciona as ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator` em `/usr/local/bin`, e instala as extensões C# do VS Code quando o editor está presente. A verificação das ferramentas pode ser feita com `dotnet --version` e `dotnet tool list --tool-path /usr/local/bin`.
+- **AI Coding Assistants:**
+  - **Claude Code CLI:** instala o Node.js 22 via NVM e o pacote `@anthropic-ai/claude-code` globalmente (`claude`).
+  - **Antigravity CLI:** baixa e instala o binário nativo `agy` em `/usr/local/bin`.
+  - **Devin CLI:** instala o binário `devin` (dados em `~/.local/share/devin`) e cria symlink em `/usr/local/bin`.
+  - **Devin Desktop:** adiciona o repositório APT `windsurf-stable` e instala o pacote `devin-desktop`. Pode falhar em arquiteturas não suportadas pelo repositório.
 
 ### NOTE :
 

@@ -26,6 +26,16 @@ detect_user() {
 
 username=$(detect_user)
 
+user_home() {
+	local user="$1"
+	local home_dir=""
+	home_dir=$(getent passwd "$user" 2>/dev/null | cut -d: -f6)
+	if [ -z "$home_dir" ]; then
+		home_dir="$HOME"
+	fi
+	echo "$home_dir"
+}
+
 check_root(){
 	if [ "$(id -u)" -ne 0 ]; then
 		echo -ne " ${R}Run this program as root!\n\n"${W}
@@ -329,6 +339,90 @@ install_fullstack() {
 	echo -e "${C} Full-Stack C# + Angular finished\n${W}"
 }
 
+install_claude_code() {
+	if command -v claude >/dev/null 2>&1; then
+		echo -e "${Y}Claude Code CLI is already Installed!${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Claude Code CLI${W}"
+	install_node_nvm
+	hash -r 2>/dev/null || true
+	npm install -g --prefix /usr/local @anthropic-ai/claude-code
+	hash -r 2>/dev/null || true
+	if command -v claude >/dev/null 2>&1; then
+		echo -e "${C} Claude Code CLI Installed Successfully\n${W}"
+	else
+		echo -e "${Y} Claude Code CLI binary not found after install.\n${W}"
+	fi
+}
+
+install_antigravity() {
+	if command -v agy >/dev/null 2>&1; then
+		echo -e "${Y}Antigravity CLI is already Installed!${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Antigravity CLI${W}"
+	if ! command -v curl >/dev/null 2>&1; then
+		apt update -y
+		apt install -y curl
+	fi
+	curl -fsSL https://antigravity.google/cli/install.sh | bash -s -- --dir /usr/local/bin
+	hash -r 2>/dev/null || true
+	if [ -x /usr/local/bin/agy ]; then
+		echo -e "${C} Antigravity CLI Installed Successfully\n${W}"
+	else
+		echo -e "${Y} Antigravity CLI binary not found after install.\n${W}"
+	fi
+}
+
+install_devin_cli() {
+	if command -v devin >/dev/null 2>&1; then
+		echo -e "${Y}Devin CLI is already Installed!${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Devin CLI${W}"
+	local target_user
+	target_user=$(detect_user)
+	if [ -n "$target_user" ] && [ "$target_user" != "root" ]; then
+		sudo -u "$target_user" -H bash -c 'curl -fsSL https://cli.devin.ai/install.sh | bash'
+	else
+		curl -fsSL https://cli.devin.ai/install.sh | bash
+	fi
+	hash -r 2>/dev/null || true
+	local devin_local_bin
+	devin_local_bin="$(user_home "$target_user")/.local/bin/devin"
+	if [ -x "$devin_local_bin" ] && [ ! -e /usr/local/bin/devin ]; then
+		ln -sf "$devin_local_bin" /usr/local/bin/devin
+		hash -r 2>/dev/null || true
+	fi
+	if command -v devin >/dev/null 2>&1; then
+		echo -e "${C} Devin CLI Installed Successfully\n${W}"
+	else
+		echo -e "${Y} Devin CLI binary not found after install.\n${W}"
+	fi
+}
+
+install_devin_desktop() {
+	if command -v devin-desktop >/dev/null 2>&1; then
+		echo -e "${Y}Devin Desktop is already Installed!${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Devin Desktop${W}"
+	apt update -y
+	apt install -y wget gpg apt-transport-https
+	mkdir -p /etc/apt/keyrings
+	local deb_arch
+	deb_arch=$(dpkg --print-architecture)
+	wget -qO- "https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/windsurf.gpg" | gpg --dearmor > /etc/apt/keyrings/windsurf-stable.gpg
+	echo "deb [arch=${deb_arch} signed-by=/etc/apt/keyrings/windsurf-stable.gpg] https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt stable main" > /etc/apt/sources.list.d/windsurf.list
+	apt-get update -y
+	if apt-get install -y devin-desktop; then
+		echo -e "${C} Devin Desktop Installed Successfully\n${W}"
+	else
+		echo -e "${Y} Devin Desktop install failed (package may be unavailable for this architecture or repository unreachable).\n${W}"
+	fi
+}
+
 install_tools() {
 	banner
 	cat <<- EOF
@@ -392,6 +486,20 @@ install_tools() {
 
 	EOF
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" DEV_OPTION
+	banner
+
+	cat <<- EOF
+		${Y} ---${G} Select AI Coding Assistants ${Y}---
+
+		${C} [${W}1${C}] Claude Code CLI
+		${C} [${W}2${C}] Antigravity CLI (agy)
+		${C} [${W}3${C}] Devin CLI
+		${C} [${W}4${C}] Devin Desktop
+		${C} [${W}5${C}] All of the above
+		${C} [${W}6${C}] Skip! (Default)
+
+	EOF
+	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" AI_OPTION
 	banner
 
 	cat <<- EOF
@@ -467,6 +575,21 @@ install_tools() {
 			install_angular_tooling
 			;;
 		*) echo -e "${Y} [!] Skipping Development Tools Installation\n" ;;
+	esac
+
+	# Install AI Coding Assistants
+	case $AI_OPTION in
+		1) install_claude_code ;;
+		2) install_antigravity ;;
+		3) install_devin_cli ;;
+		4) install_devin_desktop ;;
+		5)
+			install_claude_code
+			install_antigravity
+			install_devin_cli
+			install_devin_desktop
+			;;
+		*) echo -e "${Y} [!] Skipping AI Assistants Installation\n" ;;
 	esac
 
 	# Install Additional Tools
