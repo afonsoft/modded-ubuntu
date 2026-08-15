@@ -82,6 +82,10 @@
 - Captura do diretório de binários do NVM em `distro/nodejs.sh` e `distro/angular.sh` agora suprime a saída de `nvm use default`, garantindo a criação correta dos symlinks em `/usr/local/bin`.
 - `distro/angular.sh` `ensure_nodejs()` não reinstala o Node.js quando ele já está disponível e o NVM está instalado.
 - `distro/gui.sh` `install_opencode()` detecta o binário `opencode`, `opencode2` ou `lildax` no diretório ativo do Node.js (via `readlink` do `node`) e cria o symlink `/usr/local/bin/opencode`.
+- Corrigida detecção de arquitetura em `distro/gui.sh` e `distro/nodejs.sh`:
+  - usa `dpkg --print-architecture` (com fallback para `uname -m`) para detectar a arquitetura de forma consistente dentro do PRoot;
+  - normaliza `aarch64`/`arm64` para `arm64` e `armhf`/`armv7l`/`armv6l` para `arm` (32-bit);
+  - evita que `arm64` seja confundido com `arm*` (32-bit) e fique sem VSCode/Sublime/Node 24.
 
 ## [2.0.0] - 2023-01-20
 

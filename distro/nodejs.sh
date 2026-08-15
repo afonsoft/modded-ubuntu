@@ -7,7 +7,13 @@ R="$(printf '\033[1;31m')"
 Y="$(printf '\033[1;33m')"
 C="$(printf '\033[1;36m')"
 W="$(printf '\033[1;37m')"
-arch=$(uname -m)
+# Usa dpkg --print-architecture quando disponível (mais confiável dentro do PRoot)
+# e cai para uname -m caso contrário.
+arch=$(dpkg --print-architecture 2>/dev/null || uname -m)
+case "$arch" in
+	arm64|aarch64) arch="arm64" ;;
+	armhf|armv7l|armv6l) arch="arm" ;;
+esac
 
 log()  { echo -e "${C}[nodejs]${W} $1"; }
 warn() { echo -e "${Y}[nodejs]${W} $1"; }
@@ -129,10 +135,10 @@ install_node_versions() {
 	# Evita compilação from-source: usa o flag -b para baixar apenas binários.
 	# Se o binário não existir para a arquitetura, a instalação falha rapidamente.
 	local node_versions=(20 22)
-	if [[ "$arch" != armv7l && "$arch" != armhf ]]; then
+	if [[ "$arch" != arm ]]; then
 		node_versions+=(24)
 	else
-		warn "Arquitetura $arch detectada. Pulando Node.js 24 (binários geralmente indisponíveis)."
+		warn "Arquitetura $arch detectada. Pulando Node.js 24 (binários geralmente indisponíveis para ARM 32-bit)."
 	fi
 
 	local timeout_prefix=()
