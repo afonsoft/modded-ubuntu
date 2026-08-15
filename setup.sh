@@ -36,6 +36,26 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
 }
 
+# Mantém o dispositivo acordado durante instalações longas no Termux.
+WAKE_LOCKED=false
+acquire_wake_lock() {
+    if command -v termux-wake-lock >/dev/null 2>&1; then
+        termux-wake-lock
+        WAKE_LOCKED=true
+    fi
+}
+
+release_wake_lock() {
+    if [ "${WAKE_LOCKED}" = "true" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
+        termux-wake-unlock
+    fi
+}
+
+cleanup_setup() {
+    release_wake_lock
+}
+trap cleanup_setup EXIT
+
 banner() {
     clear
     printf "\033[33m    _  _ ___  _  _ _  _ ___ _  _    _  _ ____ ___  \033[0m\n"
@@ -66,7 +86,7 @@ package() {
             exit 1
         fi
 
-        yes | pkg upgrade
+        pkg upgrade -y
         packs=(pulseaudio proot-distro)
         for x in "${packs[@]}"; do
             if ! pkg install -y "$x"; then
@@ -210,9 +230,14 @@ permission() {
         fi
     fi
 
-    echo "$(getprop persist.sys.timezone)" > "$UBUNTU_DIR/etc/timezone"
-    echo "proot-distro login --no-sysvipc ubuntu" > "$PREFIX/bin/ubuntu"
-    chmod +x "$PREFIX/bin/ubuntu"
+    local timezone termux_prefix
+    timezone=$(getprop persist.sys.timezone 2>/dev/null || true)
+    [ -z "$timezone" ] && timezone="${TZ:-UTC}"
+    echo "$timezone" > "$UBUNTU_DIR/etc/timezone"
+
+    termux_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
+    echo "proot-distro login --no-sysvipc ubuntu" > "$termux_prefix/bin/ubuntu"
+    chmod +x "$termux_prefix/bin/ubuntu"
     termux-reload-settings
 
     if [[ -e "$PREFIX/bin/ubuntu" ]]; then
@@ -231,6 +256,7 @@ permission() {
     fi
 }
 
+acquire_wake_lock
 package
 distro
 sound
