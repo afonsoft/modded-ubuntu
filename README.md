@@ -129,7 +129,7 @@ During `sudo bash gui.sh` you can install:
 - **OpenCode CLI:** install Node.js 22.x from NodeSource and `@opencode-ai/cli` globally.
 - **Git + GitHub CLI (gh):** add Git and the official `gh` APT repository.
 - **Essential Dev Stack:** `build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`.
-- **.NET SDK 10.0 + C# tooling:** instala o SDK 10.0 (com fallback para 9.0/8.0), adiciona as ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator`, e instala as extensões C# do VS Code quando o editor está presente. Usa os repositórios Ubuntu quando disponíveis e evita conflitos de pacotes Microsoft/Ubuntu.
+- **.NET SDK 10.0 + C# tooling:** instala o SDK 10.0 (se o pacote Ubuntu não estiver disponível, usa `dotnet-install.sh` para baixar a versão 10.0), adiciona as ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator` em `/usr/local/bin`, e instala as extensões C# do VS Code quando o editor está presente. A verificação das ferramentas pode ser feita com `dotnet --version` e `dotnet tool list --tool-path /usr/local/bin`.
 
 ### NOTE :
 
