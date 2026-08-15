@@ -47,7 +47,7 @@
 - `distro/csharp.sh` não tenta mais instalar `dotnet-sdk-8.0`/`dotnet-sdk-9.0` quando `dotnet-sdk-10.0` não está disponível, usando `dotnet-install.sh` como fallback para garantir a versão 10.0.
 - Captura do diretório de binários do NVM em `distro/nodejs.sh` e `distro/angular.sh` agora suprime a saída de `nvm use default`, garantindo a criação correta dos symlinks em `/usr/local/bin`.
 - `distro/angular.sh` `ensure_nodejs()` não reinstala o Node.js quando ele já está disponível e o NVM está instalado.
-- `distro/gui.sh` `install_opencode()` detecta tanto `opencode` quanto `lildax` e cria o symlink `/usr/local/bin/opencode`.
+- `distro/gui.sh` `install_opencode()` detecta o binário `opencode`, `opencode2` ou `lildax` no diretório ativo do Node.js (via `readlink` do `node`) e cria o symlink `/usr/local/bin/opencode`.
 
 ## [2.0.0] - 2023-01-20
 

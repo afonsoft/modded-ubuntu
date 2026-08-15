@@ -177,14 +177,29 @@ install_opencode() {
 	npm install -g @opencode-ai/cli
 	hash -r 2>/dev/null || true
 
-	# O binário pode se chamar opencode ou lildax dependendo da versão do pacote
-	local opencode_bin=""
-	opencode_bin=$(command -v opencode 2>/dev/null) || true
-	if [ -z "$opencode_bin" ]; then
-		opencode_bin=$(command -v lildax 2>/dev/null) || true
+	# O pacote pode expor o binário como opencode, lildax ou opencode2.
+	# Em shells non-login o diretório do nvm não está no PATH, então
+	# procuramos o binário no diretório ativo do Node.js.
+	local nvm_bin
+	nvm_bin=$(dirname "$(readlink -f "$(command -v node)" 2>/dev/null)" 2>/dev/null) || true
+	if [ -z "$nvm_bin" ] || [ ! -d "$nvm_bin" ]; then
+		nvm_bin=""
 	fi
+
+	local opencode_bin=""
+	for bin_name in opencode opencode2 lildax; do
+		if command -v "$bin_name" >/dev/null 2>&1; then
+			opencode_bin=$(command -v "$bin_name")
+			break
+		elif [ -n "$nvm_bin" ] && [ -x "$nvm_bin/$bin_name" ]; then
+			opencode_bin="$nvm_bin/$bin_name"
+			break
+		fi
+	done
+
 	if [ -n "$opencode_bin" ] && [ ! -e /usr/local/bin/opencode ]; then
 		ln -sf "$opencode_bin" /usr/local/bin/opencode 2>/dev/null || true
+		hash -r 2>/dev/null || true
 	fi
 
 	if command -v opencode >/dev/null 2>&1; then
