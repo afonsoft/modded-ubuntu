@@ -408,13 +408,17 @@ install_devin_desktop() {
 		return 0
 	fi
 	echo -e "${G}Installing ${Y}Devin Desktop${W}"
-	apt update -y
-	apt install -y wget gpg apt-transport-https
-	mkdir -p /etc/apt/keyrings
+	apt-get update -y
+	apt-get install -y wget gpg
+
 	local deb_arch
 	deb_arch=$(dpkg --print-architecture)
+	mkdir -p /etc/apt/keyrings
 	wget -qO- "https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/windsurf.gpg" | gpg --dearmor > /etc/apt/keyrings/windsurf-stable.gpg
+	chmod 644 /etc/apt/keyrings/windsurf-stable.gpg
 	echo "deb [arch=${deb_arch} signed-by=/etc/apt/keyrings/windsurf-stable.gpg] https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt stable main" > /etc/apt/sources.list.d/windsurf.list
+
+	apt-get install -y apt-transport-https
 	apt-get update -y
 	if apt-get install -y devin-desktop; then
 		echo -e "${C} Devin Desktop Installed Successfully\n${W}"
