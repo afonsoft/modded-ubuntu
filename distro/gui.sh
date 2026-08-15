@@ -169,11 +169,13 @@ install_vscode() {
 install_opencode() {
 	[[ $(command -v opencode) ]] && echo "${Y}OpenCode is already Installed!${W}" || {
 		echo -e "${G}Installing ${Y}Node.js and OpenCode CLI${W}"
-		apt update -y
-		apt install -y curl ca-certificates gnupg
-		curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-		apt install -y nodejs
+		install_node_nvm
 		npm install -g @opencode-ai/cli
+		local opencode_bin
+		opencode_bin=$(command -v opencode)
+		if [ -n "$opencode_bin" ] && [ ! -e /usr/local/bin/opencode ]; then
+			ln -sf "$opencode_bin" /usr/local/bin/opencode 2>/dev/null || true
+		fi
 		echo -e "${C} OpenCode Installed Successfully\n${W}"
 	}
 }
@@ -258,6 +260,46 @@ install_csharp_tools() {
 	echo -e "${C} .NET / C# Development Stack finished\n${W}"
 }
 
+install_node_nvm() {
+	echo -e "${G}Installing ${Y}Node.js 20/22/24 via NVM${W}"
+	if [ -f /usr/local/bin/node-setup ]; then
+		bash /usr/local/bin/node-setup
+	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh ]; then
+		bash /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh
+	else
+		local node_script
+		node_script=$(mktemp)
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/nodejs.sh -o "$node_script"
+		bash "$node_script"
+		rm -f "$node_script"
+	fi
+	echo -e "${C} Node.js / NVM finished\n${W}"
+}
+
+install_angular_tooling() {
+	echo -e "${G}Installing ${Y}Angular 20 + VS Code: extensions${W}"
+	if [ -f /usr/local/bin/angular-setup ]; then
+		bash /usr/local/bin/angular-setup
+	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/angular.sh ]; then
+		bash /data/data/com.termux/files/home/modded-ubuntu/distro/angular.sh
+	else
+		local angular_script
+		angular_script=$(mktemp)
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/angular.sh -o "$angular_script"
+		bash "$angular_script"
+		rm -f "$angular_script"
+	fi
+	echo -e "${C} Angular 20 tooling finished\n${W}"
+}
+
+install_fullstack() {
+	echo -e "${G}Installing ${Y}Full-Stack C# + Angular${W}"
+	install_csharp_tools
+	install_node_nvm
+	install_angular_tooling
+	echo -e "${C} Full-Stack C# + Angular finished\n${W}"
+}
+
 install_tools() {
 	banner
 	cat <<- EOF
@@ -313,8 +355,11 @@ install_tools() {
 		${C} [${W}1${C}] Git + GitHub CLI (gh)
 		${C} [${W}2${C}] Essential Dev Stack (build-essential, python3-pip, nodejs, npm, cmake)
 		${C} [${W}3${C}] .NET SDK 10.0 + C# tooling
-		${C} [${W}4${C}] All of the above
-		${C} [${W}5${C}] Skip! (Default)
+		${C} [${W}4${C}] Node.js 20/22/24 via NVM
+		${C} [${W}5${C}] Angular 20 + VS Code: extensions
+		${C} [${W}6${C}] Full-Stack C# + Angular
+		${C} [${W}7${C}] All of the above
+		${C} [${W}8${C}] Skip! (Default)
 
 	EOF
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" DEV_OPTION
@@ -382,10 +427,15 @@ install_tools() {
 		1) install_git_gh ;;
 		2) install_devtools ;;
 		3) install_csharp_tools ;;
-		4)
+		4) install_node_nvm ;;
+		5) install_angular_tooling ;;
+		6) install_fullstack ;;
+		7)
 			install_git_gh
 			install_devtools
 			install_csharp_tools
+			install_node_nvm
+			install_angular_tooling
 			;;
 		*) echo -e "${Y} [!] Skipping Development Tools Installation\n" ;;
 	esac

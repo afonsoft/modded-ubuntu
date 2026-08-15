@@ -24,7 +24,7 @@ jobs:
       - name: Check executable permissions on entrypoint scripts
         run: |
           set -e
-          for script in setup.sh remove.sh distro/user.sh distro/gui.sh distro/tools.sh distro/firefox.sh distro/csharp.sh; do
+          for script in setup.sh remove.sh distro/user.sh distro/gui.sh distro/tools.sh distro/firefox.sh distro/csharp.sh distro/nodejs.sh distro/angular.sh; do
             if [ ! -x "$script" ]; then
               echo "Warning: $script is not executable"; 
             fi
