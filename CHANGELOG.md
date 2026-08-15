@@ -9,7 +9,7 @@
   - Essential dev stack (`build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`)
   - .NET SDK 8.0 (amd64/arm64)
 - Novo script `distro/csharp.sh` para instalação da stack C# / .NET:
-  - .NET SDK 10.0 com fallback para 9.0 / 8.0 e, se necessário, o script `dotnet-install.sh`;
+  - .NET SDK 10.0 via repositórios Ubuntu ou, como fallback, `dotnet-install.sh`;
   - ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator` em `/usr/local/bin`;
   - extensões C# do VS Code (`ms-dotnettools.csharp`, `ms-dotnettools.csdevkit`, `ms-dotnettools.vscode-dotnet-runtime`) para o usuário não-root;
   - dependências nativas (`libicu-dev`, `libssl3`, `libgdiplus`, etc.) e compatibilidade com Ubuntu 26.04+ sem conflitos de repositórios.
@@ -32,6 +32,7 @@
 - Missing IDE installation logic in `distro/gui.sh`; IDE selection now triggers `install_sublime`, `install_vscode` or `install_opencode`.
 - ShellCheck warnings in `distro/gui.sh`, `distro/tools.sh` and `remove.sh`.
 - VNC startup crash (`error: expected absolute path: "--shm-helper"`) by launching `proot-distro` with `--no-sysvipc` and passing `-extension MIT-SHM` to `vncserver`.
+- `distro/csharp.sh` não tenta mais instalar `dotnet-sdk-8.0`/`dotnet-sdk-9.0` quando `dotnet-sdk-10.0` não está disponível, usando `dotnet-install.sh` como fallback para garantir a versão 10.0.
 
 ## [2.0.0] - 2023-01-20
 

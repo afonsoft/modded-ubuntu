@@ -37,18 +37,16 @@ install_dotnet_sdk() {
 	log "Instalando .NET SDK..."
 
 	local sdk_installed=false
-	for pkg in dotnet-sdk-10.0 dotnet-sdk-9.0 dotnet-sdk-8.0; do
-		if apt-cache show "$pkg" >/dev/null 2>&1; then
-			log "Pacote $pkg encontrado. Instalando..."
-			if apt-get install -yq "$pkg"; then
-				sdk_installed=true
-				break
-			fi
+	local pkg="dotnet-sdk-10.0"
+	if apt-cache show "$pkg" >/dev/null 2>&1; then
+		log "Pacote $pkg encontrado. Instalando..."
+		if apt-get install -yq "$pkg"; then
+			sdk_installed=true
 		fi
-	done
+	fi
 
 	if [ "$sdk_installed" != true ]; then
-		warn ".NET SDK não encontrado nos repositórios. Usando dotnet-install.sh como fallback..."
+		warn ".NET SDK 10.0 não encontrado nos repositórios. Usando dotnet-install.sh como fallback..."
 		curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
 		chmod +x /tmp/dotnet-install.sh
 		/tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
@@ -76,6 +74,9 @@ install_dotnet_global_tools() {
 
 	# Scaffolding ASP.NET Core
 	dotnet tool install --tool-path /usr/local/bin dotnet-aspnet-codegenerator || warn "Não foi possível instalar dotnet-aspnet-codegenerator"
+
+	log "Ferramentas globais instaladas:"
+	dotnet tool list --tool-path /usr/local/bin
 }
 
 install_vscode_csharp_extensions() {
