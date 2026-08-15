@@ -699,9 +699,9 @@ config() {
 cleanup() {
 	echo -e "${C} [*] Limpando arquivos temporários e caches finais...${W}"
 
-	# Limpa cache de pacotes e dependências órfãs
-	apt-get clean 2>/dev/null || true
+	# Limpa dependências órfãs e depois o cache de pacotes
 	apt-get autoremove -y 2>/dev/null || true
+	apt-get clean 2>/dev/null || true
 
 	# Limpa cache do npm/pip quando disponíveis
 	if command -v npm >/dev/null 2>&1; then

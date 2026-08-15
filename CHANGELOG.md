@@ -4,6 +4,7 @@
 
 ### Added
 - `install.sh` one-liner installer: download and run `curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/install.sh | bash` to clone the repo and execute `setup.sh` automatically. Runs `pkg update` and installs `git`, `curl`, `wget`, `proot-distro` and `pulseaudio` at the start; writes logs to `~/modded-ubuntu-install.log`; and backs up an existing `~/modded-ubuntu` directory instead of prompting.
+- `update.sh` (Termux) e `distro/update-system.sh` (dentro do Ubuntu) para atualizar instalações existentes: atualizam pacotes via `apt`, reforçam locale `en_US.UTF-8` e timezone `America/Sao_Paulo` e limpam caches/temporários sem reinstalar o rootfs.
 - Development tools menu in `distro/gui.sh`:
   - Git + GitHub CLI (`gh`)
   - Essential dev stack (`build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`)
@@ -42,6 +43,9 @@
 - `setup.sh` define o locale padrão como `en_US.UTF-8` e fallback de timezone para `America/Sao_Paulo` no rootfs, quando ainda não configurados.
 - `distro/user.sh` permite criação não interativa de usuário via variáveis `MODDED_USER`/`MODDED_PASS` e evita duplicar a entrada no `/etc/sudoers`.
 - `distro/user.sh` configura locale `en_US.UTF-8` e timezone `America/Sao_Paulo` como padrões do sistema, incluindo `/etc/default/locale`, `/etc/localtime`, `/etc/timezone` e `.bashrc`.
+- `distro/user.sh` limpa dependências órfãs com `apt-get autoremove -y --purge` antes de `apt-get clean` e chama `clear` no final do cleanup.
+- `distro/nodejs.sh`, `distro/angular.sh` e `distro/csharp.sh` também executam `apt-get autoremove -y --purge` antes de `apt-get clean` no final da instalação.
+- `setup.sh` não sobrescreve o comando `ubuntu` em `$PREFIX/bin/ubuntu` se ele já existir (preserva o wrapper criado por `user.sh` durante atualizações).
 - `install_vscode()` skips 32-bit ARM and uses `dpkg --print-architecture` for the APT repository.
 - `install_opencode()` agora usa `install_node_nvm()` (Node.js via NVM) antes de instalar o `@opencode-ai/cli`.
 - `install_sublime()` skips 32-bit ARM.

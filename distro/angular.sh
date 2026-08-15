@@ -149,6 +149,7 @@ install_vscode_angular_extensions() {
 cleanup() {
 	log "Limpando caches e arquivos temporários do Angular..."
 	rm -f /tmp/angular-script-* 2>/dev/null || true
+	apt-get autoremove -y --purge 2>/dev/null || true
 	apt-get clean 2>/dev/null || true
 	if command -v npm >/dev/null 2>&1; then
 		npm cache clean --force 2>/dev/null || true
