@@ -27,6 +27,11 @@
   - Node.js 20/22/24 via NVM;
   - Angular 20 + extensões VS Code:;
   - Full-Stack C# + Angular (instala a stack C# e em seguida Node.js/NVM + Angular).
+- Novo menu "AI Coding Assistants" em `distro/gui.sh` com as opções:
+  - **Claude Code CLI** (`@anthropic-ai/claude-code` via npm global);
+  - **Antigravity CLI** (`agy` via script oficial `--dir /usr/local/bin`);
+  - **Devin CLI** (`devin` via `cli.devin.ai/install.sh` + symlink em `/usr/local/bin`);
+  - **Devin Desktop** (`devin-desktop` via repositório APT `windsurf-stable`).
 - `setup.sh` e `distro/user.sh` também copiam `distro/nodejs.sh` e `distro/angular.sh` para `/usr/local/bin/node-setup` e `/usr/local/bin/angular-setup`.
 - `distro/vncstop` now uses `${HOME}` instead of a hardcoded `/username/` path.
 
