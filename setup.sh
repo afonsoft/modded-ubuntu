@@ -239,6 +239,11 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/angular-setup"
     fi
 
+    if [[ -e "$CURR_DIR/distro/update-system.sh" ]]; then
+        cp -f "$CURR_DIR/distro/update-system.sh" "$UBUNTU_DIR/usr/local/bin/update-system"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/update-system"
+    fi
+
     # Optional Termux performance tweaks for Samsung S26 / high-end devices
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         mkdir -p "$HOME/.termux"
@@ -259,7 +264,9 @@ permission() {
     fi
 
     termux_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
-    echo "proot-distro login --no-sysvipc ubuntu" > "$termux_prefix/bin/ubuntu"
+    if [ ! -f "$termux_prefix/bin/ubuntu" ]; then
+        echo "proot-distro login --no-sysvipc ubuntu" > "$termux_prefix/bin/ubuntu"
+    fi
     chmod +x "$termux_prefix/bin/ubuntu"
     termux-reload-settings
 

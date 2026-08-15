@@ -111,6 +111,7 @@ install_vscode_csharp_extensions() {
 cleanup() {
 	log "Limpando caches e arquivos temporários do .NET..."
 	rm -f /tmp/dotnet-install.sh /tmp/csharp-script-* 2>/dev/null || true
+	apt-get autoremove -y --purge 2>/dev/null || true
 	apt-get clean 2>/dev/null || true
 	if command -v dotnet >/dev/null 2>&1; then
 		dotnet nuget locals all --clear 2>/dev/null || true
