@@ -8,6 +8,13 @@
   - Git + GitHub CLI (`gh`)
   - Essential dev stack (`build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`)
   - .NET SDK 8.0 (amd64/arm64)
+- Novo script `distro/csharp.sh` para instalação da stack C# / .NET:
+  - .NET SDK 10.0 com fallback para 9.0 / 8.0 e, se necessário, o script `dotnet-install.sh`;
+  - ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator` em `/usr/local/bin`;
+  - extensões C# do VS Code (`ms-dotnettools.csharp`, `ms-dotnettools.csdevkit`, `ms-dotnettools.vscode-dotnet-runtime`) para o usuário não-root;
+  - dependências nativas (`libicu-dev`, `libssl3`, `libgdiplus`, etc.) e compatibilidade com Ubuntu 26.04+ sem conflitos de repositórios.
+- `distro/gui.sh` exibe `.NET SDK 10.0 + C# tooling` no menu de ferramentas de desenvolvimento e chama `install_csharp_tools()`.
+- `setup.sh` e `distro/user.sh` copiam `distro/csharp.sh` para `/usr/local/bin/csharp-setup` durante a instalação.
 - `detect_user()` helper to locate the correct non-root user inside `gui.sh`.
 - `distro/vncstop` now uses `${HOME}` instead of a hardcoded `/username/` path.
 
