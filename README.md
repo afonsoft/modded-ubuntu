@@ -26,7 +26,11 @@
 - Sublime Text Editor (only for arm64/aarch64)
 - OpenCode CLI
 - Git + GitHub CLI (gh)
-- Essential Development Tools (build-essential, python3-pip, nodejs, npm, cmake, .NET SDK 10.0 + C# tooling)
+- Essential Development Tools (build-essential, python3-pip, nodejs, npm, cmake)
+- .NET SDK 10.0 + C# tooling
+- Node.js 20 / 22 / 24 via NVM (with `nvm` to switch versions)
+- Angular 20 CLI + VS Code: extensions
+- Full-Stack C# + Angular install option
 - Easy for Beginners
 - Comes with some cool themes.
 - Kali linux tools installer. (Metasploit included)

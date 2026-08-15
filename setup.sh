@@ -192,6 +192,16 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/csharp-setup"
     fi
 
+    if [[ -e "$CURR_DIR/distro/nodejs.sh" ]]; then
+        cp -f "$CURR_DIR/distro/nodejs.sh" "$UBUNTU_DIR/usr/local/bin/node-setup"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/node-setup"
+    fi
+
+    if [[ -e "$CURR_DIR/distro/angular.sh" ]]; then
+        cp -f "$CURR_DIR/distro/angular.sh" "$UBUNTU_DIR/usr/local/bin/angular-setup"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/angular-setup"
+    fi
+
     # Optional Termux performance tweaks for Samsung S26 / high-end devices
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         mkdir -p "$HOME/.termux"

@@ -15,12 +15,24 @@
   - dependências nativas (`libicu-dev`, `libssl3`, `libgdiplus`, etc.) e compatibilidade com Ubuntu 26.04+ sem conflitos de repositórios.
 - `distro/gui.sh` exibe `.NET SDK 10.0 + C# tooling` no menu de ferramentas de desenvolvimento e chama `install_csharp_tools()`.
 - `setup.sh` e `distro/user.sh` copiam `distro/csharp.sh` para `/usr/local/bin/csharp-setup` durante a instalação.
-- `detect_user()` helper to locate the correct non-root user inside `gui.sh`.
+- Novo script `distro/nodejs.sh` para instalação do Node.js via NVM (versões 20, 22 e 24, com 22 como padrão).
+  - Instala o NVM `v0.40.0` para o usuário não-root;
+  - Cria symlinks de `node`, `npm`, `npx` e `corepack` em `/usr/local/bin` para uso imediato;
+  - Persiste a ativação da versão padrão no `.bashrc` do usuário.
+- Novo script `distro/angular.sh` para instalação do Angular 20:
+  - Instala o Angular CLI (`@angular/cli@20` com fallback para a versão mais recente);
+  - Instala extensões do VS Code: para Angular (`Angular.ng-template`, `johnpapa.Angular2`, ESLint, Prettier, EditorConfig, Path Intellisense, Auto Rename Tag, Material Icon Theme);
+  - Garante Node.js/NVM antes de instalar o Angular.
+- `distro/gui.sh` ganha as opções de instalação:
+  - Node.js 20/22/24 via NVM;
+  - Angular 20 + extensões VS Code:;
+  - Full-Stack C# + Angular (instala a stack C# e em seguida Node.js/NVM + Angular).
+- `setup.sh` e `distro/user.sh` também copiam `distro/nodejs.sh` e `distro/angular.sh` para `/usr/local/bin/node-setup` e `/usr/local/bin/angular-setup`.
 - `distro/vncstop` now uses `${HOME}` instead of a hardcoded `/username/` path.
 
 ### Changed
 - `install_vscode()` skips 32-bit ARM and uses `dpkg --print-architecture` for the APT repository.
-- `install_opencode()` installs Node.js 22.x from NodeSource and `@opencode-ai/cli`.
+- `install_opencode()` agora usa `install_node_nvm()` (Node.js via NVM) antes de instalar o `@opencode-ai/cli`.
 - `install_sublime()` skips 32-bit ARM.
 - `sound_fix()` is now idempotent and no longer duplicates `export` entries in `/etc/profile`.
 - `downloader()` in `setup.sh` and `gui.sh` no longer uses `--insecure`.
