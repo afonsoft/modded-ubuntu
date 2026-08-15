@@ -146,10 +146,23 @@ install_vscode_angular_extensions() {
 	done
 }
 
+cleanup() {
+	log "Limpando caches e arquivos temporários do Angular..."
+	rm -f /tmp/angular-script-* 2>/dev/null || true
+	apt-get clean 2>/dev/null || true
+	if command -v npm >/dev/null 2>&1; then
+		npm cache clean --force 2>/dev/null || true
+	fi
+	if command -v pip >/dev/null 2>&1; then
+		pip cache purge 2>/dev/null || true
+	fi
+}
+
 main() {
 	ensure_nodejs
 	install_angular_cli
 	install_vscode_angular_extensions
+	cleanup
 	log "Stack Angular 20 configurado."
 }
 

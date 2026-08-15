@@ -696,6 +696,36 @@ config() {
 	yes | apt autoremove
 }
 
+cleanup() {
+	echo -e "${C} [*] Limpando arquivos temporários e caches finais...${W}"
+
+	# Limpa cache de pacotes e dependências órfãs
+	apt-get clean 2>/dev/null || true
+	apt-get autoremove -y 2>/dev/null || true
+
+	# Limpa cache do npm/pip quando disponíveis
+	if command -v npm >/dev/null 2>&1; then
+		npm cache clean --force 2>/dev/null || true
+	fi
+	if command -v pip >/dev/null 2>&1; then
+		pip cache purge 2>/dev/null || true
+	fi
+
+	# Remove scripts/tarballs temporários conhecidos
+	rm -f /tmp/nvm-install.sh \
+		/tmp/dotnet-install.sh \
+		/tmp/install_ghost.sh \
+		/tmp/tools.sh \
+		/tmp/node_script \
+		/tmp/angular_script \
+		/tmp/csharp_script 2>/dev/null || true
+
+	# Limpa logs antigos de instalação (mantém os mais recentes)
+	find /var/log -type f -name "*.log.*" -mtime +7 -delete 2>/dev/null || true
+
+	echo -e "${G} [*] Limpeza concluída.${W}"
+}
+
 # ----------------------------
 
 check_root
@@ -703,3 +733,4 @@ package
 install_tools
 config
 note
+cleanup

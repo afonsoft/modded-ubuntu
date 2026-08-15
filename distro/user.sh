@@ -116,11 +116,22 @@ login() {
     chmod +x /usr/local/bin/vncstart-fhd /usr/local/bin/vncstart-qhd /usr/local/bin/s26-optimize /usr/local/bin/csharp-setup /usr/local/bin/node-setup /usr/local/bin/angular-setup 2>/dev/null || true
 
     log "User login setup completed for user: $user"
+    cleanup
     clear
     echo
     echo -e "\n${R} [${W}-${R}]${G} Restart your Termux & Type ${C}ubuntu${W}"
     echo -e "\n${R} [${W}-${R}]${G} Skip to graphical Interface with ${C}sudo bash gui.sh${W}"
     echo
+}
+
+cleanup() {
+    log "Limpando caches do sistema..."
+    apt-get clean 2>/dev/null || true
+    if command -v pip >/dev/null 2>&1; then
+        pip cache purge 2>/dev/null || true
+    fi
+    # Remove logs antigos deste script
+    find "${PREFIX:-/data/data/com.termux/files/usr}/tmp" -name "user-script.log.*" -mtime +7 -delete 2>/dev/null || true
 }
 
 # Main script execution

@@ -36,7 +36,19 @@ release_wake_lock() {
     fi
 }
 
+cleanup_install() {
+    # Limpa caches do Termux e arquivos temporários sem remover o clone do repo
+    if command -v pkg >/dev/null 2>&1; then
+        pkg clean 2>/dev/null || true
+    fi
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get clean 2>/dev/null || true
+    fi
+    rm -f /tmp/modded-ubuntu-*.sh 2>/dev/null || true
+}
+
 cleanup() {
+    cleanup_install
     release_wake_lock
 }
 trap cleanup EXIT

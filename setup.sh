@@ -51,7 +51,24 @@ release_wake_lock() {
     fi
 }
 
+cleanup_install() {
+    # Limpa cache de downloads do Termux/proot-distro quando aplicável
+    if command -v pkg >/dev/null 2>&1; then
+        pkg clean 2>/dev/null || true
+    fi
+    if command -v apt-get >/dev/null 2>&1; then
+        apt-get clean 2>/dev/null || true
+    fi
+    local proot_cache
+    proot_cache="${PREFIX:-/data/data/com.termux/files/usr}/var/lib/proot-distro/dlcache"
+    if [ -d "$proot_cache" ]; then
+        rm -rf "${proot_cache:?}"/* 2>/dev/null || true
+    fi
+    rm -f "$CURR_DIR/vncstart" "$CURR_DIR/vncstop" "$CURR_DIR/user.sh" 2>/dev/null || true
+}
+
 cleanup_setup() {
+    cleanup_install
     release_wake_lock
 }
 trap cleanup_setup EXIT
