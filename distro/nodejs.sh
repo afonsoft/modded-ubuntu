@@ -83,7 +83,7 @@ persist_nvm_default() {
 			echo ''
 			echo '# Ativar a versão padrão do Node.js gerenciada pelo nvm'
 			echo 'export NVM_DIR="$HOME/.nvm"'
-			echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use default'
+			echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && nvm use default >/dev/null 2>&1'
 		} >> "$home_dir/.bashrc"
 	fi
 }
@@ -102,7 +102,7 @@ install_node_versions() {
 
 	log "Instalando Node.js 20, 22 e 24 (se disponível) via NVM..."
 
-	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\" && nvm use default"
+	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\" && nvm use default >/dev/null 2>&1"
 
 	# Tenta instalar cada versão, ignorando falhas individuais
 	for version in 20 22 24; do
@@ -130,7 +130,7 @@ symlink_nvm_binaries() {
 	local nvm_dir="$home_dir/.nvm"
 
 	# Ativa a versão padrão para descobrir o caminho dos binários
-	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\" && nvm use default"
+	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\" && nvm use default >/dev/null 2>&1"
 	local node_bin
 	node_bin=$(sudo -u "$target_user" -H bash -c "$nvm_env; dirname \"\$(command -v node)\"")
 

@@ -167,17 +167,31 @@ install_vscode() {
 }
 
 install_opencode() {
-	[[ $(command -v opencode) ]] && echo "${Y}OpenCode is already Installed!${W}" || {
-		echo -e "${G}Installing ${Y}Node.js and OpenCode CLI${W}"
-		install_node_nvm
-		npm install -g @opencode-ai/cli
-		local opencode_bin
-		opencode_bin=$(command -v opencode)
-		if [ -n "$opencode_bin" ] && [ ! -e /usr/local/bin/opencode ]; then
-			ln -sf "$opencode_bin" /usr/local/bin/opencode 2>/dev/null || true
-		fi
+	if command -v opencode >/dev/null 2>&1; then
+		echo "${Y}OpenCode is already Installed!${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Node.js and OpenCode CLI${W}"
+	install_node_nvm
+	hash -r 2>/dev/null || true
+	npm install -g @opencode-ai/cli
+	hash -r 2>/dev/null || true
+
+	# O binário pode se chamar opencode ou lildax dependendo da versão do pacote
+	local opencode_bin=""
+	opencode_bin=$(command -v opencode 2>/dev/null) || true
+	if [ -z "$opencode_bin" ]; then
+		opencode_bin=$(command -v lildax 2>/dev/null) || true
+	fi
+	if [ -n "$opencode_bin" ] && [ ! -e /usr/local/bin/opencode ]; then
+		ln -sf "$opencode_bin" /usr/local/bin/opencode 2>/dev/null || true
+	fi
+
+	if command -v opencode >/dev/null 2>&1; then
 		echo -e "${C} OpenCode Installed Successfully\n${W}"
-	}
+	else
+		echo -e "${Y} OpenCode CLI binary not found after install. Binary detected: ${opencode_bin:-none}\n${W}"
+	fi
 }
 
 install_sublime() {
