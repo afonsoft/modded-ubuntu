@@ -144,23 +144,33 @@ distro() {
 
 sound() {
     echo -e "\n${R} [${W}-${R}]${C} Fixing Sound Problem...${W}"
-    [ ! -e "$HOME/.sound" ] && touch "$HOME/.sound"
-    
-    if ! grep -q "pacmd load-module module-aaudio-sink" "$HOME/.sound"; then
-        echo "pacmd load-module module-aaudio-sink" >> "$HOME/.sound"
-    fi
 
-    if ! grep -q "pacmd load-module module-aaudio-source" "$HOME/.sound"; then
-        echo "pacmd load-module module-aaudio-source" >> "$HOME/.sound"
-    fi
+    cat > "$HOME/.sound" <<'EOF'
+#!/usr/bin/env bash
+# Sound fix for modded-ubuntu
+if command -v pulseaudio >/dev/null 2>&1; then
+    pulseaudio --start --exit-idle-time=-1 >/dev/null 2>&1
+    # Aguarda o daemon do PulseAudio iniciar
+    for _ in {1..20}; do
+        pulseaudio --check 2>/dev/null && break
+        sleep 0.25
+    done
+fi
 
-    if ! grep -q "pulseaudio --start --exit-idle-time=-1" "$HOME/.sound"; then
-        echo "pulseaudio --start --exit-idle-time=-1" >> "$HOME/.sound"
-    fi
+module_loaded() {
+    command -v pactl >/dev/null 2>&1 && pactl list modules short 2>/dev/null | grep -q "$1"
+}
 
-    if ! grep -q "pacmd load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" "$HOME/.sound"; then
-        echo "pacmd load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" >> "$HOME/.sound"
-    fi
+if ! module_loaded "module-aaudio-sink"; then
+    pacmd load-module module-aaudio-sink >/dev/null 2>&1 || true
+fi
+if ! module_loaded "module-aaudio-source"; then
+    pacmd load-module module-aaudio-source >/dev/null 2>&1 || true
+fi
+if ! module_loaded "module-native-protocol-tcp"; then
+    pacmd load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1 >/dev/null 2>&1 || true
+fi
+EOF
 }
 
 downloader() {
