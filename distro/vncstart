@@ -1,9 +1,82 @@
 #!/usr/bin/env bash
-# Inicia o servidor VNC no display :1, removendo sessões e locks antigos.
-geometry="${VNC_GEOMETRY:-1440x720}"
+# Inicia o servidor VNC no display :1.
+# Se nao houver senha definida, cria uma padrao (ou solicita em TTY).
 
-# Garante que a porta 5901 esteja livre antes de iniciar.
+set -euo pipefail
+
+geometry="${VNC_GEOMETRY:-1440x720}"
+passwd_file="${HOME}/.vnc/passwd"
+default_pass="modded"
+
+# Localiza os comandos corretos do TigerVNC (variam entre versoes/distros).
+_vncserver_cmd=""
+for cmd in vncserver tigervncserver; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        _vncserver_cmd="$cmd"
+        break
+    fi
+done
+
+_vncpasswd_cmd=""
+for cmd in vncpasswd tigervncpasswd; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        _vncpasswd_cmd="$cmd"
+        break
+    fi
+done
+
+if [[ -z "$_vncserver_cmd" ]]; then
+    echo "Erro: vncserver/tigervncserver nao encontrado." >&2
+    exit 1
+fi
+
+if [[ -z "$_vncpasswd_cmd" ]]; then
+    echo "Erro: vncpasswd/tigervncpasswd nao encontrado." >&2
+    exit 1
+fi
+
+mkdir -p "${HOME}/.vnc"
+
+if [[ ! -f "$passwd_file" ]]; then
+    if [[ -t 0 ]]; then
+        # TTY disponivel: pergunta a senha de forma segura.
+        read -r -s -p "Defina a senha do VNC (minimo 6 caracteres): " vnc_pass
+        echo
+        read -r -s -p "Confirme a senha: " vnc_pass2
+        echo
+        if [[ "${#vnc_pass}" -lt 6 ]]; then
+            echo "Erro: a senha deve ter pelo menos 6 caracteres." >&2
+            exit 1
+        fi
+        if [[ "$vnc_pass" != "$vnc_pass2" ]]; then
+            echo "Erro: as senhas nao conferem." >&2
+            exit 1
+        fi
+        printf '%s\n%s\n' "$vnc_pass" "$vnc_pass2" | "$_vncpasswd_cmd" "$passwd_file" >/dev/null 2>&1 || {
+            echo "Erro: nao foi possivel criar o arquivo de senha." >&2
+            exit 1
+        }
+    else
+        # Sem TTY (ex: execucao automatica via .bashrc): senha padrao.
+        printf '%s' "$default_pass" | "$_vncpasswd_cmd" -f > "$passwd_file"
+        chmod 600 "$passwd_file"
+        echo "Senha VNC padrao definida: $default_pass"
+        echo "Altere-a quando quiser com: vncpasswd"
+    fi
+fi
+
+# Garante que nenhuma sessao antiga ocupe a porta/display :1.
 vncstop 2>/dev/null || true
 
-# Usa sempre :1 para manter o cliente VNC padrão funcionando.
-exec dbus-launch vncserver :1 -geometry "$geometry" -depth 24 -zliblevel 0 -extension MIT-SHM -name modded-ubuntu -xstartup /usr/bin/xfce4-session
+# Inicia o servidor VNC.
+echo "Iniciando VNC em localhost:1 (geometria: $geometry)..."
+dbus-launch "$_vncserver_cmd" :1 \
+    -geometry "$geometry" \
+    -depth 24 \
+    -zliblevel 0 \
+    -extension MIT-SHM \
+    -name modded-ubuntu \
+    -xstartup /usr/bin/xfce4-session
+
+sleep 1
+"$_vncserver_cmd" -list

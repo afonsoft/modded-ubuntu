@@ -1,12 +1,22 @@
 #!/usr/bin/env bash
 # Stop all TigerVNC/Xvnc sessions and remove every stale lock/socket file.
 
-if command -v vncserver >/dev/null 2>&1; then
+set -euo pipefail
+
+_vncserver_cmd=""
+for cmd in vncserver tigervncserver; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        _vncserver_cmd="$cmd"
+        break
+    fi
+done
+
+if [[ -n "$_vncserver_cmd" ]]; then
     for pidfile in "${HOME}"/.vnc/*:*.pid; do
         [ -f "$pidfile" ] || continue
         display="${pidfile##*:}"
         display=":${display%.pid}"
-        vncserver -kill "$display" >/dev/null 2>&1 || true
+        "$_vncserver_cmd" -kill "$display" >/dev/null 2>&1 || true
     done
 fi
 
