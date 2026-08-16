@@ -165,10 +165,30 @@ Esse erro ocorre no Android 12+ (comum em aparelhos Samsung) quando o sistema An
   bash fix-signal9.sh --check
   ```
 
-- **Android 14+:**
-  - Acesse **Configurações → Opções do desenvolvedor** e ative **Desativar restrições de processos filhos** (Disable child process restrictions).
+- **Android 14, 15, 16 e 17 / Samsung Galaxy S24, S25, S26 (One UI 6+):**
+  - Ative as **Opções do desenvolvedor**: Configurações → Sobre o telefone → Informações do software → toque 7 vezes em **Número de compilação**.
+  - Acesse **Configurações → Opções do desenvolvedor** e ative **Desativar restrições de processos filhos** (ou **Disable child process restrictions**).
+  - No mesmo menu, desative **Suspender execução de apps em cache** (ou **Suspend execution for cached apps**).
+  - Vá em **Configurações → Aplicativos → Termux → Bateria** e defina como **Irrestrita** (ou **Unrestricted**).
   - Reinicie o aparelho.
-  - Go to **Settings → Developer Options** and enable **Disable child process restrictions**, then reboot.
+
+  > **Enable Developer Options:** Settings → About phone → Software information → tap **Build number** 7 times. Then go to **Settings → Developer Options** and enable **Disable child process restrictions** and disable **Suspend execution for cached apps**. Go to **Settings → Apps → Termux → Battery** and set it to **Unrestricted**, then reboot.
+
+  - **Se não quiser usar a interface / If you prefer ADB:**
+
+  ```bash
+  adb shell "settings put global settings_enable_monitor_phantom_procs false"
+  adb shell "/system/bin/device_config set_sync_disabled_for_tests persistent"
+  adb shell "/system/bin/device_config put activity_manager_native_boot use_freezer false"
+  adb shell "/system/bin/device_config put activity_manager max_phantom_processes 2147483647"
+  ```
+
+  - Reinicie o aparelho / Reboot the phone.
+
+  - **Nota sobre Samsung One UI 8.x (Android 16) / Note on Samsung One UI 8.x (Android 16):**
+    Em alguns aparelhos da linha Galaxy S com One UI 8.x, o Termux em segundo plano pode não usar os núcleos grandes (big cores) mesmo com a bateria em Irrestrito. Isso é uma limitação do escalonamento de CPU da Samsung e está sendo discutido no issue termux/termux-app#5086 — não há uma correção pelo lado do usuário atualmente.
+
+    > On some Galaxy S devices with One UI 8.x, Termux in the background may not use the big cores even with battery set to Unrestricted. This is a Samsung CPU scheduling limitation discussed in termux/termux-app#5086 — there is no user-side fix currently.
 
 - **Android 12, 12L e 13 (sem root / non-root):**
   - Ative a **Depuração USB** (USB debugging) nas Opções do desenvolvedor.
@@ -202,8 +222,9 @@ Esse erro ocorre no Android 12+ (comum em aparelhos Samsung) quando o sistema An
 - **Mantenha a tela ligada** durante tarefas pesadas e não deixe o Termux rodar por longos períodos com a tela desligada.
 - **Reduza tarefas em segundo plano** (compilações multi-thread, serviços etc.) se o aparelho não estiver rooteado e não puder desabilitar o phantom killer.
 - **Use `termux-wake-lock`** para impedir que o Android durma o Termux durante instalações longas.
+- **Em Samsung Galaxy S**, confirme que a bateria do Termux está **Irrestrita** e que **Suspender execução de apps em cache** está desativado nas Opções do desenvolvedor.
 
-> **Keep the screen on** during heavy tasks and avoid leaving Termux running for long periods with the screen locked. **Reduce background tasks** (multi-threaded builds, services, etc.) if the device is unrooted and cannot disable the phantom killer. **Use `termux-wake-lock`** to prevent Android from sleeping Termux during long installs.
+> **Keep the screen on** during heavy tasks and avoid leaving Termux running for long periods with the screen locked. **Reduce background tasks** (multi-threaded builds, services, etc.) if the device is unrooted and cannot disable the phantom killer. **Use `termux-wake-lock`** to prevent Android from sleeping Termux during long installs. **On Samsung Galaxy S**, make sure Termux battery is set to **Unrestricted** and **Suspend execution for cached apps** is disabled in Developer Options.
 
 > **Atenção / Warning:** essas alterações podem ser revertidas por uma atualização do sistema. Reaplique os comandos se o erro voltar. / These changes may be reverted by a system update. Reapply the commands if the error returns.
 
