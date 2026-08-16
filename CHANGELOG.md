@@ -93,6 +93,12 @@
   - extrai o tarball em `$NVM_DIR/versions/node/<versão>` mantendo a estrutura esperada pelo NVM;
   - adiciona `xz-utils` como dependência e usa `tar -xJf` para descompactar `.tar.xz`;
   - define Node 22 como padrão via `nvm alias default <versão completa>`.
+- Node.js agora é instalado diretamente (sem NVM) em `distro/nodejs.sh`:
+  - remove qualquer instalação anterior do NVM (`~/.nvm`) e suas referências no `.bashrc`;
+  - instala o Node.js LTS mais recente a partir do tarball oficial em `/usr/local/lib/nodejs`;
+  - cria symlinks em `/usr/local/bin` para `node`, `npm`, `npx` e `corepack`;
+  - adiciona `/usr/local/lib/nodejs/bin` ao PATH via `/etc/profile.d/nodejs.sh` e `.bashrc`;
+  - `distro/angular.sh` e `distro/gui.sh` foram ajustados para usar `npm` global sem depender do NVM.
 
 ## [2.0.0] - 2023-01-20
 

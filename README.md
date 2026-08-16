@@ -43,7 +43,7 @@ O **modded-ubuntu** é um ambiente Ubuntu personalizado e otimizado para rodar e
   - `build-essential`, `python3-pip`, `python3-venv`
   - `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`
 - .NET SDK 10.0 + ferramentas C# / .NET SDK 10.0 + C# tooling
-- Node.js 20 / 22 / 24 via NVM (`nvm` para alternar versões) / Node.js 20 / 22 / 24 via NVM (`nvm` to switch versions)
+- Node.js LTS instalado diretamente (sem NVM) / Node.js LTS installed directly (no NVM)
 - Angular 20 CLI + extensões do VS Code: / Angular 20 CLI + VS Code: extensions
 - Instalação full-stack C# + Angular / Full-Stack C# + Angular install option
 - Assistentes de IA para código / AI coding assistants:
@@ -175,12 +175,12 @@ Dicas para melhor latência e qualidade no S26: / Tips for best quality and lowe
 Durante `sudo bash gui.sh` você pode instalar:
 
 - **Visual Studio Code:** via repositório Microsoft APT (pulado em ARM 32-bit).
-- **OpenCode CLI:** Node.js 22.x do NodeSource e `@opencode-ai/cli` global.
+- **OpenCode CLI:** Node.js LTS e `@opencode-ai/cli` global.
 - **Git + GitHub CLI (`gh`):** adiciona Git e o repositório oficial `gh`.
 - **Essential Dev Stack:** `build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`.
 - **.NET SDK 10.0 + C# tooling:** instala o SDK 10.0 (se o pacote Ubuntu não estiver disponível, usa `dotnet-install.sh` como fallback), adiciona as ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator` em `/usr/local/bin`, e instala as extensões C# do VS Code: quando o editor está presente. Verifique com `dotnet --version` e `dotnet tool list --tool-path /usr/local/bin`.
 - **AI Coding Assistants:**
-  - **Claude Code CLI:** instala o Node.js 22 via NVM e o pacote `@anthropic-ai/claude-code` globalmente (`claude`).
+  - **Claude Code CLI:** instala o pacote `@anthropic-ai/claude-code` globalmente (`claude`).
   - **Antigravity CLI:** baixa e instala o binário nativo `agy` em `/usr/local/bin`.
   - **Devin CLI:** instala o binário `devin` (dados em `~/.local/share/devin`) e cria symlink em `/usr/local/bin`.
   - **Devin Desktop:** adiciona o repositório APT `windsurf-stable` e instala o pacote `devin-desktop`. Pode falhar em arquiteturas não suportadas pelo repositório.

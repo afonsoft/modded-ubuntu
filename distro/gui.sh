@@ -188,18 +188,17 @@ install_opencode() {
 		return 0
 	fi
 	echo -e "${G}Installing ${Y}Node.js and OpenCode CLI${W}"
-	install_node_nvm
+	install_node
 	hash -r 2>/dev/null || true
 	npm install -g @opencode-ai/cli
 	hash -r 2>/dev/null || true
 
 	# O pacote pode expor o binário como opencode, lildax ou opencode2.
-	# Em shells non-login o diretório do nvm não está no PATH, então
-	# procuramos o binário no diretório ativo do Node.js.
-	local nvm_bin
-	nvm_bin=$(dirname "$(readlink -f "$(command -v node)" 2>/dev/null)" 2>/dev/null) || true
-	if [ -z "$nvm_bin" ] || [ ! -d "$nvm_bin" ]; then
-		nvm_bin=""
+	# Procuramos o binário no diretório ativo do Node.js.
+	local node_bin
+	node_bin=$(dirname "$(readlink -f "$(command -v node)" 2>/dev/null)" 2>/dev/null) || true
+	if [ -z "$node_bin" ] || [ ! -d "$node_bin" ]; then
+		node_bin=""
 	fi
 
 	local opencode_bin=""
@@ -207,8 +206,8 @@ install_opencode() {
 		if command -v "$bin_name" >/dev/null 2>&1; then
 			opencode_bin=$(command -v "$bin_name")
 			break
-		elif [ -n "$nvm_bin" ] && [ -x "$nvm_bin/$bin_name" ]; then
-			opencode_bin="$nvm_bin/$bin_name"
+		elif [ -n "$node_bin" ] && [ -x "$node_bin/$bin_name" ]; then
+			opencode_bin="$node_bin/$bin_name"
 			break
 		fi
 	done
@@ -305,8 +304,8 @@ install_csharp_tools() {
 	echo -e "${C} .NET / C# Development Stack finished\n${W}"
 }
 
-install_node_nvm() {
-	echo -e "${G}Installing ${Y}Node.js 20/22/24 via NVM${W}"
+install_node() {
+	echo -e "${G}Installing ${Y}Node.js LTS (direct)${W}"
 	if [ -f /usr/local/bin/node-setup ]; then
 		bash /usr/local/bin/node-setup
 	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh ]; then
@@ -318,7 +317,7 @@ install_node_nvm() {
 		bash "$node_script"
 		rm -f "$node_script"
 	fi
-	echo -e "${C} Node.js / NVM finished\n${W}"
+	echo -e "${C} Node.js LTS (direct) finished\n${W}"
 }
 
 install_angular_tooling() {
@@ -340,7 +339,7 @@ install_angular_tooling() {
 install_fullstack() {
 	echo -e "${G}Installing ${Y}Full-Stack C# + Angular${W}"
 	install_csharp_tools
-	install_node_nvm
+	install_node
 	install_angular_tooling
 	echo -e "${C} Full-Stack C# + Angular finished\n${W}"
 }
@@ -351,7 +350,7 @@ install_claude_code() {
 		return 0
 	fi
 	echo -e "${G}Installing ${Y}Claude Code CLI${W}"
-	install_node_nvm
+	install_node
 	hash -r 2>/dev/null || true
 	npm install -g --prefix /usr/local @anthropic-ai/claude-code
 	hash -r 2>/dev/null || true
@@ -488,7 +487,7 @@ install_tools() {
 		${C} [${W}1${C}] Git + GitHub CLI (gh)
 		${C} [${W}2${C}] Essential Dev Stack (build-essential, python3-pip, nodejs, npm, cmake)
 		${C} [${W}3${C}] .NET SDK 10.0 + C# tooling
-		${C} [${W}4${C}] Node.js 20/22/24 via NVM
+		${C} [${W}4${C}] Node.js LTS (direct)
 		${C} [${W}5${C}] Angular 20 + VS Code: extensions
 		${C} [${W}6${C}] Full-Stack C# + Angular
 		${C} [${W}7${C}] All of the above
@@ -574,14 +573,14 @@ install_tools() {
 		1) install_git_gh ;;
 		2) install_devtools ;;
 		3) install_csharp_tools ;;
-		4) install_node_nvm ;;
+		4) install_node ;;
 		5) install_angular_tooling ;;
 		6) install_fullstack ;;
 		7)
 			install_git_gh
 			install_devtools
 			install_csharp_tools
-			install_node_nvm
+			install_node
 			install_angular_tooling
 			;;
 		*) echo -e "${Y} [!] Skipping Development Tools Installation\n" ;;
