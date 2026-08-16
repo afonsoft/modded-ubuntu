@@ -38,40 +38,18 @@ user_home() {
 	echo "$home_dir"
 }
 
-nvm_env_string() {
-	local user="$1"
-	local home_dir
-	home_dir=$(user_home "$user")
-	echo "export NVM_DIR=\"$home_dir/.nvm\"; [ -s \"$home_dir/.nvm/nvm.sh\" ] && \\. \"$home_dir/.nvm/nvm.sh\" && nvm use default >/dev/null 2>&1"
-}
-
-run_with_nvm() {
-	local target_user
-	target_user=$(detect_user)
-	local nvm_env
-	nvm_env=$(nvm_env_string "$target_user")
-
-	if [ -s "$(user_home "$target_user")/.nvm/nvm.sh" ]; then
-		sudo -u "$target_user" -H bash -c "$nvm_env; $*"
-	else
-		bash -c "$*"
-	fi
+run_with_node() {
+	bash -c "$*"
 }
 
 ensure_nodejs() {
-	local target_user
-	target_user=$(detect_user)
-	local home_dir
-	home_dir=$(user_home "$target_user")
-	local nvm_dir="$home_dir/.nvm"
-
-	# Se node e npm existem e o nvm está disponível, não reinstala
-	if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 && [ -s "$nvm_dir/nvm.sh" ]; then
-		log "Node.js e npm já estão disponíveis gerenciados pelo nvm."
+	# Se node e npm existem, não reinstala
+	if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+		log "Node.js e npm já estão disponíveis."
 		return 0
 	fi
 
-	warn "Node.js gerenciado pelo nvm não encontrado. Instalando..."
+	warn "Node.js não encontrado. Instalando..."
 	if [ -f /usr/local/bin/node-setup ]; then
 		bash /usr/local/bin/node-setup
 	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh ]; then
@@ -89,20 +67,20 @@ install_angular_cli() {
 	log "Instalando Angular CLI..."
 
 	# Tenta a versão 20; se falhar (ainda não publicada), usa a última disponível
-	if run_with_nvm "npm install -g @angular/cli@20"; then
+	if npm install -g @angular/cli@20; then
 		log "Angular CLI v20 instalado."
 	else
 		warn "Não foi possível instalar @angular/cli@20; usando a última versão."
-		run_with_nvm "npm install -g @angular/cli" || warn "Não foi possível instalar o Angular CLI"
+		npm install -g @angular/cli || warn "Não foi possível instalar o Angular CLI"
 	fi
 
 	# Garante que o comando ng esteja no PATH global
-	local target_user
-	target_user=$(detect_user)
 	local ng_path
-	ng_path=$(run_with_nvm "command -v ng" 2>/dev/null) || true
+	ng_path=$(command -v ng 2>/dev/null) || true
 	if [ -x "$ng_path" ] && [ ! -e /usr/local/bin/ng ]; then
 		ln -sf "$ng_path" /usr/local/bin/ng 2>/dev/null || true
+	elif [ -x /usr/local/lib/nodejs/bin/ng ] && [ ! -e /usr/local/bin/ng ]; then
+		ln -sf /usr/local/lib/nodejs/bin/ng /usr/local/bin/ng 2>/dev/null || true
 	fi
 
 	if command -v ng >/dev/null 2>&1; then
