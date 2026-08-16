@@ -134,19 +134,28 @@ login() {
     chmod +x "$termux_prefix/bin/ubuntu" || { log "Failed to set permissions for ubuntu command"; exit 1; }
 
     # Download and set up the GUI script
-    if [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh' ]]; then
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh "/home/$user/gui.sh"
+    if [[ -e '/usr/local/bin/gui.sh' ]]; then
+        # Prefere a versão já instalada pelo setup.sh (atualizada pelo update.sh)
+        cp -f /usr/local/bin/gui.sh "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/vncstart-fhd /usr/local/bin/vncstart-fhd 2>/dev/null || true
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/vncstart-qhd /usr/local/bin/vncstart-qhd 2>/dev/null || true
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/s26-optimize.sh /usr/local/bin/s26-optimize 2>/dev/null || true
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/csharp.sh /usr/local/bin/csharp-setup 2>/dev/null || true
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh /usr/local/bin/node-setup 2>/dev/null || true
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/angular.sh /usr/local/bin/angular-setup 2>/dev/null || true
-        cp /data/data/com.termux/files/home/modded-ubuntu/distro/update-system.sh /usr/local/bin/update-system 2>/dev/null || true
+    elif [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh' ]]; then
+        cp -f /data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh "/home/$user/gui.sh"
+        chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
     else
         wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/gui.sh" -O "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
+    fi
+
+    # Copia/atualiza os helpers no /usr/local/bin (preferindo a versão local do repo, se existir)
+    local repo_dir='/data/data/com.termux/files/home/modded-ubuntu/distro'
+    if [[ -d "$repo_dir" ]]; then
+        cp -f "$repo_dir/vncstart-fhd" /usr/local/bin/vncstart-fhd 2>/dev/null || true
+        cp -f "$repo_dir/vncstart-qhd" /usr/local/bin/vncstart-qhd 2>/dev/null || true
+        cp -f "$repo_dir/s26-optimize.sh" /usr/local/bin/s26-optimize 2>/dev/null || true
+        cp -f "$repo_dir/csharp.sh" /usr/local/bin/csharp-setup 2>/dev/null || true
+        cp -f "$repo_dir/nodejs.sh" /usr/local/bin/node-setup 2>/dev/null || true
+        cp -f "$repo_dir/angular.sh" /usr/local/bin/angular-setup 2>/dev/null || true
+        cp -f "$repo_dir/update-system.sh" /usr/local/bin/update-system 2>/dev/null || true
     fi
     chmod +x /usr/local/bin/vncstart-fhd /usr/local/bin/vncstart-qhd /usr/local/bin/s26-optimize /usr/local/bin/csharp-setup /usr/local/bin/node-setup /usr/local/bin/angular-setup /usr/local/bin/update-system 2>/dev/null || true
 

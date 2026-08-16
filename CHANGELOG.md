@@ -99,6 +99,10 @@
   - cria symlinks em `/usr/local/bin` para `node`, `npm`, `npx` e `corepack`;
   - adiciona `/usr/local/lib/nodejs/bin` ao PATH via `/etc/profile.d/nodejs.sh` e `.bashrc`;
   - `distro/angular.sh` e `distro/gui.sh` foram ajustados para usar `npm` global sem depender do NVM.
+- `setup.sh` agora instala `distro/gui.sh` em `/usr/local/bin/gui.sh` dentro do rootfs.
+- `distro/user.sh` copia `gui.sh` e os scripts helpers preferindo a versão atualizada em `/usr/local/bin/`, caindo para o repo local ou download remoto.
+- `distro/update-system.sh` sincroniza `/usr/local/bin/gui.sh` para o diretório home de todos os usuários regulares durante a atualização.
+- `update.sh` continua fazendo `git pull`, executando `setup.sh` (que atualiza `/usr/local/bin/gui.sh`) e rodando `update-system` dentro do proot.
 
 ## [2.0.0] - 2023-01-20
 
