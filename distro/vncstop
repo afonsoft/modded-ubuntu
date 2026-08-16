@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
-vncserver -kill :*
-rm -rf "${HOME}/.vnc/localhost:*.pid"
-rm -rf /tmp/.X1-lock
-rm -rf /tmp/.X11-unix/X1
+# Stop all TigerVNC/Xvnc sessions and remove every stale lock/socket file.
+
+if command -v vncserver >/dev/null 2>&1; then
+    for pidfile in "${HOME}"/.vnc/*:*.pid; do
+        [ -f "$pidfile" ] || continue
+        display="${pidfile##*:}"
+        display=":${display%.pid}"
+        vncserver -kill "$display" >/dev/null 2>&1 || true
+    done
+fi
+
+pkill -f "Xtigervnc" >/dev/null 2>&1 || true
+pkill -f "Xvnc" >/dev/null 2>&1 || true
+
+rm -rf "${HOME}"/.vnc/*.pid "${HOME}"/.vnc/*.log
+rm -rf /tmp/.X*-lock /tmp/.X11-unix/X*
