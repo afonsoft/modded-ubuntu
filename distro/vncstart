@@ -69,8 +69,11 @@ fi
 vncstop 2>/dev/null || true
 
 # Inicia o servidor VNC.
+# O xfce4-session inicia seu proprio dbus-launch quando necessario;
+# executar o vncserver diretamente evita que o dbus-launch externo trave
+# em alguns ambientes PRoot.
 echo "Iniciando VNC em localhost:1 (geometria: $geometry)..."
-dbus-launch "$_vncserver_cmd" :1 \
+"$_vncserver_cmd" :1 \
     -geometry "$geometry" \
     -depth 24 \
     -zliblevel 0 \
