@@ -5,7 +5,13 @@ G="$(printf '\033[1;32m')"
 Y="$(printf '\033[1;33m')"
 W="$(printf '\033[1;37m')"
 C="$(printf '\033[1;36m')"
-arch=$(uname -m)
+# Usa dpkg --print-architecture quando disponível (mais confiável dentro do PRoot)
+# e cai para uname -m caso contrário.
+arch=$(dpkg --print-architecture 2>/dev/null || uname -m)
+case "$arch" in
+	arm64|aarch64) arch="arm64" ;;
+	armhf|armv7l|armv6l) arch="arm" ;;
+esac
 
 # Detect the target non-root user even when running under sudo.
 detect_user() {
@@ -157,7 +163,7 @@ install_apt() {
 }
 
 install_vscode() {
-	if [[ "$arch" == arm* ]]; then
+	if [[ "$arch" == arm ]]; then
 		echo -e "${Y} [!] VSCode is not supported on 32-bit ARM (armhf/armv7) in this setup. Skipping.${W}"
 		return 0
 	fi
@@ -220,7 +226,7 @@ install_opencode() {
 }
 
 install_sublime() {
-	if [[ "$arch" == arm* ]]; then
+	if [[ "$arch" == arm ]]; then
 		echo -e "${Y} [!] Sublime Text is only available for arm64/aarch64 and x64 in this setup. Skipping.${W}"
 		return 0
 	fi
@@ -440,7 +446,7 @@ install_tools() {
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" BROWSER_OPTION
 	banner
 
-	if [[ "$arch" != arm* ]]; then
+	if [[ "$arch" != arm ]]; then
 		cat <<- EOF
 			${Y} ---${G} Select IDE & Code Editor ${Y}---
 
@@ -532,7 +538,7 @@ install_tools() {
 	fi
 
 	# Install IDEs
-	if [[ "$arch" != arm* ]]; then
+	if [[ "$arch" != arm ]]; then
 		case $IDE_OPTION in
 			1) install_sublime ;;
 			2) install_vscode ;;

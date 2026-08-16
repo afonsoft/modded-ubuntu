@@ -35,8 +35,8 @@ O **modded-ubuntu** é um ambiente Ubuntu personalizado e otimizado para rodar e
 - 2 navegadores (Chromium e Mozilla Firefox) / 2 browsers (Chromium & Mozilla Firefox)
 - Suporte a fontes e acentuação em português / Portuguese font and accent support
 - VLC Media Player e MPV / VLC Media Player and MPV media player
-- Visual Studio Code (com ressalvas em `armhf`/`armv7`) / Visual Studio Code (buggy on armhf/armv7)
-- Sublime Text Editor (apenas `arm64`/`aarch64`) / Sublime Text Editor (only for arm64/aarch64)
+- Visual Studio Code (`arm64`/`aarch64` e x64; pulado em `armhf`/`armv7` 32-bit) / Visual Studio Code (arm64/aarch64 and x64; skipped on 32-bit armhf/armv7)
+- Sublime Text Editor (`arm64`/`aarch64` e x64; pulado em `armhf`/`armv7` 32-bit) / Sublime Text Editor (arm64/aarch64 and x64; skipped on 32-bit armhf/armv7)
 - OpenCode CLI
 - Git + GitHub CLI (`gh`)
 - Ferramentas essenciais de desenvolvimento / Essential development tools:
