@@ -67,6 +67,8 @@ fi
 # Detecta versão do Android / Detect Android version
 ANDROID_VERSION="$(getprop ro.build.version.release 2>/dev/null || echo "0")"
 ANDROID_SDK="$(getprop ro.build.version.sdk 2>/dev/null || echo "0")"
+DEVICE_BRAND="$(getprop ro.product.brand 2>/dev/null || echo "unknown")"
+ONE_UI_VERSION="$(getprop ro.build.version.oneui 2>/dev/null || echo "0")"
 
 # Verifica root / Check for root
 IS_ROOTED=false
@@ -113,6 +115,12 @@ if [ "${MODE}" = "check" ]; then
     if command -v device_config >/dev/null 2>&1; then
         CURRENT_MAX="$(device_config get activity_manager max_phantom_processes 2>/dev/null || echo "desconhecido/unknown")"
         log "activity_manager/max_phantom_processes = ${CURRENT_MAX}"
+        CURRENT_FREEZER="$(device_config get activity_manager_native_boot use_freezer 2>/dev/null || echo "desconhecido/unknown")"
+        log "activity_manager_native_boot/use_freezer = ${CURRENT_FREEZER}"
+    fi
+
+    if [ "$DEVICE_BRAND" = "samsung" ] && [ "$ONE_UI_VERSION" != "0" ]; then
+        log "Samsung One UI detectado: ${ONE_UI_VERSION}"
     fi
 
     echo ""
@@ -128,25 +136,27 @@ if [ "$IS_ROOTED" = false ]; then
     echo ""
     echo -e "${Y}Siga uma das opções abaixo / Follow one of the options below:${NC}"
     echo ""
-    echo -e "${C}1) Android 14+ (sem PC / no PC):${NC}"
-    echo "   Acesse Configurações → Opções do desenvolvedor"
-    echo "   Go to Settings → Developer Options"
-    echo "   Ative 'Desativar restrições de processos filhos'"
-    echo "   Enable 'Disable child process restrictions'"
+    echo -e "${C}1) Android 14, 15, 16, 17 / Samsung Galaxy S (sem PC / no PC):${NC}"
+    echo "   Acesse Configurações → Sobre o telefone → Informações do software"
+    echo "   Go to Settings → About phone → Software information"
+    echo "   Toque 7 vezes em 'Número de compilação' / Tap 'Build number' 7 times"
+    echo "   Configurações → Opções do desenvolvedor / Settings → Developer Options"
+    echo "   Ative 'Desativar restrições de processos filhos' / Enable 'Disable child process restrictions'"
+    echo "   Desative 'Suspender execução de apps em cache' / Disable 'Suspend execution for cached apps'"
+    echo "   Configurações → Aplicativos → Termux → Bateria → Irrestrita"
+    echo "   Settings → Apps → Termux → Battery → Unrestricted"
     echo "   Reinicie o aparelho / Reboot the device"
     echo ""
-    echo -e "${C}2) Android 12, 12L ou 13 (com PC / with PC):${NC}"
+    echo -e "${C}2) Via ADB (com PC / with PC):${NC}"
     echo "   Instale o Android Platform Tools no PC"
     echo "   Install Android Platform Tools on your PC"
     echo "   Ative a Depuração USB e conecte o celular"
     echo "   Enable USB debugging and connect the phone"
     echo ""
-    if [ "$ANDROID_SDK" -ge 32 ]; then
-        echo "   adb shell \"settings put global settings_enable_monitor_phantom_procs false\""
-    else
-        echo "   adb shell \"/system/bin/device_config set_sync_disabled_for_tests persistent\""
-        echo "   adb shell \"/system/bin/device_config put activity_manager max_phantom_processes 2147483647\""
-    fi
+    echo "   adb shell \"settings put global settings_enable_monitor_phantom_procs false\""
+    echo "   adb shell \"/system/bin/device_config set_sync_disabled_for_tests persistent\""
+    echo "   adb shell \"/system/bin/device_config put activity_manager_native_boot use_freezer false\""
+    echo "   adb shell \"/system/bin/device_config put activity_manager max_phantom_processes 2147483647\""
     echo ""
     echo "   Reinicie o aparelho / Reboot the device"
     echo ""
@@ -158,22 +168,37 @@ echo -e "${C}Aplicando correção com root... / Applying fix with root...${NC}"
 echo ""
 
 if [ "$ANDROID_SDK" -ge 34 ]; then
-    log "Android 14+ detectado. Desabilitando monitor de processos fantasmas..."
-    log "Android 14+ detected. Disabling phantom process monitor..."
+    log "Android 14+ detectado. Desabilitando monitor e freezer de apps em cache..."
+    log "Android 14+ detected. Disabling phantom monitor and cached apps freezer..."
+
     if su -c "settings put global settings_enable_monitor_phantom_procs false"; then
-        success "Configuração aplicada com sucesso. / Setting applied successfully."
+        success "Monitor de processos fantasmas desabilitado. / Phantom process monitor disabled."
     else
         error "Falha ao aplicar settings_enable_monitor_phantom_procs. / Failed to apply settings_enable_monitor_phantom_procs."
         exit 1
     fi
+
+    if su -c "/system/bin/device_config put activity_manager_native_boot use_freezer false"; then
+        success "Freezer de apps em cache desabilitado. / Cached apps freezer disabled."
+    else
+        error "Falha ao desabilitar cached apps freezer. / Failed to disable cached apps freezer."
+        exit 1
+    fi
 elif [ "$ANDROID_SDK" -ge 31 ]; then
-    log "Android 12/12L/13 detectado. Desabilitando monitor e aumentando limite..."
-    log "Android 12/12L/13 detected. Disabling monitor and raising limit..."
+    log "Android 12/12L/13 detectado. Desabilitando monitor, freezer e aumentando limite..."
+    log "Android 12/12L/13 detected. Disabling monitor, freezer and raising limit..."
 
     if su -c "/system/bin/device_config set_sync_disabled_for_tests persistent"; then
         success "Sincronização de device_config desabilitada. / device_config sync disabled."
     else
         error "Falha ao desabilitar sincronização de device_config. / Failed to disable device_config sync."
+        exit 1
+    fi
+
+    if su -c "/system/bin/device_config put activity_manager_native_boot use_freezer false"; then
+        success "Freezer de apps em cache desabilitado. / Cached apps freezer disabled."
+    else
+        error "Falha ao desabilitar cached apps freezer. / Failed to disable cached apps freezer."
         exit 1
     fi
 
@@ -186,6 +211,12 @@ elif [ "$ANDROID_SDK" -ge 31 ]; then
 else
     warning "Android anterior ao 12 detectado. O erro signal 9 não costuma ocorrer nessa versão. / Android version older than 12 detected. The signal 9 error usually does not occur on this version."
     exit 0
+fi
+
+if [ "$DEVICE_BRAND" = "samsung" ] && [ "$ONE_UI_VERSION" != "0" ]; then
+    echo ""
+    log "Samsung One UI ${ONE_UI_VERSION} detectado. / Samsung One UI ${ONE_UI_VERSION} detected."
+    warning "Em One UI 8.x (Android 16), o Termux em segundo plano pode não usar os núcleos grandes mesmo com bateria Irrestrita. Isso é uma limitação da Samsung. / On One UI 8.x (Android 16), Termux in the background may not use big cores even with battery set to Unrestricted. This is a Samsung limitation."
 fi
 
 echo ""
