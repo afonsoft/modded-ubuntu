@@ -7,6 +7,14 @@ Y="$(printf '\033[1;33m')"
 C="$(printf '\033[1;36m')"
 W="$(printf '\033[1;37m')"
 
+export DEBIAN_FRONTEND=noninteractive
+
+# Evita que pacotes tentem iniciar serviços dentro do PRoot
+if [ ! -f /usr/sbin/policy-rc.d ]; then
+	printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+	chmod 755 /usr/sbin/policy-rc.d
+fi
+
 log()  { echo -e "${C}[csharp]${W} $1"; }
 warn() { echo -e "${Y}[csharp]${W} $1"; }
 err()  { echo -e "${R}[csharp]${W} $1"; }
