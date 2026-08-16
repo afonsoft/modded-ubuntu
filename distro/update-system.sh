@@ -68,6 +68,36 @@ update_apt() {
     apt-get dist-upgrade -yq 2>/dev/null || true
 }
 
+update_vnc_scripts() {
+    log "Atualizando scripts VNC..."
+    echo -e "${C} [*] Atualizando scripts VNC...${W}"
+
+    if ! command -v curl >/dev/null 2>&1; then
+        warn "curl não encontrado. Pulando atualização dos scripts VNC."
+        return 0
+    fi
+
+    local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
+    local scripts=("vncstart" "vncstop" "vncstart-fhd" "vncstart-qhd")
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+
+    local script
+    for script in "${scripts[@]}"; do
+        local tmp_file="${tmp_dir}/${script}"
+        local dest="/usr/local/bin/${script}"
+        if curl --fail --retry 3 --retry-delay 2 --location --output "$tmp_file" "${base_url}/${script}" >/dev/null 2>&1; then
+            cp -f "$tmp_file" "$dest"
+            chmod +x "$dest"
+            log "${script} atualizado em ${dest}"
+        else
+            warn "Falha ao baixar ${script}. Versão atual mantida."
+        fi
+    done
+
+    rm -rf "$tmp_dir"
+}
+
 update_gui_scripts() {
     log "Atualizando gui.sh nos diretórios dos usuários..."
     echo -e "${C} [*] Atualizando gui.sh...${W}"
@@ -111,6 +141,7 @@ main() {
 
     update_apt
     configure_locale_timezone
+    update_vnc_scripts
     update_gui_scripts
     cleanup
 
