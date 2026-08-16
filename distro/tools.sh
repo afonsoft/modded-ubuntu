@@ -15,9 +15,12 @@ NC='\033[0m' # No Color
 
 # Non-interactive mode
 AUTO_YES=false
+MINIMAL=true
 for arg in "$@"; do
   case "$arg" in
     -y|--yes) AUTO_YES=true ;;
+    -f|--full) MINIMAL=false ;;
+    -m|--minimal) MINIMAL=true ;;
   esac
 done
 
@@ -35,6 +38,13 @@ ask_yn() {
 }
 
 export DEBIAN_FRONTEND=noninteractive
+
+# Flags do apt-get variam conforme o modo minimal/full
+if [ "$MINIMAL" = true ]; then
+  APT_GET_FLAGS=(-yq --no-install-recommends)
+else
+  APT_GET_FLAGS=(-yq)
+fi
 
 # Error Handling
 handle_error() {
@@ -146,7 +156,7 @@ install_package() {
   echo -n "[+] Installing $package..."
   case $PACKAGE_MANAGER in
     apt)
-      if apt-get install -yq "$package"; then
+      if apt-get install "${APT_GET_FLAGS[@]}" "$package"; then
         echo -e "${GREEN} Done.${NC}"
       else
         echo -e "${RED} Failed.${NC}"
@@ -180,6 +190,28 @@ install_package() {
   esac
 }
 
+set_tool_lists() {
+  if [ "$MINIMAL" = true ]; then
+    ESSENTIAL_PACKAGES="build-essential python3-pip git curl wget"
+    NETWORK_TOOLS="nmap netcat-traditional tcpdump"
+    WEB_TOOLS="gobuster ffuf nikto"
+    INFO_TOOLS="dnsrecon dnsenum subfinder"
+    PASSWORD_TOOLS="john crunch"
+    EXPLOIT_TOOLS="responder"
+    MISC_TOOLS="yara fcrackzip masscan"
+    ADDITIONAL_TOOLS="sublist3r massdns dirsearch scapy wfuzz"
+  else
+    ESSENTIAL_PACKAGES="build-essential python3-pip python3-dev git curl wget"
+    NETWORK_TOOLS="nmap ncat ndiff zenmap wireshark tshark tcpdump netcat-traditional ettercap-common arpwatch"
+    WEB_TOOLS="gobuster ffuf wpscan nikto"
+    INFO_TOOLS="theharvester cewl dnsrecon dnsenum amass subfinder"
+    PASSWORD_TOOLS="john hashcat crunch"
+    EXPLOIT_TOOLS="responder evil-winrm"
+    MISC_TOOLS="yara fcrackzip dirbuster masscan"
+    ADDITIONAL_TOOLS="recon-ng sublist3r massdns dirsearch scapy wfuzz"
+  fi
+}
+
 # Interactive Mode
 interactive_mode() {
   display_banner
@@ -189,7 +221,6 @@ interactive_mode() {
   install_essential=""
   install_network=""
   install_web=""
-  install_pen_test=""
   install_info=""
   install_password=""
   install_exploit=""
@@ -197,6 +228,9 @@ interactive_mode() {
   install_additional=""
   install_metasploit=""
   cleanup_choice=""
+
+  # Define listas leves ou completas conforme o modo minimal/full
+  set_tool_lists
 
   # Update system
   ask_yn update_system_choice "Do you want to update the system packages?"
@@ -209,7 +243,6 @@ interactive_mode() {
   # Essential Dependencies
   ask_yn install_essential "Do you want to install Essential Dependencies?"
   if [[ "$install_essential" == "y" ]]; then
-    ESSENTIAL_PACKAGES="build-essential python3-pip python3-dev git curl wget"
     for pkg in $ESSENTIAL_PACKAGES; do
       install_package "$pkg"
     done
@@ -218,12 +251,13 @@ interactive_mode() {
   # Network Tools
   ask_yn install_network "Do you want to install Network Tools?"
   if [[ "$install_network" == "y" ]]; then
-    # Pré-configura wireshark-common para evitar prompt do debconf
-    if ! command -v debconf-set-selections >/dev/null 2>&1; then
-      apt-get install -yq debconf-utils >/dev/null 2>&1 || true
+    # Pré-configura wireshark-common para evitar prompt do debconf (modo full)
+    if [ "$MINIMAL" = false ]; then
+      if ! command -v debconf-set-selections >/dev/null 2>&1; then
+        apt-get install -yq debconf-utils >/dev/null 2>&1 || true
+      fi
+      echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections 2>/dev/null || true
     fi
-    echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections 2>/dev/null || true
-    NETWORK_TOOLS="nmap ncat ndiff zenmap wireshark tshark tcpdump netcat-traditional ettercap-common arpwatch"
     for tool in $NETWORK_TOOLS; do
       install_package "$tool"
     done
@@ -232,17 +266,7 @@ interactive_mode() {
   # Web Application Testing Tools
   ask_yn install_web "Do you want to install Web Application Testing Tools?"
   if [[ "$install_web" == "y" ]]; then
-    WEB_TOOLS="gobuster ffuf wpscan nikto"
     for tool in $WEB_TOOLS; do
-      install_package "$tool"
-    done
-  fi
-
-  # Penetration Testing Tools
-  ask_yn install_pen_test "Do you want to install Penetration Testing Tools?"
-  if [[ "$install_pen_test" == "y" ]]; then
-    PEN_TEST_TOOLS="metasploit-framework aircrack-ng bettercap beef-xss"
-    for tool in $PEN_TEST_TOOLS; do
       install_package "$tool"
     done
   fi
@@ -250,7 +274,6 @@ interactive_mode() {
   # Information Gathering Tools
   ask_yn install_info "Do you want to install Information Gathering Tools?"
   if [[ "$install_info" == "y" ]]; then
-    INFO_TOOLS="theharvester cewl dnsrecon dnsenum amass subfinder"
     for tool in $INFO_TOOLS; do
       install_package "$tool"
     done
@@ -259,7 +282,6 @@ interactive_mode() {
   # Password Cracking Tools
   ask_yn install_password "Do you want to install Password Cracking Tools?"
   if [[ "$install_password" == "y" ]]; then
-    PASSWORD_TOOLS="john hashcat crunch"
     for tool in $PASSWORD_TOOLS; do
       install_package "$tool"
     done
@@ -268,7 +290,6 @@ interactive_mode() {
   # Exploitation Tools
   ask_yn install_exploit "Do you want to install Exploitation Tools?"
   if [[ "$install_exploit" == "y" ]]; then
-    EXPLOIT_TOOLS="responder evil-winrm mimikatz powershell-empire"
     for tool in $EXPLOIT_TOOLS; do
       install_package "$tool"
     done
@@ -277,7 +298,6 @@ interactive_mode() {
   # Miscellaneous Tools
   ask_yn install_misc "Do you want to install Miscellaneous Tools?"
   if [[ "$install_misc" == "y" ]]; then
-    MISC_TOOLS="burpsuite yara fcrackzip dirbuster spiderfoot masscan"
     for tool in $MISC_TOOLS; do
       install_package "$tool"
     done
@@ -286,7 +306,6 @@ interactive_mode() {
   # Additional Tools
   ask_yn install_additional "Do you want to install Additional Tools?"
   if [[ "$install_additional" == "y" ]]; then
-    ADDITIONAL_TOOLS="recon-ng maltego sublist3r massdns dirsearch scapy feroxbuster wfuzz"
     for tool in $ADDITIONAL_TOOLS; do
       install_package "$tool"
     done
