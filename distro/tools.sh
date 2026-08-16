@@ -190,7 +190,6 @@ interactive_mode() {
   install_network=""
   install_web=""
   install_pen_test=""
-  install_vuln=""
   install_info=""
   install_password=""
   install_exploit=""
@@ -244,15 +243,6 @@ interactive_mode() {
   if [[ "$install_pen_test" == "y" ]]; then
     PEN_TEST_TOOLS="metasploit-framework aircrack-ng bettercap beef-xss"
     for tool in $PEN_TEST_TOOLS; do
-      install_package "$tool"
-    done
-  fi
-
-  # Vulnerability Analysis Tools
-  ask_yn install_vuln "Do you want to install Vulnerability Analysis Tools?"
-  if [[ "$install_vuln" == "y" ]]; then
-    VULN_TOOLS="hydra sqlmap rkhunter chkrootkit lynis"
-    for tool in $VULN_TOOLS; do
       install_package "$tool"
     done
   fi
