@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Node.js para o modded-ubuntu
-# Instala o Node.js LTS diretamente a partir dos tarballs oficiais,
-# sem usar o NVM (que travava dentro do PRoot).
+# Instala o Node.js LTS a partir do repositório Ubuntu (apt),
+# evitando downloads manuais do nodejs.org dentro do PRoot.
 # Pode ser executado standalone ou chamado por distro/gui.sh
 
 R="$(printf '\033[1;31m')"
@@ -39,75 +39,66 @@ user_home() {
 	echo "$home_dir"
 }
 
-# Usa dpkg --print-architecture quando disponível (mais confiável dentro do PRoot)
-# e cai para uname -m caso contrário.
-arch=$(dpkg --print-architecture 2>/dev/null || uname -m)
-case "$arch" in
-	arm64|aarch64) arch="arm64" ;;
-	armhf|armv7l|armv6l) arch="arm" ;;
-esac
-
-install_prerequisites() {
-	log "Atualizando repositórios e instalando dependências do Node.js..."
-	apt-get update -yq
-	apt-get install -yq --no-install-recommends \
-		coreutils curl ca-certificates xz-utils || true
-	log "Dependências do Node.js instaladas."
-}
-
-node_arch() {
-	case "$arch" in
-		arm64) echo "arm64" ;;
-		arm) echo "armv7l" ;;
-		amd64|x86_64) echo "x64" ;;
-		*) echo "$arch" ;;
-	esac
-}
-
-resolve_latest_lts() {
-	local fallback="v22.23.2"
-
-	local resolved=""
-	if command -v timeout >/dev/null 2>&1; then
-		resolved=$(timeout 15s curl -fsSL --connect-timeout 10 --max-time 15 \
-			"https://nodejs.org/dist/index.tab" 2>/dev/null \
-			| awk -F'\t' '$10 != "-" {print $1}' \
-			| sort -V \
-			| tail -1)
-	else
-		resolved=$(curl -fsSL --connect-timeout 10 --max-time 15 \
-			"https://nodejs.org/dist/index.tab" 2>/dev/null \
-			| awk -F'\t' '$10 != "-" {print $1}' \
-			| sort -V \
-			| tail -1)
+enable_universe_repo() {
+	local suite=""
+	if [ -f /etc/os-release ]; then
+		suite=$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+	fi
+	if [ -z "$suite" ]; then
+		suite="resolute"
 	fi
 
-	if [ -n "$resolved" ]; then
-		echo "$resolved"
-	else
-		warn "Não foi possível consultar a versão LTS mais recente. Usando fallback $fallback."
-		echo "$fallback"
+	if ! grep -rEq "^deb .* ${suite}( .*|) universe" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+		warn "Habilitando repositório universe para o suite ${suite}..."
+		echo "deb http://ports.ubuntu.com/ubuntu-ports ${suite} universe" > /etc/apt/sources.list.d/modded-ubuntu-universe.list
 	fi
 }
 
-remove_nvm() {
+remove_previous_node() {
 	local target_user
 	target_user=$(detect_user)
 	local home_dir
 	home_dir=$(user_home "$target_user")
 
+	# Remove instalação anterior do NVM, se existir
 	if [ -d "$home_dir/.nvm" ]; then
 		warn "Removendo instalação anterior do NVM em $home_dir/.nvm..."
 		rm -rf "$home_dir/.nvm"
 	fi
 
 	if [ -f "$home_dir/.bashrc" ]; then
-		# Remove as linhas relacionadas ao NVM sem sobrescrever o arquivo por completo.
 		sed -i '/# Ativar a versão padrão do Node\.js gerenciada pelo nvm/d' "$home_dir/.bashrc" 2>/dev/null || true
 		sed -i '/export NVM_DIR=/d' "$home_dir/.bashrc" 2>/dev/null || true
-		sed -i '/\[ -s "\$NVM_DIR\/nvm\.sh" \] && \\\. "\$NVM_DIR\/nvm\.sh"/d' "$home_dir/.bashrc" 2>/dev/null || true
+		sed -i '/\[ -s "\$NVM_DIR\/nvm\.sh" \] && \\\.*\$NVM_DIR\/nvm\.sh"/d' "$home_dir/.bashrc" 2>/dev/null || true
 		sed -i '/nvm use default/d' "$home_dir/.bashrc" 2>/dev/null || true
+		sed -i '/# Node.js instalado manualmente/d' "$home_dir/.bashrc" 2>/dev/null || true
+		sed -i '\|/usr/local/lib/nodejs/bin|d' "$home_dir/.bashrc" 2>/dev/null || true
 	fi
+
+	# Remove instalação manual anterior do Node.js, se existir
+	if [ -d /usr/local/lib/nodejs ]; then
+		warn "Removendo instalação manual anterior do Node.js em /usr/local/lib/nodejs..."
+		rm -rf /usr/local/lib/nodejs
+	fi
+
+	for bin in node npm npx corepack ng; do
+		if [ -e "/usr/local/bin/$bin" ]; then
+			rm -f "/usr/local/bin/$bin"
+		fi
+	done
+
+	if [ -f /etc/profile.d/nodejs.sh ]; then
+		rm -f /etc/profile.d/nodejs.sh
+	fi
+}
+
+install_prerequisites() {
+	log "Atualizando repositórios e instalando dependências do Node.js..."
+	enable_universe_repo
+	apt-get update -yq
+	apt-get install -yq --no-install-recommends \
+		ca-certificates curl || true
+	log "Dependências do Node.js instaladas."
 }
 
 install_node() {
@@ -115,110 +106,20 @@ install_node() {
 	target_user=$(detect_user)
 	local home_dir
 	home_dir=$(user_home "$target_user")
-	local node_arch_name
-	node_arch_name=$(node_arch)
 
-	log "Arquitetura detectada: $arch (tarball: $node_arch_name)"
+	log "Instalando Node.js LTS via apt (repositório Ubuntu)..."
 
-	local node_version
-	node_version=$(resolve_latest_lts)
-	local slug="node-${node_version}-linux-${node_arch_name}"
-	local tarball_url="https://nodejs.org/dist/${node_version}/${slug}.tar.xz"
-	local install_dir="/usr/local/lib/nodejs"
-	local cache_dir="/tmp/node-install-cache"
+	remove_previous_node
 
-	log "Instalando Node.js $node_version diretamente em $install_dir..."
-
-	remove_nvm
-
-	# Remove instalação anterior do Node.js se existir
-	if [ -d "$install_dir" ]; then
-		warn "Removendo instalação anterior do Node.js em $install_dir..."
-		rm -rf "$install_dir"
-	fi
-
-	mkdir -p "$install_dir"
-	mkdir -p "$cache_dir"
-
-	local tarball="$cache_dir/${slug}.tar.xz"
-
-	log "Baixando $tarball_url..."
-	if command -v timeout >/dev/null 2>&1; then
-		if ! timeout --kill-after=30 900 curl -fSL --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 5 \
-			--progress-bar -o "$tarball" "$tarball_url"; then
-			err "Falha ao baixar o tarball do Node.js."
-			return 1
-		fi
-	else
-		if ! curl -fSL --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 5 \
-			--progress-bar -o "$tarball" "$tarball_url"; then
-			err "Falha ao baixar o tarball do Node.js."
-			return 1
-		fi
-	fi
-
-	# Verifica checksum quando possível
-	local shasums="$cache_dir/SHASUMS256.txt"
-	local shasums_url="https://nodejs.org/dist/${node_version}/SHASUMS256.txt"
-	if command -v timeout >/dev/null 2>&1; then
-		if timeout --kill-after=5 30 curl -fsSL --connect-timeout 10 --max-time 30 -o "$shasums" "$shasums_url" 2>/dev/null; then
-			if grep -F "${slug}.tar.xz" "$shasums" | sha256sum -c - >/dev/null 2>&1; then
-				log "Checksum OK."
-			else
-				err "Checksum do tarball não confere. Abortando instalação."
-				rm -f "$tarball" "$shasums"
-				return 1
-			fi
-		else
-			warn "Não foi possível baixar SHASUMS256; continuando sem verificação."
-		fi
-	else
-		if curl -fsSL --connect-timeout 10 --max-time 30 -o "$shasums" "$shasums_url" 2>/dev/null; then
-			if grep -F "${slug}.tar.xz" "$shasums" | sha256sum -c - >/dev/null 2>&1; then
-				log "Checksum OK."
-			else
-				err "Checksum do tarball não confere. Abortando instalação."
-				rm -f "$tarball" "$shasums"
-				return 1
-			fi
-		else
-			warn "Não foi possível baixar SHASUMS256; continuando sem verificação."
-		fi
-	fi
-
-	log "Extraindo $tarball para $install_dir..."
-	if ! tar -xJf "$tarball" -C "$install_dir" --strip-components=1; then
-		err "Falha ao extrair o tarball do Node.js."
+	if ! apt-get install -yq --no-install-recommends nodejs npm; then
+		err "Falha ao instalar nodejs/npm via apt."
 		return 1
 	fi
 
-	log "Criando symlinks em /usr/local/bin..."
-	for bin in node npm npx corepack; do
-		if [ -x "$install_dir/bin/$bin" ]; then
-			ln -sf "$install_dir/bin/$bin" "/usr/local/bin/$bin"
-		fi
-	done
-
-	# Garante que o diretório bin do Node.js esteja no PATH
-	if [ ! -f /etc/profile.d/nodejs.sh ]; then
-		cat > /etc/profile.d/nodejs.sh <<'EOF'
-# Adiciona o Node.js instalado manualmente ao PATH
-export PATH="/usr/local/lib/nodejs/bin:$PATH"
-EOF
-		chmod +x /etc/profile.d/nodejs.sh
-	fi
-
-	# Também adiciona ao .bashrc do usuário alvo
-	if ! grep -q '/usr/local/lib/nodejs/bin' "$home_dir/.bashrc" 2>/dev/null; then
-		sudo -u "$target_user" -H bash -c 'cat >> "$HOME/.bashrc"' <<'EOF'
-
-# Node.js instalado manualmente
-export PATH="/usr/local/lib/nodejs/bin:$PATH"
-EOF
-	fi
-
+	# Atualiza o PATH imediatamente
 	hash -r 2>/dev/null || true
-	log "Node.js $node_version instalado em $install_dir."
+
+	log "Node.js instalado via apt."
 }
 
 print_versions() {

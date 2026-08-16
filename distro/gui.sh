@@ -305,7 +305,7 @@ install_csharp_tools() {
 }
 
 install_node() {
-	echo -e "${G}Installing ${Y}Node.js LTS (direct)${W}"
+	echo -e "${G}Installing ${Y}Node.js LTS (apt)${W}"
 	if [ -f /usr/local/bin/node-setup ]; then
 		bash /usr/local/bin/node-setup
 	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/nodejs.sh ]; then
