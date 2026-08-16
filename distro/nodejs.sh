@@ -49,7 +49,7 @@ install_prerequisites() {
 	log "Atualizando repositórios e instalando dependências do Node.js..."
 	apt-get update -yq
 	apt-get install -yq --no-install-recommends \
-		coreutils curl ca-certificates git || true
+		coreutils curl ca-certificates git xz-utils || true
 	log "Dependências do Node.js instaladas."
 }
 
@@ -114,6 +114,31 @@ EOF
 	fi
 }
 
+resolve_node_version() {
+	local major="$1"
+	local fallback
+	case "$major" in
+		20) fallback="v20.20.2" ;;
+		22) fallback="v22.23.2" ;;
+		24) fallback="v24.19.0" ;;
+		*) fallback="v${major}.0.0" ;;
+	esac
+
+	local resolved
+	resolved=$(curl -fsSL --connect-timeout 30 --max-time 60 \
+		"https://nodejs.org/dist/index.tab" 2>/dev/null \
+		| awk -F'\t' -v maj="$major" '$1 ~ "^v"maj"\\." {print $1}' \
+		| sort -V \
+		| tail -1)
+
+	if [ -n "$resolved" ]; then
+		echo "$resolved"
+	else
+		warn "Não foi possível consultar a versão mais recente do Node $major. Usando fallback $fallback."
+		echo "$fallback"
+	fi
+}
+
 install_node_versions() {
 	local target_user
 	target_user=$(detect_user)
@@ -128,50 +153,100 @@ install_node_versions() {
 	fi
 
 	log "Arquitetura detectada: $arch"
-	log "Instalando Node.js (versões: 20, 22 e 24 quando disponível) via NVM (somente binário)..."
+	log "Instalando Node.js (versões: 20, 22 e 24 quando disponível) via download direto..."
 
 	local nvm_env="export NVM_DIR=\"$nvm_dir\"; [ -s \"$nvm_dir/nvm.sh\" ] && \\. \"$nvm_dir/nvm.sh\""
 
-	# Evita compilação from-source: usa o flag -b para baixar apenas binários.
-	# Se o binário não existir para a arquitetura, a instalação falha rapidamente.
-	local node_versions=(20 22)
+	local node_arch
+	case "$arch" in
+		arm64) node_arch="arm64" ;;
+		arm) node_arch="armv7l" ;;
+		amd64|x86_64) node_arch="x64" ;;
+		*) node_arch="$arch" ;;
+	esac
+
+	local node_majors=(20 22)
 	if [[ "$arch" != arm ]]; then
-		node_versions+=(24)
+		node_majors+=(24)
 	else
 		warn "Arquitetura $arch detectada. Pulando Node.js 24 (binários geralmente indisponíveis para ARM 32-bit)."
 	fi
 
 	local timeout_prefix=()
 	if command -v timeout >/dev/null 2>&1; then
-		# 15 minutos para download + extração; força SIGKILL 60s após o prazo
+		# 15 minutos para download; força SIGKILL 60s após o prazo
 		timeout_prefix=(timeout --kill-after=60 900)
-		log "Timeout de 900s (com SIGKILL após 60s) será usado para cada instalação de Node.js."
+		log "Timeout de 900s (com SIGKILL após 60s) será usado para cada download."
 	else
-		warn "Comando 'timeout' não encontrado; instalação pode demorar sem limite."
+		warn "Comando 'timeout' não encontrado; download pode demorar sem limite."
 	fi
 
-	local version
-	for version in "${node_versions[@]}"; do
-		log "[Node $version] Iniciando instalação (nvm install -b $version)..."
-		# NVM_NO_PROGRESS não é setado para que curl moste o progresso do download.
-		local install_cmd="$nvm_env; nvm install -b $version"
-		log "[Node $version] Comando: ${timeout_prefix[*]} sudo -u $target_user -H bash -c '... $install_cmd'"
-		local cmd=("${timeout_prefix[@]}" sudo -u "$target_user" -H bash -c "$install_cmd")
-		if "${cmd[@]}"; then
-			log "[Node $version] Instalação concluída."
+	local default_version=""
+
+	local major
+	for major in "${node_majors[@]}"; do
+		local full_version
+		full_version=$(resolve_node_version "$major")
+		log "[Node $major] Versão resolvida: $full_version"
+
+		local slug="node-${full_version}-linux-${node_arch}"
+		local tarball_url="https://nodejs.org/dist/${full_version}/${slug}.tar.xz"
+		local cache_dir="$nvm_dir/.cache/bin/$slug"
+		local tarball="$cache_dir/${slug}.tar.xz"
+		local version_dir="$nvm_dir/versions/node/$full_version"
+
+		if [ -x "$version_dir/bin/node" ]; then
+			log "[Node $major] Já instalado em $version_dir. Pulando."
+			if [ "$major" = "22" ]; then
+				default_version="$full_version"
+			fi
+			continue
+		fi
+
+		log "[Node $major] Baixando $tarball_url..."
+		mkdir -p "$cache_dir"
+		local download_cmd=(curl -fSL --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 5 --progress-bar -o "$tarball" "$tarball_url")
+		if ! "${timeout_prefix[@]}" "${download_cmd[@]}"; then
+			warn "[Node $major] Falha no download do tarball. Pulando."
+			rm -f "$tarball"
+			continue
+		fi
+
+		# Verifica checksum quando possível
+		local shasums="$cache_dir/SHASUMS256.txt"
+		local shasums_url="https://nodejs.org/dist/${full_version}/SHASUMS256.txt"
+		if curl -fsSL --connect-timeout 30 --max-time 120 -o "$shasums" "$shasums_url" 2>/dev/null; then
+			if grep -F "${slug}.tar.xz" "$shasums" | sha256sum -c - >/dev/null 2>&1; then
+				log "[Node $major] Checksum OK."
+			else
+				warn "[Node $major] Checksum não confere. Pulando extração."
+				rm -f "$tarball" "$shasums"
+				continue
+			fi
 		else
-			warn "[Node $version] Não foi possível instalar (timeout, binário indisponível ou erro)."
+			warn "[Node $major] Não foi possível baixar SHASUMS256; continuando sem verificação."
+		fi
+
+		log "[Node $major] Extraindo para $version_dir..."
+		rm -rf "$version_dir"
+		sudo -u "$target_user" -H mkdir -p "$version_dir"
+		if sudo -u "$target_user" -H tar -xJf "$tarball" -C "$version_dir" --strip-components=1; then
+			log "[Node $major] Instalado em $version_dir."
+			if [ "$major" = "22" ]; then
+				default_version="$full_version"
+			fi
+		else
+			warn "[Node $major] Falha ao extrair o tarball."
+			rm -rf "$version_dir"
 		fi
 	done
 
 	# Define Node 22 como padrão (LTS estável e compatível com Angular 20)
-	log "Definindo alias padrão do NVM para Node 22..."
-	if sudo -u "$target_user" -H bash -c "$nvm_env && nvm use default >/dev/null 2>&1; nvm alias default 22" 2>/dev/null; then
-		log "Versão padrão do Node.js definida como 22."
+	if [ -n "$default_version" ]; then
+		log "Definindo alias padrão do NVM para $default_version..."
+		sudo -u "$target_user" -H bash -c "$nvm_env; nvm alias default \"$default_version\"" >/dev/null 2>&1 || warn "Não foi possível definir o alias padrão do nvm"
 	else
-		# Fallback: usa a última versão instalada
-		log "Tentando fallback: alias default node..."
-		sudo -u "$target_user" -H bash -c "$nvm_env && nvm use default >/dev/null 2>&1; nvm alias default node" 2>/dev/null || warn "Não foi possível definir o alias padrão do nvm"
+		warn "Não foi possível determinar a versão padrão do Node.js."
 	fi
 }
 

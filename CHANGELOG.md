@@ -86,6 +86,13 @@
   - usa `dpkg --print-architecture` (com fallback para `uname -m`) para detectar a arquitetura de forma consistente dentro do PRoot;
   - normaliza `aarch64`/`arm64` para `arm64` e `armhf`/`armv7l`/`armv6l` para `arm` (32-bit);
   - evita que `arm64` seja confundido com `arm*` (32-bit) e fique sem VSCode/Sublime/Node 24.
+- Substituída a instalação do Node.js via `nvm install -b` por download direto dos tarballs oficiais em `distro/nodejs.sh`:
+  - resolve a versão completa a partir do `index.tab` do nodejs.org (com fallback para versões conhecidas);
+  - usa `curl` com `--connect-timeout`, `--max-time`, `--retry` e `--progress-bar` para evitar travamentos silenciosos;
+  - verifica o checksum `SHASUMS256.txt` antes de extrair o tarball;
+  - extrai o tarball em `$NVM_DIR/versions/node/<versão>` mantendo a estrutura esperada pelo NVM;
+  - adiciona `xz-utils` como dependência e usa `tar -xJf` para descompactar `.tar.xz`;
+  - define Node 22 como padrão via `nvm alias default <versão completa>`.
 
 ## [2.0.0] - 2023-01-20
 
