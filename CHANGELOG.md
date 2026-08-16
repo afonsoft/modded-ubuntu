@@ -103,6 +103,12 @@
 - `distro/user.sh` copia `gui.sh` e os scripts helpers preferindo a versão atualizada em `/usr/local/bin/`, caindo para o repo local ou download remoto.
 - `distro/update-system.sh` sincroniza `/usr/local/bin/gui.sh` para o diretório home de todos os usuários regulares durante a atualização.
 - `update.sh` continua fazendo `git pull`, executando `setup.sh` (que atualiza `/usr/local/bin/gui.sh`) e rodando `update-system` dentro do proot.
+- `distro/nodejs.sh` reescrito para instalar o Node.js LTS via `apt` (pacotes `nodejs` e `npm` do repositório Ubuntu), evitando downloads diretos do nodejs.org que travavam dentro do PRoot:
+  - habilita o repositório `universe` automaticamente, se necessário;
+  - remove instalações anteriores do NVM e do tarball manual em `/usr/local/lib/nodejs`;
+  - limpa symlinks legados em `/usr/local/bin` e o arquivo `/etc/profile.d/nodejs.sh`;
+  - instala `nodejs` e `npm` a partir dos repositórios Ubuntu (v22.x LTS no Ubuntu 26.04);
+  - `distro/gui.sh` atualiza a mensagem para "Node.js LTS (apt)".
 
 ## [2.0.0] - 2023-01-20
 
