@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
+# Inicia o servidor VNC no display :1, removendo sessões e locks antigos.
 geometry="${VNC_GEOMETRY:-1440x720}"
-dbus-launch vncserver -geometry "$geometry" -depth 24 -zliblevel 0 -extension MIT-SHM -name modded-ubuntu -xstartup /usr/bin/xfce4-session
+
+# Garante que a porta 5901 esteja livre antes de iniciar.
+vncstop 2>/dev/null || true
+
+# Usa sempre :1 para manter o cliente VNC padrão funcionando.
+exec dbus-launch vncserver :1 -geometry "$geometry" -depth 24 -zliblevel 0 -extension MIT-SHM -name modded-ubuntu -xstartup /usr/bin/xfce4-session
