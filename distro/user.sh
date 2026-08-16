@@ -138,7 +138,12 @@ login() {
     # Create the ubuntu command for proot-distro
     local termux_prefix
     termux_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
-    echo "proot-distro login --user $user --no-sysvipc ubuntu --bind /dev/null:/proc/sys/kernel/cap_last_last --shared-tmp --fix-low-ports" > "$termux_prefix/bin/ubuntu"
+    cat > "$termux_prefix/bin/ubuntu" <<EOF
+#!/data/data/com.termux/files/usr/bin/env bash
+# Inicia o PulseAudio no Termux antes de acessar o Ubuntu como $user.
+bash ~/.sound 2>/dev/null || true
+exec proot-distro login --user $user --no-sysvipc ubuntu --bind /dev/null:/proc/sys/kernel/cap_last_last --shared-tmp --fix-low-ports
+EOF
     chmod +x "$termux_prefix/bin/ubuntu" || { log "Failed to set permissions for ubuntu command"; exit 1; }
 
     # Download and set up the GUI script

@@ -287,8 +287,14 @@ permission() {
     fi
 
     termux_prefix="${PREFIX:-/data/data/com.termux/files/usr}"
-    if [ ! -f "$termux_prefix/bin/ubuntu" ]; then
-        echo "proot-distro login --no-sysvipc ubuntu" > "$termux_prefix/bin/ubuntu"
+    # Sobrescreve o wrapper se não existir ou se for o padrão (não contém --user).
+    if [ ! -f "$termux_prefix/bin/ubuntu" ] || ! grep -q -- '--user ' "$termux_prefix/bin/ubuntu" 2>/dev/null; then
+        cat > "$termux_prefix/bin/ubuntu" <<'EOF'
+#!/data/data/com.termux/files/usr/bin/env bash
+# Inicia o PulseAudio no Termux antes de acessar o Ubuntu.
+bash ~/.sound 2>/dev/null || true
+exec proot-distro login --no-sysvipc ubuntu
+EOF
     fi
     chmod +x "$termux_prefix/bin/ubuntu"
     termux_reload_settings
