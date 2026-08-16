@@ -155,12 +155,12 @@ install_kali_tools() {
     if [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh' ]]; then
         echo -e "${G}Using local tools.sh for installation...${W}"
         chmod +x /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh
-        bash /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh -y
+        bash /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh -y --minimal
     else
         echo -e "${G}Downloading tools.sh from remote...${W}"
         wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/tools.sh" -O /tmp/tools.sh
         chmod +x /tmp/tools.sh
-        bash /tmp/tools.sh -y
+        bash /tmp/tools.sh -y --minimal
     fi
     echo -e "${G} Kali Linux Tools Installed Successfully\n${W}"
 }
