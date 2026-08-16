@@ -244,6 +244,11 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/update-system"
     fi
 
+    if [[ -e "$CURR_DIR/distro/gui.sh" ]]; then
+        cp -f "$CURR_DIR/distro/gui.sh" "$UBUNTU_DIR/usr/local/bin/gui.sh"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/gui.sh"
+    fi
+
     # Optional Termux performance tweaks for Samsung S26 / high-end devices
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         mkdir -p "$HOME/.termux"

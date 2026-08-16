@@ -11,6 +11,11 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a /tmp/update-system.log
 }
 
+warn() {
+    echo -e "${Y}$*${W}"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] $*" | tee -a /tmp/update-system.log
+}
+
 configure_locale_timezone() {
     log "Configurando locale en_US.UTF-8 e timezone America/Sao_Paulo..."
     echo -e "${C} [*] Aplicando locale en_US.UTF-8 e timezone America/Sao_Paulo...${W}"
@@ -55,6 +60,24 @@ update_apt() {
     apt-get dist-upgrade -yq 2>/dev/null || true
 }
 
+update_gui_scripts() {
+    log "Atualizando gui.sh nos diretórios dos usuários..."
+    echo -e "${C} [*] Atualizando gui.sh...${W}"
+
+    if [ ! -f /usr/local/bin/gui.sh ]; then
+        warn "/usr/local/bin/gui.sh não encontrado. Pulando atualização do gui.sh."
+        return 0
+    fi
+
+    awk -F: '$3 >= 1000 && $3 < 65534 {print $1, $6}' /etc/passwd 2>/dev/null | while read -r username home_dir; do
+        if [ -d "$home_dir" ]; then
+            cp -f /usr/local/bin/gui.sh "$home_dir/gui.sh"
+            chown "$username:" "$home_dir/gui.sh" 2>/dev/null || true
+            log "gui.sh atualizado em $home_dir/gui.sh"
+        fi
+    done
+}
+
 cleanup() {
     log "Limpando pacotes e caches..."
     echo -e "${C} [*] Limpando caches...${W}"
@@ -80,6 +103,7 @@ main() {
 
     update_apt
     configure_locale_timezone
+    update_gui_scripts
     cleanup
 
     echo -e "${G} [+] Atualização concluída!${W}"
