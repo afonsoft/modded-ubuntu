@@ -7,6 +7,14 @@ C="\033[1;36m"
 Y="\033[1;33m"
 W="\033[0m"
 
+export DEBIAN_FRONTEND=noninteractive
+
+# Evita que pacotes tentem iniciar serviços dentro do PRoot
+if [ ! -f /usr/sbin/policy-rc.d ]; then
+    printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+    chmod 755 /usr/sbin/policy-rc.d
+fi
+
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a /tmp/update-system.log
 }

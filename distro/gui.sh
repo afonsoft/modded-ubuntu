@@ -13,6 +13,14 @@ case "$arch" in
 	armhf|armv7l|armv6l) arch="arm" ;;
 esac
 
+export DEBIAN_FRONTEND=noninteractive
+
+# Evita que pacotes tentem iniciar serviços dentro do PRoot
+if [ ! -f /usr/sbin/policy-rc.d ]; then
+	printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+	chmod 755 /usr/sbin/policy-rc.d
+fi
+
 # Detect the target non-root user even when running under sudo.
 detect_user() {
 	local user_name=""
@@ -117,7 +125,11 @@ install_ghost_framework() {
 install_wireshark() {
     [[ $(command -v wireshark) ]] && echo "${Y}Wireshark is already Installed!${W}\n" || {
         echo -e "${G}Installing ${Y}Wireshark${W}"
-        sudo apt install wireshark -y
+        if ! command -v debconf-set-selections >/dev/null 2>&1; then
+            apt-get install -yq debconf-utils >/dev/null 2>&1 || true
+        fi
+        echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections 2>/dev/null || true
+        apt-get install -yq wireshark
         echo -e "${G} Wireshark Installed Successfully\n${W}"
     }
 }
@@ -125,7 +137,7 @@ install_wireshark() {
 install_gimp() {
     [[ $(command -v gimp) ]] && echo "${Y}GIMP is already Installed!${W}\n" || {
         echo -e "${G}Installing ${Y}GIMP${W}"
-        sudo apt install gimp -y
+        apt-get install -yq gimp
         echo -e "${G} GIMP Installed Successfully\n${W}"
     }
 }
@@ -133,7 +145,7 @@ install_gimp() {
 install_htop() {
     [[ $(command -v htop) ]] && echo "${Y}htop is already Installed!${W}\n" || {
         echo -e "${G}Installing ${Y}htop${W}"
-        sudo apt install htop -y
+        apt-get install -yq htop
         echo -e "${G} htop Installed Successfully\n${W}"
     }
 }
@@ -143,12 +155,12 @@ install_kali_tools() {
     if [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh' ]]; then
         echo -e "${G}Using local tools.sh for installation...${W}"
         chmod +x /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh
-        bash /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh
+        bash /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh -y
     else
         echo -e "${G}Downloading tools.sh from remote...${W}"
         wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/tools.sh" -O /tmp/tools.sh
         chmod +x /tmp/tools.sh
-        bash /tmp/tools.sh
+        bash /tmp/tools.sh -y
     fi
     echo -e "${G} Kali Linux Tools Installed Successfully\n${W}"
 }
@@ -388,11 +400,25 @@ install_devin_cli() {
 	echo -e "${G}Installing ${Y}Devin CLI${W}"
 	local target_user
 	target_user=$(detect_user)
-	if [ -n "$target_user" ] && [ "$target_user" != "root" ]; then
-		sudo -u "$target_user" -H bash -c 'curl -fsSL https://cli.devin.ai/install.sh | bash'
-	else
-		curl -fsSL https://cli.devin.ai/install.sh | bash
+
+	# Baixa o instalador, remove a última linha (devin setup) e executa,
+	# evitando a tela de login do Devin CLI nesta etapa.
+	local install_script
+	install_script=$(mktemp)
+	if ! curl -fsSL https://cli.devin.ai/install.sh -o "$install_script"; then
+		err "Não foi possível baixar o instalador do Devin CLI."
+		rm -f "$install_script"
+		return 1
 	fi
+	sed -i '$d' "$install_script"
+	if [ -n "$target_user" ] && [ "$target_user" != "root" ]; then
+		chown "$target_user:" "$install_script" 2>/dev/null || true
+		sudo -u "$target_user" -H bash "$install_script"
+	else
+		bash "$install_script"
+	fi
+	rm -f "$install_script"
+
 	hash -r 2>/dev/null || true
 	local devin_local_bin
 	devin_local_bin="$(user_home "$target_user")/.local/bin/devin"

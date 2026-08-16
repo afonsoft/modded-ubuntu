@@ -5,6 +5,14 @@ G="$(printf '\033[1;32m')"
 W="$(printf '\033[1;37m')"
 C="$(printf '\033[1;36m')"
 
+export DEBIAN_FRONTEND=noninteractive
+
+# Evita que pacotes tentem iniciar serviços dentro do PRoot
+if [ ! -f /usr/sbin/policy-rc.d ]; then
+    printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+    chmod 755 /usr/sbin/policy-rc.d
+fi
+
 # Logging function
 log() {
     local LOG_FILE="${PREFIX:-/data/data/com.termux/files/usr}/tmp/user-script.log"

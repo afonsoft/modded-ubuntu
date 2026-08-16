@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Node.js para o modded-ubuntu
-# Instala o Node.js LTS a partir do repositório Ubuntu (apt),
+# Instala o Node.js LTS a partir do repositório NodeSource (.deb),
 # evitando downloads manuais do nodejs.org dentro do PRoot.
 # Pode ser executado standalone ou chamado por distro/gui.sh
+
+export DEBIAN_FRONTEND=noninteractive
 
 R="$(printf '\033[1;31m')"
 Y="$(printf '\033[1;33m')"
@@ -39,21 +41,6 @@ user_home() {
 	echo "$home_dir"
 }
 
-enable_universe_repo() {
-	local suite=""
-	if [ -f /etc/os-release ]; then
-		suite=$(grep '^VERSION_CODENAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
-	fi
-	if [ -z "$suite" ]; then
-		suite="resolute"
-	fi
-
-	if ! grep -rEq "^deb .* ${suite}( .*|) universe" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
-		warn "Habilitando repositório universe para o suite ${suite}..."
-		echo "deb http://ports.ubuntu.com/ubuntu-ports ${suite} universe" > /etc/apt/sources.list.d/modded-ubuntu-universe.list
-	fi
-}
-
 remove_previous_node() {
 	local target_user
 	target_user=$(detect_user)
@@ -69,7 +56,7 @@ remove_previous_node() {
 	if [ -f "$home_dir/.bashrc" ]; then
 		sed -i '/# Ativar a versão padrão do Node\.js gerenciada pelo nvm/d' "$home_dir/.bashrc" 2>/dev/null || true
 		sed -i '/export NVM_DIR=/d' "$home_dir/.bashrc" 2>/dev/null || true
-		sed -i '/\[ -s "\$NVM_DIR\/nvm\.sh" \] && \\\.*\$NVM_DIR\/nvm\.sh"/d' "$home_dir/.bashrc" 2>/dev/null || true
+		sed -i '/\[ -s "\$NVM_DIR\/nvm\.sh" \] && \\.*\$NVM_DIR\/nvm\.sh"/d' "$home_dir/.bashrc" 2>/dev/null || true
 		sed -i '/nvm use default/d' "$home_dir/.bashrc" 2>/dev/null || true
 		sed -i '/# Node.js instalado manualmente/d' "$home_dir/.bashrc" 2>/dev/null || true
 		sed -i '\|/usr/local/lib/nodejs/bin|d' "$home_dir/.bashrc" 2>/dev/null || true
@@ -90,15 +77,47 @@ remove_previous_node() {
 	if [ -f /etc/profile.d/nodejs.sh ]; then
 		rm -f /etc/profile.d/nodejs.sh
 	fi
+
+	# Remove pacotes antigos do apt para evitar conflitos com o NodeSource
+	if dpkg -l 2>/dev/null | grep -qE '^(ii|iU|rc) (nodejs|npm) '; then
+		warn "Removendo pacotes nodejs/npm anteriores dos repositórios Ubuntu..."
+		apt-get purge -yq nodejs npm >/dev/null 2>&1 || true
+		dpkg --remove --force-remove-reinstreq npm >/dev/null 2>&1 || true
+		dpkg --remove --force-remove-reinstreq nodejs >/dev/null 2>&1 || true
+		dpkg --purge nodejs npm >/dev/null 2>&1 || true
+		apt-get autoremove -yq >/dev/null 2>&1 || true
+	fi
 }
 
 install_prerequisites() {
 	log "Atualizando repositórios e instalando dependências do Node.js..."
-	enable_universe_repo
 	apt-get update -yq
-	apt-get install -yq --no-install-recommends \
-		ca-certificates curl || true
+	apt-get install -yq --no-install-recommends ca-certificates curl gnupg
 	log "Dependências do Node.js instaladas."
+}
+
+install_nodesource() {
+	local deb_arch
+	deb_arch=$(dpkg --print-architecture 2>/dev/null || uname -m)
+	case "$deb_arch" in
+		arm64|aarch64) deb_arch="arm64" ;;
+		x86_64|amd64)  deb_arch="amd64" ;;
+		armhf|armv7l)  deb_arch="armhf" ;;
+	esac
+
+	log "Configurando repositório NodeSource para ${deb_arch}..."
+
+	mkdir -p /etc/apt/keyrings
+	if [ ! -f /etc/apt/keyrings/nodesource.gpg ]; then
+		if curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg 2>/dev/null; then
+			log "Chave GPG do NodeSource importada."
+		else
+			warn "Não foi possível importar a chave GPG do NodeSource; continuando sem verificação."
+		fi
+	fi
+
+	echo "deb [arch=${deb_arch} signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+	apt-get update -yq
 }
 
 install_node() {
@@ -107,19 +126,19 @@ install_node() {
 	local home_dir
 	home_dir=$(user_home "$target_user")
 
-	log "Instalando Node.js LTS via apt (repositório Ubuntu)..."
+	log "Instalando Node.js LTS via NodeSource (repositório .deb)..."
 
 	remove_previous_node
+	install_nodesource
 
-	if ! apt-get install -yq --no-install-recommends nodejs npm; then
-		err "Falha ao instalar nodejs/npm via apt."
+	if ! apt-get install -yq nodejs; then
+		err "Falha ao instalar nodejs do NodeSource."
 		return 1
 	fi
 
-	# Atualiza o PATH imediatamente
 	hash -r 2>/dev/null || true
 
-	log "Node.js instalado via apt."
+	log "Node.js instalado via NodeSource."
 }
 
 print_versions() {
