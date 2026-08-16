@@ -53,6 +53,29 @@
 - `install_devin_desktop()` agora segue a ordem exata da documentação oficial: instala `wget/gpg`, adiciona o repositório `windsurf-stable`, instala `apt-transport-https`, atualiza e depois instala `devin-desktop`.
 - `downloader()` in `setup.sh` and `gui.sh` no longer uses `--insecure`.
 - `remove.sh` safely handles missing `~/.sound` and uses `$HOME`.
+- `distro/tools.sh` foi reestruturado para **modo minimal por padrão** (`MINIMAL=true`):
+  - adiciona as flags `-y`/`--yes`, `-m`/`--minimal` e `-f`/`--full`;
+  - no minimal instala apenas `ESSENTIAL`, `NETWORK`, `WEB` e `INFO` Gathering (ferramentas leves);
+  - no full mantém o conjunto maior de ferramentas;
+  - `apt-get` usa `--no-install-recommends` no modo minimal para reduzir espaço.
+- `distro/gui.sh` chama `tools.sh` com `--minimal` ao instalar `Kali Linux Tools`, evitando downloads grandes por padrão.
+- `distro/nodejs.sh` reescrito para instalar o Node.js LTS via repositório **NodeSource `.deb`** (`node_22.x nodistro main`):
+  - remove a duplicidade do source `universe`;
+  - remove o pacote `npm` quebrado do Ubuntu, usando o `npm` empacotado junto com o `nodejs` do NodeSource;
+  - `distro/user.sh`, `distro/csharp.sh` e `distro/update-system.sh` exportam `DEBIAN_FRONTEND=noninteractive` e criam `/usr/sbin/policy-rc.d` retornando `101` para impedir que `postinst` inicie serviços no PRoot.
+- `distro/gui.sh` ajustado para ambiente `noninteractive`:
+  - preseed de `wireshark-common` para evitar prompt do debconf;
+  - `install_kali_tools()` passa `-y --minimal` para o `tools.sh`;
+  - `install_devin_cli()` baixa o script do Devin CLI, remove a última linha (`devin setup`) e instala o binário sem exigir login.
+
+### Removed
+- Removidas as seguintes categorias do `distro/tools.sh` para reduzir o tamanho da instalação:
+  - `Vulnerability Analysis Tools`;
+  - `Penetration Testing Tools`;
+  - `Password Cracking Tools`;
+  - `Exploitation Tools`;
+  - `Miscellaneous Tools`;
+  - `Additional Tools`.
 
 ### Added
 - Limpeza automática de arquivos temporários e caches no final das instalações:

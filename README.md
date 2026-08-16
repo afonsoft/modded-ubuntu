@@ -31,36 +31,36 @@ O **modded-ubuntu** é um ambiente Ubuntu personalizado e otimizado para rodar e
 ## Recursos / Features
 
 - Saída de áudio corrigida / Fixed audio output
-- Leve — requer pelo menos 5 GB de armazenamento / Lightweight — requires at least 5 GB of storage
-- 2 navegadores (Chromium e Mozilla Firefox) / 2 browsers (Chromium & Mozilla Firefox)
+- Leve — a partir de ~3 GB de armazenamento (5 GB+ recomendado para dev tools e navegadores) / Lightweight — from ~3 GB of storage (5 GB+ recommended for dev tools and browsers)
+- Navegadores opcionais: Chromium e Mozilla Firefox / Optional browsers: Chromium and Mozilla Firefox
 - Suporte a fontes e acentuação em português / Portuguese font and accent support
-- VLC Media Player e MPV / VLC Media Player and MPV media player
+- VLC/MPV Media Player (opcional) / VLC/MPV media player (optional)
 - Visual Studio Code (`arm64`/`aarch64` e x64; pulado em `armhf`/`armv7` 32-bit) / Visual Studio Code (arm64/aarch64 and x64; skipped on 32-bit armhf/armv7)
 - Sublime Text Editor (`arm64`/`aarch64` e x64; pulado em `armhf`/`armv7` 32-bit) / Sublime Text Editor (arm64/aarch64 and x64; skipped on 32-bit armhf/armv7)
-- OpenCode CLI
-- Git + GitHub CLI (`gh`)
-- Ferramentas essenciais de desenvolvimento / Essential development tools:
+- OpenCode CLI (opcional) / OpenCode CLI (optional)
+- Git + GitHub CLI (`gh`) (opcional) / Git + GitHub CLI (`gh`) (optional)
+- Ferramentas essenciais de desenvolvimento (opcional) / Essential development tools (optional):
   - `build-essential`, `python3-pip`, `python3-venv`
   - `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`
-- .NET SDK 10.0 + ferramentas C# / .NET SDK 10.0 + C# tooling
-- Node.js LTS instalado diretamente (sem NVM) / Node.js LTS installed directly (no NVM)
-- Angular 20 CLI + extensões do VS Code: / Angular 20 CLI + VS Code: extensions
-- Instalação full-stack C# + Angular / Full-Stack C# + Angular install option
-- Assistentes de IA para código / AI coding assistants:
+- .NET SDK 10.0 + ferramentas C# (opcional) / .NET SDK 10.0 + C# tooling (optional)
+- Node.js LTS instalado diretamente via NodeSource .deb (sem NVM) / Node.js LTS installed directly via NodeSource .deb (no NVM)
+- Angular 20 CLI + extensões do VS Code: (opcional) / Angular 20 CLI + VS Code: extensions (optional)
+- Instalação full-stack C# + Angular (opcional) / Full-Stack C# + Angular install option (optional)
+- Assistentes de IA para código (opcionais) / AI coding assistants (optional):
   - **Claude Code CLI** (`claude`)
   - **Antigravity CLI** (`agy`)
   - **Devin CLI** (`devin`)
   - **Devin Desktop** IDE (instalação via APT; depende da arquitetura do dispositivo)
 - Fácil para iniciantes / Beginner-friendly
 - Temas e cursores personalizados / Custom themes and cursors
-- Instalador de ferramentas do Kali Linux (inclui Metasploit) / Kali Linux tools installer (Metasploit included)
-- Ghost Framework e Wireshark / Ghost Framework and Wireshark
+- Instalador de ferramentas de segurança (modo minimal por padrão; Metasploit opcional) / Security tools installer (minimal by default; Metasploit optional)
+- Ghost Framework, Wireshark e GIMP (opcionais) / Ghost Framework, Wireshark and GIMP (optional)
 
 ## Requisitos / Requirements
 
 - Android 8.0 ou superior / Android 8.0 or higher
 - [Termux](https://termux.com/) instalado pelo F-Droid / [Termux](https://termux.com/) installed from F-Droid
-- Pelo menos 5 GB de armazenamento livre / At least 5 GB of free storage
+- A partir de ~3 GB de armazenamento livre (5 GB+ recomendado para dev tools e navegadores) / From ~3 GB of free storage (5 GB+ recommended for dev tools and browsers)
 - Conexão Wi-Fi recomendada para downloads grandes / Wi-Fi connection recommended for large downloads
 
 ## Instalação automática / One-liner installation
@@ -182,8 +182,19 @@ Durante `sudo bash gui.sh` você pode instalar:
 - **AI Coding Assistants:**
   - **Claude Code CLI:** instala o pacote `@anthropic-ai/claude-code` globalmente (`claude`).
   - **Antigravity CLI:** baixa e instala o binário nativo `agy` em `/usr/local/bin`.
-  - **Devin CLI:** instala o binário `devin` (dados em `~/.local/share/devin`) e cria symlink em `/usr/local/bin`.
+  - **Devin CLI:** baixa o instalador do `devin`, remove a etapa `devin setup` para evitar o login durante a instalação, instala o binário e cria symlink em `/usr/local/bin`.
   - **Devin Desktop:** adiciona o repositório APT `windsurf-stable` e instala o pacote `devin-desktop`. Pode falhar em arquiteturas não suportadas pelo repositório.
+
+## Ferramentas de segurança / Security tools
+
+O instalador de ferramentas de segurança (`distro/tools.sh`) agora trabalha em **modo minimal por padrão**:
+
+- **Modo minimal (`--minimal` ou padrão):** instala apenas ferramentas leves nas categorias Essential, Network, Web e Information Gathering.
+- **Modo completo (`--full`):** instala o conjunto maior de ferramentas, incluindo `wireshark`, `tshark`, `wpscan`, `theharvester`, `amass`, `hashcat`, `evil-winrm` e `recon-ng`.
+- As categorias **Vulnerability Analysis**, **Penetration Testing**, **Password Cracking**, **Exploitation**, **Miscellaneous** e **Additional** foram removidas do fluxo para reduzir o espaço em disco.
+- O **Metasploit Framework** continua disponível como instalação opcional dentro do `tools.sh`.
+
+No `gui.sh`, a opção `Kali Linux Tools` executa o `tools.sh --minimal`, evitando downloads grandes por padrão.
 
 ## Comandos úteis / Useful commands
 

@@ -196,19 +196,11 @@ set_tool_lists() {
     NETWORK_TOOLS="nmap netcat-traditional tcpdump"
     WEB_TOOLS="gobuster ffuf nikto"
     INFO_TOOLS="dnsrecon dnsenum subfinder"
-    PASSWORD_TOOLS="john crunch"
-    EXPLOIT_TOOLS="responder"
-    MISC_TOOLS="yara fcrackzip masscan"
-    ADDITIONAL_TOOLS="sublist3r massdns dirsearch scapy wfuzz"
   else
     ESSENTIAL_PACKAGES="build-essential python3-pip python3-dev git curl wget"
     NETWORK_TOOLS="nmap ncat ndiff zenmap wireshark tshark tcpdump netcat-traditional ettercap-common arpwatch"
     WEB_TOOLS="gobuster ffuf wpscan nikto"
     INFO_TOOLS="theharvester cewl dnsrecon dnsenum amass subfinder"
-    PASSWORD_TOOLS="john hashcat crunch"
-    EXPLOIT_TOOLS="responder evil-winrm"
-    MISC_TOOLS="yara fcrackzip dirbuster masscan"
-    ADDITIONAL_TOOLS="recon-ng sublist3r massdns dirsearch scapy wfuzz"
   fi
 }
 
@@ -222,10 +214,6 @@ interactive_mode() {
   install_network=""
   install_web=""
   install_info=""
-  install_password=""
-  install_exploit=""
-  install_misc=""
-  install_additional=""
   install_metasploit=""
   cleanup_choice=""
 
@@ -275,38 +263,6 @@ interactive_mode() {
   ask_yn install_info "Do you want to install Information Gathering Tools?"
   if [[ "$install_info" == "y" ]]; then
     for tool in $INFO_TOOLS; do
-      install_package "$tool"
-    done
-  fi
-
-  # Password Cracking Tools
-  ask_yn install_password "Do you want to install Password Cracking Tools?"
-  if [[ "$install_password" == "y" ]]; then
-    for tool in $PASSWORD_TOOLS; do
-      install_package "$tool"
-    done
-  fi
-
-  # Exploitation Tools
-  ask_yn install_exploit "Do you want to install Exploitation Tools?"
-  if [[ "$install_exploit" == "y" ]]; then
-    for tool in $EXPLOIT_TOOLS; do
-      install_package "$tool"
-    done
-  fi
-
-  # Miscellaneous Tools
-  ask_yn install_misc "Do you want to install Miscellaneous Tools?"
-  if [[ "$install_misc" == "y" ]]; then
-    for tool in $MISC_TOOLS; do
-      install_package "$tool"
-    done
-  fi
-
-  # Additional Tools
-  ask_yn install_additional "Do you want to install Additional Tools?"
-  if [[ "$install_additional" == "y" ]]; then
-    for tool in $ADDITIONAL_TOOLS; do
       install_package "$tool"
     done
   fi
