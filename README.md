@@ -152,6 +152,19 @@ Esse erro ocorre no Android 12+ (comum em aparelhos Samsung) quando o sistema An
 
 ### Soluções / Fixes
 
+- **Script automático (apenas com root / automated script, rooted only):**
+  - Execute no Termux: / Run in Termux:
+
+  ```bash
+  bash fix-signal9.sh
+  ```
+
+  - Com `--check` você apenas visualiza o estado atual: / Use `--check` to only see the current state:
+
+  ```bash
+  bash fix-signal9.sh --check
+  ```
+
 - **Android 14+:**
   - Acesse **Configurações → Opções do desenvolvedor** e ative **Desativar restrições de processos filhos** (Disable child process restrictions).
   - Reinicie o aparelho.
@@ -255,6 +268,7 @@ No `gui.sh`, a opção `Kali Linux Tools` executa o `tools.sh --minimal`, evitan
 | `vncstart-fhd` | Inicia VNC em 2340x1080 / Start VNC at 2340x1080 |
 | `vncstart-qhd` | Inicia VNC em 3088x1440 / Start VNC at 3088x1440 |
 | `s26-optimize` | Aplica otimizações para high-DPI / Apply high-DPI optimizations |
+| `bash fix-signal9.sh` | Corrige erro signal 9 (Phantom Process Killer) / Fix signal 9 error (Phantom Process Killer) |
 | `bash remove.sh` | Remove o Ubuntu modded / Remove the modded Ubuntu OS |
 
 ### Iniciar VNC automaticamente / Auto-start VNC Server
