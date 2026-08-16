@@ -69,13 +69,14 @@
   - `install_devin_cli()` baixa o script do Devin CLI, remove a última linha (`devin setup`) e instala o binário sem exigir login.
 
 ### Removed
-- Removidas as seguintes categorias do `distro/tools.sh` para reduzir o tamanho da instalação:
+- Removidas as seguintes categorias/pacotes do `distro/tools.sh` para reduzir o tamanho da instalação:
   - `Vulnerability Analysis Tools`;
   - `Penetration Testing Tools`;
   - `Password Cracking Tools`;
   - `Exploitation Tools`;
   - `Miscellaneous Tools`;
-  - `Additional Tools`.
+  - `Additional Tools`;
+  - `Metasploit Framework`.
 
 ### Added
 - Limpeza automática de arquivos temporários e caches no final das instalações:

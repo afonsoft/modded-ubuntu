@@ -53,7 +53,7 @@ O **modded-ubuntu** é um ambiente Ubuntu personalizado e otimizado para rodar e
   - **Devin Desktop** IDE (instalação via APT; depende da arquitetura do dispositivo)
 - Fácil para iniciantes / Beginner-friendly
 - Temas e cursores personalizados / Custom themes and cursors
-- Instalador de ferramentas de segurança (modo minimal por padrão; Metasploit opcional) / Security tools installer (minimal by default; Metasploit optional)
+- Instalador de ferramentas de segurança (modo minimal por padrão) / Security tools installer (minimal by default)
 - Ghost Framework, Wireshark e GIMP (opcionais) / Ghost Framework, Wireshark and GIMP (optional)
 
 ## Requisitos / Requirements
@@ -190,9 +190,8 @@ Durante `sudo bash gui.sh` você pode instalar:
 O instalador de ferramentas de segurança (`distro/tools.sh`) agora trabalha em **modo minimal por padrão**:
 
 - **Modo minimal (`--minimal` ou padrão):** instala apenas ferramentas leves nas categorias Essential, Network, Web e Information Gathering.
-- **Modo completo (`--full`):** instala o conjunto maior de ferramentas, incluindo `wireshark`, `tshark`, `wpscan`, `theharvester`, `amass`, `hashcat`, `evil-winrm` e `recon-ng`.
-- As categorias **Vulnerability Analysis**, **Penetration Testing**, **Password Cracking**, **Exploitation**, **Miscellaneous** e **Additional** foram removidas do fluxo para reduzir o espaço em disco.
-- O **Metasploit Framework** continua disponível como instalação opcional dentro do `tools.sh`.
+- **Modo completo (`--full`):** instala o conjunto maior de ferramentas, incluindo `wireshark`, `tshark`, `wpscan`, `theharvester`, `cewl`, `amass`, `subfinder`, `ettercap-common`, `arpwatch`, `ncat`, `ndiff` e `zenmap`.
+- As categorias **Vulnerability Analysis**, **Penetration Testing**, **Password Cracking**, **Exploitation**, **Miscellaneous**, **Additional** e **Metasploit Framework** foram removidas do fluxo para reduzir o espaço em disco.
 
 No `gui.sh`, a opção `Kali Linux Tools` executa o `tools.sh --minimal`, evitando downloads grandes por padrão.
 

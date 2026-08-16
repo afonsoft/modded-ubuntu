@@ -214,7 +214,6 @@ interactive_mode() {
   install_network=""
   install_web=""
   install_info=""
-  install_metasploit=""
   cleanup_choice=""
 
   # Define listas leves ou completas conforme o modo minimal/full
@@ -265,18 +264,6 @@ interactive_mode() {
     for tool in $INFO_TOOLS; do
       install_package "$tool"
     done
-  fi
-
-  # Install Metasploit Framework
-  ask_yn install_metasploit "Do you want to install Metasploit Framework?"
-  if [[ "$install_metasploit" == "y" ]]; then
-    if command -v curl &>/dev/null; then
-      echo "[+] Installing Metasploit Framework..."
-      curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall
-      chmod 755 msfinstall && ./msfinstall || handle_error "Failed to install Metasploit Framework."
-    else
-      echo "[-] curl is not installed. Skipping Metasploit installation."
-    fi
   fi
 
   # Cleanup unnecessary packages
