@@ -60,6 +60,81 @@ configure_locale_timezone() {
     log "Locale e timezone configurados."
 }
 
+cleanup_unwanted_apt_sources() {
+    log "Removendo repositórios indesejados (ex.: Metasploit)..."
+    echo -e "${C} [*] Removendo repositórios indesejados...${W}"
+
+    # Remove entradas do sources.list principal
+    if grep -qE 'metasploit|rapid7' /etc/apt/sources.list 2>/dev/null; then
+        sed -i '/metasploit/d; /rapid7/d' /etc/apt/sources.list
+        log "Removidas entradas indesejadas do /etc/apt/sources.list"
+    fi
+
+    # Remove arquivos de repositório suspeitos
+    find /etc/apt/sources.list.d -type f -print0 2>/dev/null | \
+        xargs -0 grep -lE 'metasploit|rapid7' 2>/dev/null | \
+        while IFS= read -r f; do
+            rm -f "$f"
+            log "Removido repositório indesejado: $f"
+        done
+
+    # Impede instalação/atualização do metasploit-framework
+    mkdir -p /etc/apt/preferences.d
+    if [ ! -f /etc/apt/preferences.d/modded-ubuntu-no-metasploit ]; then
+        cat > /etc/apt/preferences.d/modded-ubuntu-no-metasploit <<'EOF'
+Package: metasploit-framework
+Pin: origin downloads.metasploit.com
+Pin-Priority: -1
+EOF
+        log "Adicionado pinning para bloquear metasploit-framework"
+    fi
+
+    # Segura o pacote caso já esteja instalado
+    if dpkg -l metasploit-framework 2>/dev/null | grep -q '^ii'; then
+        apt-mark hold metasploit-framework >/dev/null 2>&1 || true
+        log "metasploit-framework detectado e marcado como hold."
+    fi
+}
+
+fix_sound() {
+    log "Corrigindo configuração de áudio..."
+    echo -e "${C} [*] Corrigindo configuração de áudio...${W}"
+
+    local sound_file
+    sound_file="/data/data/com.termux/files/home/.sound"
+
+    for f in "$sound_file" "$HOME/.sound"; do
+        [ -e "$f" ] || continue
+        cat > "$f" <<'EOF'
+#!/usr/bin/env bash
+# Sound fix for modded-ubuntu
+if command -v pulseaudio >/dev/null 2>&1; then
+    pulseaudio --start --exit-idle-time=-1 >/dev/null 2>&1
+    # Aguarda o daemon do PulseAudio iniciar
+    for _ in {1..20}; do
+        pulseaudio --check 2>/dev/null && break
+        sleep 0.25
+    done
+fi
+
+module_loaded() {
+    command -v pactl >/dev/null 2>&1 && pactl list modules short 2>/dev/null | grep -q "$1"
+}
+
+if ! module_loaded "module-aaudio-sink"; then
+    pacmd load-module module-aaudio-sink >/dev/null 2>&1 || true
+fi
+if ! module_loaded "module-aaudio-source"; then
+    pacmd load-module module-aaudio-source >/dev/null 2>&1 || true
+fi
+if ! module_loaded "module-native-protocol-tcp"; then
+    pacmd load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1 >/dev/null 2>&1 || true
+fi
+EOF
+        log "Arquivo de som atualizado: $f"
+    done
+}
+
 update_apt() {
     log "Atualizando pacotes do sistema..."
     echo -e "${C} [*] Atualizando pacotes...${W}"
@@ -139,8 +214,10 @@ main() {
     echo -e "${G} [+] Iniciando atualização do modded-ubuntu...${W}"
     log "Iniciando atualização"
 
+    cleanup_unwanted_apt_sources
     update_apt
     configure_locale_timezone
+    fix_sound
     update_vnc_scripts
     update_gui_scripts
     cleanup
