@@ -658,7 +658,14 @@ downloader(){
 sound_fix() {
 	local ubuntu_bin="/data/data/com.termux/files/usr/bin/ubuntu"
 	if [ -f "$ubuntu_bin" ] && ! grep -q "bash ~/.sound" "$ubuntu_bin"; then
-		echo "$(echo "bash ~/.sound" | cat - "$ubuntu_bin")" > "$ubuntu_bin"
+		local tmp
+		tmp=$(mktemp)
+		{
+			echo "bash ~/.sound"
+			cat "$ubuntu_bin"
+		} > "$tmp"
+		mv "$tmp" "$ubuntu_bin"
+		chmod +x "$ubuntu_bin"
 	fi
 	if ! grep -q 'export DISPLAY=":1"' /etc/profile; then
 		echo 'export DISPLAY=":1"' >> /etc/profile
