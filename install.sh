@@ -85,8 +85,8 @@ if command -v pkg >/dev/null 2>&1; then
     log "[+] Atualizando lista de pacotes (pkg update -y)..."
     pkg update -y
 
-    log "[+] Instalando dependências (git, curl, wget, proot-distro, pulseaudio)..."
-    pkg install -y git curl wget proot-distro pulseaudio
+    log "[+] Instalando dependências (git, curl, wget, proot-distro, pulseaudio, termux-am)..."
+    pkg install -y git curl wget proot-distro pulseaudio termux-am
 else
     log "[!] Gerenciador de pacotes 'pkg' não encontrado. Pulando instalação de dependências." >&2
 fi

@@ -40,14 +40,22 @@ log() {
 WAKE_LOCKED=false
 acquire_wake_lock() {
     if command -v termux-wake-lock >/dev/null 2>&1; then
-        termux-wake-lock
-        WAKE_LOCKED=true
+        if termux-wake-lock >/dev/null 2>&1; then
+            WAKE_LOCKED=true
+        fi
     fi
 }
 
 release_wake_lock() {
     if [ "${WAKE_LOCKED}" = "true" ] && command -v termux-wake-unlock >/dev/null 2>&1; then
-        termux-wake-unlock
+        termux-wake-unlock >/dev/null 2>&1 || true
+    fi
+}
+
+# Recarrega as configurações do Termux sem quebrar em ambientes sem Android (ex.: Docker).
+termux_reload_settings() {
+    if command -v termux-reload-settings >/dev/null 2>&1; then
+        termux-reload-settings >/dev/null 2>&1 || true
     fi
 }
 
@@ -91,10 +99,10 @@ package() {
     if [ ! -d '/data/data/com.termux/files/home/storage' ]; then
         log "Setting up storage..."
         echo -e "${R} [${W}-${R}]${C} Setting up Storage...${W}"
-        termux-setup-storage
+        termux-setup-storage >/dev/null 2>&1 || true
     fi
 
-    if [[ $(command -v pulseaudio) && $(command -v proot-distro) ]]; then
+    if [[ $(command -v pulseaudio) && $(command -v proot-distro) && $(command -v am) ]]; then
         log "Packages already installed."
         echo -e "\n${R} [${W}-${R}]${G} Packages already installed.${W}"
     else
@@ -104,7 +112,7 @@ package() {
         fi
 
         pkg upgrade -y
-        packs=(pulseaudio proot-distro)
+        packs=(pulseaudio proot-distro termux-am)
         for x in "${packs[@]}"; do
             if ! pkg install -y "$x"; then
                 log "Failed to install package: $x"
@@ -117,8 +125,8 @@ package() {
 
 distro() {
     echo -e "\n${R} [${W}-${R}]${C} Checking for Distro...${W}"
-    termux-reload-settings
-    
+    termux_reload_settings
+
     UBUNTU_DIR=$(resolve_ubuntu_dir)
 
     if [[ -d "$UBUNTU_DIR" ]]; then
@@ -129,7 +137,7 @@ distro() {
             echo -e "\n${R} [${W}-${R}]${G} Error Installing Distro !\n${W}"
             exit 1
         fi
-        termux-reload-settings
+        termux_reload_settings
     fi
 
     UBUNTU_DIR=$(resolve_ubuntu_dir)
@@ -283,7 +291,7 @@ permission() {
         echo "proot-distro login --no-sysvipc ubuntu" > "$termux_prefix/bin/ubuntu"
     fi
     chmod +x "$termux_prefix/bin/ubuntu"
-    termux-reload-settings
+    termux_reload_settings
 
     if [[ -e "$PREFIX/bin/ubuntu" ]]; then
         banner
