@@ -146,15 +146,15 @@ Para que a instalação longa (rootfs, Node.js, Angular, .NET, CLIs de IA etc.) 
 
 ## Erro `[Process completed (signal 9) - press Enter]` / `[Process completed (signal 9) - press Enter]` error
 
-Esse erro ocorre no Android 12+ (comum em aparelhos Samsung) quando o sistema Android mata processos em segundo plano do Termux, como o `vncserver`. Isso é causado pelo **Phantom Process Killer** do Android, que limita processos "fantasmas" em execução.
+Esse erro ocorre no Android 12+ (comum em aparelhos Samsung) quando o sistema Android mata a sessão do Termux com `SIGKILL`. Ele é causado pelo **Phantom Process Killer** do Android, que limita processos "fantasmas" em segundo plano a **32 no total** no sistema e também termina processos que usam muita CPU. Cargas pesadas — como compilar código, rodar o `vncserver`/proot-distro ou usar assistentes de IA — costumam disparar o limite.
 
-> This error happens on Android 12+ (common on Samsung devices) when the Android OS kills background Termux processes like `vncserver`. It is caused by the Android **Phantom Process Killer**, which limits running "phantom" processes.
+> This error happens on Android 12+ (common on Samsung devices) when the Android OS force-kills the Termux session with `SIGKILL`. It is caused by the Android **Phantom Process Killer**, which limits background "phantom" processes to **32 total** system-wide and also terminates CPU-heavy processes. Heavy workloads — compiling code, running `vncserver`/proot-distro, or active AI workflows — usually trigger the limit.
 
 ### Soluções / Fixes
 
 - **Android 14+:**
   - Acesse **Configurações → Opções do desenvolvedor** e ative **Desativar restrições de processos filhos** (Disable child process restrictions).
-  - Restart o aparelho.
+  - Reinicie o aparelho.
   - Go to **Settings → Developer Options** and enable **Disable child process restrictions**, then reboot.
 
 - **Android 12, 12L e 13 (sem root / non-root):**
@@ -183,6 +183,14 @@ Esse erro ocorre no Android 12+ (comum em aparelhos Samsung) quando o sistema An
   # Android 12
   su -c "/system/bin/device_config set_sync_disabled_for_tests persistent; /system/bin/device_config put activity_manager max_phantom_processes 2147483647"
   ```
+
+### Dicas para evitar / Tips to avoid
+
+- **Mantenha a tela ligada** durante tarefas pesadas e não deixe o Termux rodar por longos períodos com a tela desligada.
+- **Reduza tarefas em segundo plano** (compilações multi-thread, serviços etc.) se o aparelho não estiver rooteado e não puder desabilitar o phantom killer.
+- **Use `termux-wake-lock`** para impedir que o Android durma o Termux durante instalações longas.
+
+> **Keep the screen on** during heavy tasks and avoid leaving Termux running for long periods with the screen locked. **Reduce background tasks** (multi-threaded builds, services, etc.) if the device is unrooted and cannot disable the phantom killer. **Use `termux-wake-lock`** to prevent Android from sleeping Termux during long installs.
 
 > **Atenção / Warning:** essas alterações podem ser revertidas por uma atualização do sistema. Reaplique os comandos se o erro voltar. / These changes may be reverted by a system update. Reapply the commands if the error returns.
 
