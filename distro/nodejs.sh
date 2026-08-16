@@ -67,12 +67,20 @@ node_arch() {
 resolve_latest_lts() {
 	local fallback="v22.23.2"
 
-	local resolved
-	resolved=$(curl -fsSL --connect-timeout 30 --max-time 60 \
-		"https://nodejs.org/dist/index.tab" 2>/dev/null \
-		| awk -F'\t' '$10 != "-" {print $1}' \
-		| sort -V \
-		| tail -1)
+	local resolved=""
+	if command -v timeout >/dev/null 2>&1; then
+		resolved=$(timeout 15s curl -fsSL --connect-timeout 10 --max-time 15 \
+			"https://nodejs.org/dist/index.tab" 2>/dev/null \
+			| awk -F'\t' '$10 != "-" {print $1}' \
+			| sort -V \
+			| tail -1)
+	else
+		resolved=$(curl -fsSL --connect-timeout 10 --max-time 15 \
+			"https://nodejs.org/dist/index.tab" 2>/dev/null \
+			| awk -F'\t' '$10 != "-" {print $1}' \
+			| sort -V \
+			| tail -1)
+	fi
 
 	if [ -n "$resolved" ]; then
 		echo "$resolved"
@@ -109,6 +117,9 @@ install_node() {
 	home_dir=$(user_home "$target_user")
 	local node_arch_name
 	node_arch_name=$(node_arch)
+
+	log "Arquitetura detectada: $arch (tarball: $node_arch_name)"
+
 	local node_version
 	node_version=$(resolve_latest_lts)
 	local slug="node-${node_version}-linux-${node_arch_name}"
@@ -116,7 +127,6 @@ install_node() {
 	local install_dir="/usr/local/lib/nodejs"
 	local cache_dir="/tmp/node-install-cache"
 
-	log "Arquitetura detectada: $arch (tarball: $node_arch_name)"
 	log "Instalando Node.js $node_version diretamente em $install_dir..."
 
 	remove_nvm
@@ -133,25 +143,47 @@ install_node() {
 	local tarball="$cache_dir/${slug}.tar.xz"
 
 	log "Baixando $tarball_url..."
-	if ! curl -fSL --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 5 \
-		--progress-bar -o "$tarball" "$tarball_url"; then
-		err "Falha ao baixar o tarball do Node.js."
-		return 1
+	if command -v timeout >/dev/null 2>&1; then
+		if ! timeout --kill-after=30 900 curl -fSL --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 5 \
+			--progress-bar -o "$tarball" "$tarball_url"; then
+			err "Falha ao baixar o tarball do Node.js."
+			return 1
+		fi
+	else
+		if ! curl -fSL --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 5 \
+			--progress-bar -o "$tarball" "$tarball_url"; then
+			err "Falha ao baixar o tarball do Node.js."
+			return 1
+		fi
 	fi
 
 	# Verifica checksum quando possível
 	local shasums="$cache_dir/SHASUMS256.txt"
 	local shasums_url="https://nodejs.org/dist/${node_version}/SHASUMS256.txt"
-	if curl -fsSL --connect-timeout 30 --max-time 120 -o "$shasums" "$shasums_url" 2>/dev/null; then
-		if grep -F "${slug}.tar.xz" "$shasums" | sha256sum -c - >/dev/null 2>&1; then
-			log "Checksum OK."
+	if command -v timeout >/dev/null 2>&1; then
+		if timeout --kill-after=5 30 curl -fsSL --connect-timeout 10 --max-time 30 -o "$shasums" "$shasums_url" 2>/dev/null; then
+			if grep -F "${slug}.tar.xz" "$shasums" | sha256sum -c - >/dev/null 2>&1; then
+				log "Checksum OK."
+			else
+				err "Checksum do tarball não confere. Abortando instalação."
+				rm -f "$tarball" "$shasums"
+				return 1
+			fi
 		else
-			err "Checksum do tarball não confere. Abortando instalação."
-			rm -f "$tarball" "$shasums"
-			return 1
+			warn "Não foi possível baixar SHASUMS256; continuando sem verificação."
 		fi
 	else
-		warn "Não foi possível baixar SHASUMS256; continuando sem verificação."
+		if curl -fsSL --connect-timeout 10 --max-time 30 -o "$shasums" "$shasums_url" 2>/dev/null; then
+			if grep -F "${slug}.tar.xz" "$shasums" | sha256sum -c - >/dev/null 2>&1; then
+				log "Checksum OK."
+			else
+				err "Checksum do tarball não confere. Abortando instalação."
+				rm -f "$tarball" "$shasums"
+				return 1
+			fi
+		else
+			warn "Não foi possível baixar SHASUMS256; continuando sem verificação."
+		fi
 	fi
 
 	log "Extraindo $tarball para $install_dir..."
