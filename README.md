@@ -122,7 +122,7 @@ bash user.sh
 sudo bash gui.sh
 ```
 
-8. Anote a senha do VNC! / Write down your VNC password!
+8. O `vncstart` vai solicitar uma senha para o VNC na primeira execução (ou usar a senha padrão `modded` se estiver rodando sem TTY). / `vncstart` will ask for a VNC password on the first run (or use the default password `modded` if running without a TTY).
 
 9. O Ubuntu está instalado. Use: / Ubuntu is installed. Use:
 
@@ -133,6 +133,31 @@ sudo bash gui.sh
 11. Abra o VNC VIEWER, clique em `+`, adicione o endereço `localhost:1` e dê um nome qualquer. / Open VNC VIEWER, tap `+`, enter the address `localhost:1` and give it any name.
 12. Defina a qualidade da imagem como **Alta** para melhor qualidade. / Set Picture Quality to **High** for better quality.
 13. Conecte-se e digite a senha. Aproveite! / Connect and enter the password. Enjoy!
+
+### `vncstart` trava ou não retorna / `vncstart` hangs or does not return
+
+Se o `vncstart` "travar" sem mostrar nada ou exigir uma senha que você não consegue digitar, o problema é que o TigerVNC precisa de um arquivo de senha (`~/.vnc/passwd`) e, sem ele, fica esperando entrada interativa. / If `vncstart` "hangs" with no output or asks for a password you cannot type, it is because TigerVNC needs a password file (`~/.vnc/passwd`) and, without it, waits for interactive input.
+
+A versão atual do `vncstart` já resolve isso: / The current version of `vncstart` already fixes this:
+
+- Se houver um TTY, ele pergunta a senha de forma segura. / If a TTY is available, it securely prompts for a password.
+- Se não houver TTY (por exemplo, auto-start no `.bashrc`), ele define a senha padrão `modded`. / If no TTY is available (e.g., auto-start in `.bashrc`), it sets the default password `modded`.
+
+Para definir sua própria senha antes de iniciar: / To set your own password before starting:
+
+```bash
+vncpasswd
+```
+
+Para trocar a senha depois: / To change the password later:
+
+```bash
+vncstop
+rm ~/.vnc/passwd
+vncstart
+```
+
+> Se você já tem uma instalação antiga, atualize os scripts com `bash update-system.sh` (dentro do Ubuntu) ou reinstale o `vncstart` manualmente: `sudo curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vncstart -o /usr/local/bin/vncstart && sudo chmod +x /usr/local/bin/vncstart`.
 
 ## Dicas para o Termux / Termux tips
 
