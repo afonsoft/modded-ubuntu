@@ -350,6 +350,13 @@ update_zsh_config() {
     fi
     chmod +x "$zsh_script" 2>/dev/null || true
 
+    local assets_src="${repo_dir}/distro/zsh-assets"
+    if [ -n "$repo_dir" ] && [ -d "$assets_src" ]; then
+        mkdir -p /usr/local/share/modded-ubuntu
+        rm -rf /usr/local/share/modded-ubuntu/zsh-assets
+        cp -r "$assets_src" /usr/local/share/modded-ubuntu/ 2>/dev/null || true
+    fi
+
     if [ -x "$zsh_script" ]; then
         bash "$zsh_script" --all 2>/dev/null || true
     fi

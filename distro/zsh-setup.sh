@@ -14,6 +14,20 @@ FONT_URL="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20N
 GIT_CLONE_TIMEOUT="120"
 CURL_MAX_TIME="90"
 
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && printf '%s' "$PWD")
+if [ -d "$SCRIPT_DIR/zsh-assets" ]; then
+    ZSH_ASSETS_DIR="$SCRIPT_DIR/zsh-assets"
+elif [ -d "/usr/local/share/modded-ubuntu/zsh-assets" ]; then
+    ZSH_ASSETS_DIR="/usr/local/share/modded-ubuntu/zsh-assets"
+else
+    ZSH_ASSETS_DIR=""
+fi
+
+has_network() {
+    command -v curl >/dev/null 2>&1 && \
+        curl -fsSL --connect-timeout 5 --max-time 10 -I https://github.com >/dev/null 2>&1
+}
+
 log() {
     echo "[zsh-setup] $*" >&2
 }
@@ -140,6 +154,20 @@ install_oh_my_zsh() {
         return 0
     fi
 
+    # Se houver Oh My Zsh empacotado no repo, copia; senao, clona se houver rede.
+    if [ -n "$ZSH_ASSETS_DIR" ] && [ -d "$ZSH_ASSETS_DIR/oh-my-zsh" ]; then
+        log "Copiando Oh My Zsh do repo para $user..."
+        rm -rf "$omz_dir"
+        cp -r "$ZSH_ASSETS_DIR/oh-my-zsh" "$omz_dir"
+        chown -R "$user:" "$omz_dir" 2>/dev/null || true
+        return 0
+    fi
+
+    if ! has_network; then
+        log "Aviso: sem rede para clonar Oh My Zsh para $user; continuando com Powerlevel10k standalone."
+        return 0
+    fi
+
     log "Instalando Oh My Zsh para $user... (repo: $OMZ_REPO)"
 
     if [ -d "$omz_dir" ]; then
@@ -158,9 +186,25 @@ install_powerlevel10k() {
     local user="$2"
     local p10k_dir="$home/.oh-my-zsh/custom/themes/powerlevel10k"
 
+    # Prefere o Powerlevel10k empacotado no repo (copia rapida, sem rede).
+    if [ -n "$ZSH_ASSETS_DIR" ] && [ -d "$ZSH_ASSETS_DIR/powerlevel10k" ]; then
+        log "Copiando Powerlevel10k do repo para $user..."
+        mkdir -p "$home/.oh-my-zsh/custom/themes"
+        rm -rf "$p10k_dir"
+        cp -r "$ZSH_ASSETS_DIR/powerlevel10k" "$p10k_dir"
+        chown -R "$user:" "$p10k_dir" 2>/dev/null || true
+        return 0
+    fi
+
+    # Atualiza se ja estiver instalado via git.
     if [ -d "$p10k_dir/.git" ]; then
         log "Atualizando Powerlevel10k para $user..."
         git -C "$p10k_dir" -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30 pull --ff-only 2>/dev/null || true
+        return 0
+    fi
+
+    if ! has_network; then
+        log "Aviso: sem rede para clonar Powerlevel10k para $user."
         return 0
     fi
 
@@ -179,7 +223,10 @@ write_zshrc() {
     local zshrc="$home/.zshrc"
 
     log "Escrevendo .zshrc para $user..."
-    cat > "$zshrc" <<'EOF'
+    if [ -n "$ZSH_ASSETS_DIR" ] && [ -f "$ZSH_ASSETS_DIR/zshrc" ]; then
+        cp -f "$ZSH_ASSETS_DIR/zshrc" "$zshrc"
+    else
+        cat > "$zshrc" <<'EOF'
 # Modded Ubuntu - zsh + Oh My Zsh + Powerlevel10k
 # Otimizado para tela pequena (Termux / Ubuntu proot)
 
@@ -203,8 +250,13 @@ export LC_ALL="${LC_ALL:-$LANG}"
 export LANGUAGE="${LANGUAGE:-en_US:en}"
 export TERM=xterm-256color
 
-# Evita erros se o Oh My Zsh ainda nao estiver totalmente instalado
-[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+# Evita erros se o Oh My Zsh ainda nao estiver totalmente instalado.
+# Fallback: carrega o Powerlevel10k standalone a partir do tema copiado do repo.
+if [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
+    source "$ZSH/oh-my-zsh.sh"
+elif [[ -f "$ZSH/custom/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+    source "$ZSH/custom/themes/powerlevel10k/powerlevel10k.zsh-theme"
+fi
 
 # Carrega a configuracao do Powerlevel10k
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
@@ -213,6 +265,7 @@ export TERM=xterm-256color
 # Se o .p10k.zsh for antigo, essa linha suprime o erro mesmo apos source.
 typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
 EOF
+    fi
 
     chown "$user:" "$zshrc" 2>/dev/null || true
     chmod 644 "$zshrc" 2>/dev/null || true
@@ -224,7 +277,10 @@ write_p10k() {
     local p10k="$home/.p10k.zsh"
 
     log "Escrevendo .p10k.zsh para $user..."
-    cat > "$p10k" <<'EOF'
+    if [ -n "$ZSH_ASSETS_DIR" ] && [ -f "$ZSH_ASSETS_DIR/p10k.zsh" ]; then
+        cp -f "$ZSH_ASSETS_DIR/p10k.zsh" "$p10k"
+    else
+        cat > "$p10k" <<'EOF'
 # Modded Ubuntu - Powerlevel10k otimizado para tela pequena
 # Dois prompts: dir + git na primeira linha, caractere na segunda;
 # hora curta do lado direito; sem linha em branco; transient prompt.
@@ -271,6 +327,7 @@ typeset -g POWERLEVEL9K_VCS_BACKENDS=(git)
 # O segmento vcs passa a usar git diretamente (mais lento, mas funcional).
 typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
 EOF
+    fi
 
     chown "$user:" "$p10k" 2>/dev/null || true
     chmod 644 "$p10k" 2>/dev/null || true
@@ -288,7 +345,10 @@ install_font() {
             mv "$termux_dir/font.ttf" "$termux_dir/font.ttf.bak.$(date +%s)"
         fi
 
-        if command -v curl >/dev/null 2>&1; then
+        if [ -n "$ZSH_ASSETS_DIR" ] && [ -f "$ZSH_ASSETS_DIR/MesloLGS-NF-Regular.ttf" ]; then
+            cp -f "$ZSH_ASSETS_DIR/MesloLGS-NF-Regular.ttf" "$termux_dir/font.ttf"
+            log "Fonte MesloLGS NF copiada para $termux_dir/font.ttf"
+        elif command -v curl >/dev/null 2>&1; then
             if run_curl -o "$termux_dir/font.ttf" "$FONT_URL" 2>/dev/null; then
                 log "Fonte MesloLGS NF instalada em $termux_dir/font.ttf"
             else
@@ -306,17 +366,23 @@ install_font() {
     local font_dir="/usr/local/share/fonts/modded-ubuntu"
     mkdir -p "$font_dir"
 
-    if [ -f "$font_dir/MesloLGS-NF-Regular.ttf" ]; then
-        log "Fonte MesloLGS NF ja instalada no sistema"
-        return 0
-    fi
-
-    if command -v curl >/dev/null 2>&1; then
-        if run_curl -o "$font_dir/MesloLGS-NF-Regular.ttf" "$FONT_URL" 2>/dev/null; then
-            log "Fonte MesloLGS NF instalada em $font_dir"
+    if [ -n "$ZSH_ASSETS_DIR" ] && [ -f "$ZSH_ASSETS_DIR/MesloLGS-NF-Regular.ttf" ]; then
+        if [ ! -f "$font_dir/MesloLGS-NF-Regular.ttf" ]; then
+            cp -f "$ZSH_ASSETS_DIR/MesloLGS-NF-Regular.ttf" "$font_dir/"
+            log "Fonte MesloLGS NF copiada para $font_dir"
         else
-            log "Aviso: nao foi possivel baixar a fonte MesloLGS NF"
-            return 0
+            log "Fonte MesloLGS NF ja instalada no sistema"
+        fi
+    elif command -v curl >/dev/null 2>&1; then
+        if [ -f "$font_dir/MesloLGS-NF-Regular.ttf" ]; then
+            log "Fonte MesloLGS NF ja instalada no sistema"
+        else
+            if run_curl -o "$font_dir/MesloLGS-NF-Regular.ttf" "$FONT_URL" 2>/dev/null; then
+                log "Fonte MesloLGS NF instalada em $font_dir"
+            else
+                log "Aviso: nao foi possivel baixar a fonte MesloLGS NF"
+                return 0
+            fi
         fi
     fi
 

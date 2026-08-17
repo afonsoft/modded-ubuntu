@@ -1,0 +1,37 @@
+# Modded Ubuntu - zsh + Oh My Zsh + Powerlevel10k
+# Otimizado para tela pequena (Termux / Ubuntu proot)
+
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="powerlevel10k/powerlevel10k"
+DISABLE_UPDATE_PROMPT=true
+DISABLE_AUTO_UPDATE=true
+DISABLE_MAGIC_FUNCTIONS=true
+DISABLE_AUTO_TITLE=true
+COMPLETION_WAITING_DOTS="true"
+CASE_SENSITIVE="false"
+HYPHEN_INSENSITIVE="true"
+HIST_STAMPS="yyyy-mm-dd"
+
+plugins=(git)
+
+# Locale: mantem o existente ou usa C.UTF-8 como fallback seguro
+export LANG="${LANG:-C.UTF-8}"
+export LC_ALL="${LC_ALL:-$LANG}"
+export LANGUAGE="${LANGUAGE:-en_US:en}"
+export TERM=xterm-256color
+
+# Evita erros se o Oh My Zsh ainda nao estiver totalmente instalado.
+# Fallback: carrega o Powerlevel10k standalone a partir do tema copiado do repo.
+if [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
+    source "$ZSH/oh-my-zsh.sh"
+elif [[ -f "$ZSH/custom/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+    source "$ZSH/custom/themes/powerlevel10k/powerlevel10k.zsh-theme"
+fi
+
+# Carrega a configuracao do Powerlevel10k
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
+
+# Garante que gitstatus esteja desabilitado em PRoot/Termux.
+# Se o .p10k.zsh for antigo, essa linha suprime o erro mesmo apos source.
+typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
