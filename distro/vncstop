@@ -24,8 +24,8 @@ if [[ -n "$_vncserver_cmd" ]]; then
     done
 fi
 
-pkill -f "Xtigervnc" >/dev/null 2>&1 || true
-pkill -f "Xvnc" >/dev/null 2>&1 || true
+pkill -x "Xtigervnc" >/dev/null 2>&1 || true
+pkill -x "Xvnc" >/dev/null 2>&1 || true
 
 for vnc_dir in "${_vnc_dirs[@]}"; do
     rm -rf "${vnc_dir}"/*.pid "${vnc_dir}"/*.log

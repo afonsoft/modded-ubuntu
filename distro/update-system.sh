@@ -24,6 +24,15 @@ warn() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] $*" | tee -a /tmp/update-system.log
 }
 
+# Preferencia pelo repositorio local do Termux (atualizado pelo update.sh).
+# Fall back para download direto do master quando o local nao estiver disponivel.
+get_repo_dir() {
+    local local_repo="/data/data/com.termux/files/home/modded-ubuntu"
+    if [ -d "${local_repo}/distro" ]; then
+        echo "$local_repo"
+    fi
+}
+
 configure_locale_timezone() {
     log "Configurando locale en_US.UTF-8 e timezone America/Sao_Paulo..."
     echo -e "${C} [*] Aplicando locale en_US.UTF-8 e timezone America/Sao_Paulo...${W}"
@@ -147,26 +156,31 @@ update_vnc_scripts() {
     log "Atualizando scripts VNC..."
     echo -e "${C} [*] Atualizando scripts VNC...${W}"
 
-    if ! command -v curl >/dev/null 2>&1; then
-        warn "curl não encontrado. Pulando atualização dos scripts VNC."
-        return 0
-    fi
-
     local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
     local scripts=("vncstart" "vncstop" "vncstart-fhd" "vncstart-qhd")
+    local repo_dir
+    repo_dir=$(get_repo_dir)
     local tmp_dir
     tmp_dir="$(mktemp -d)"
 
     local script
     for script in "${scripts[@]}"; do
-        local tmp_file="${tmp_dir}/${script}"
+        local src_file=""
         local dest="/usr/local/bin/${script}"
-        if curl --fail --retry 3 --retry-delay 2 --location --output "$tmp_file" "${base_url}/${script}" >/dev/null 2>&1; then
-            cp -f "$tmp_file" "$dest"
+
+        if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/${script}" ]; then
+            src_file="${repo_dir}/distro/${script}"
+        elif command -v curl >/dev/null 2>&1 && \
+             curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/${script}" "${base_url}/${script}" >/dev/null 2>&1; then
+            src_file="${tmp_dir}/${script}"
+        fi
+
+        if [ -n "$src_file" ]; then
+            cp -f "$src_file" "$dest"
             chmod +x "$dest"
             log "${script} atualizado em ${dest}"
         else
-            warn "Falha ao baixar ${script}. Versão atual mantida."
+            warn "Falha ao atualizar ${script}. Versão atual mantida."
         fi
     done
 
@@ -179,19 +193,29 @@ update_gui_scripts() {
 
     local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
     local scripts=("gui.sh" "firefox.sh")
+    local repo_dir
+    repo_dir=$(get_repo_dir)
     local tmp_dir
     tmp_dir="$(mktemp -d)"
 
     local script
     for script in "${scripts[@]}"; do
-        local tmp_file="${tmp_dir}/${script}"
+        local src_file=""
         local dest="/usr/local/bin/${script}"
-        if curl --fail --retry 3 --retry-delay 2 --location --output "$tmp_file" "${base_url}/${script}" >/dev/null 2>&1; then
-            cp -f "$tmp_file" "$dest"
+
+        if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/${script}" ]; then
+            src_file="${repo_dir}/distro/${script}"
+        elif command -v curl >/dev/null 2>&1 && \
+             curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/${script}" "${base_url}/${script}" >/dev/null 2>&1; then
+            src_file="${tmp_dir}/${script}"
+        fi
+
+        if [ -n "$src_file" ]; then
+            cp -f "$src_file" "$dest"
             chmod +x "$dest"
             log "${script} atualizado em ${dest}"
         else
-            warn "Falha ao baixar ${script}. Versão atual mantida."
+            warn "Falha ao atualizar ${script}. Versão atual mantida."
         fi
     done
     rm -rf "$tmp_dir"
@@ -314,9 +338,11 @@ update_zsh_config() {
     echo -e "${C} [*] Atualizando zsh + Oh My Zsh + Powerlevel10k...${W}"
 
     local zsh_script="/usr/local/bin/zsh-setup"
+    local repo_dir
+    repo_dir=$(get_repo_dir)
 
-    if [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh ]; then
-        cp -f /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh "$zsh_script"
+    if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/zsh-setup.sh" ]; then
+        cp -f "${repo_dir}/distro/zsh-setup.sh" "$zsh_script"
     elif command -v curl >/dev/null 2>&1; then
         curl -fsSL --retry 3 --retry-delay 2 \
             "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/zsh-setup.sh" \
@@ -333,18 +359,26 @@ update_xfce_config() {
     log "Atualizando configurações XFCE, .desktop e systemd..."
     echo -e "${C} [*] Atualizando configurações XFCE, .desktop e systemd...${W}"
 
-    local base_url="https://github.com/afonsoft/modded-ubuntu/archive/refs/heads/master.tar.gz"
+    local repo_dir
+    repo_dir=$(get_repo_dir)
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    local repo_dir=""
     local download_ok=0
 
-    if command -v curl >/dev/null 2>&1 && \
-       curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/repo.tar.gz" "$base_url" >/dev/null 2>&1; then
-        if tar -xzf "${tmp_dir}/repo.tar.gz" -C "$tmp_dir" >/dev/null 2>&1; then
-            repo_dir=$(find "$tmp_dir" -maxdepth 1 -type d -name "modded-ubuntu-*" | head -n 1)
-            download_ok=1
+    # Prefere o repositorio local do Termux; caso nao exista, baixa o master.
+    if [ -z "$repo_dir" ]; then
+        local base_url="https://github.com/afonsoft/modded-ubuntu/archive/refs/heads/master.tar.gz"
+        if command -v curl >/dev/null 2>&1 && \
+           curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/repo.tar.gz" "$base_url" >/dev/null 2>&1; then
+            if tar -xzf "${tmp_dir}/repo.tar.gz" -C "$tmp_dir" >/dev/null 2>&1; then
+                repo_dir=$(find "$tmp_dir" -maxdepth 1 -type d -name "modded-ubuntu-*" | head -n 1)
+                if [ -n "$repo_dir" ]; then
+                    download_ok=1
+                fi
+            fi
         fi
+    else
+        download_ok=1
     fi
 
     if [ "$download_ok" -eq 1 ] && [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/xfce-apply.sh" ]; then
@@ -363,7 +397,7 @@ update_xfce_config() {
         fi
         log "xfce-apply, xfce-config, systemd e patches atualizados."
     else
-        warn "Falha ao baixar atualização do repositório. Usando versão local."
+        warn "Falha ao obter atualização do repositório. Usando versão local."
     fi
 
     if [ -x /usr/local/bin/xfce-apply ]; then
