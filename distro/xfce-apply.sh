@@ -33,17 +33,14 @@ install_packages() {
 		return 0
 	fi
 
-	local pkgs=(
-		greybird-gtk-theme
-		papirus-icon-theme
-		breeze-cursor-theme
-		fonts-hack-ttf
-		fonts-noto-color-emoji
-	)
-
 	echo "[*] Instalando/verificando temas, ícones e fontes..."
 	apt-get update -y >/dev/null 2>&1 || true
-	apt-get install -y --no-install-recommends "${pkgs[@]}" 2>/dev/null || true
+
+	# Temas e ícones principais
+	apt-get install -y --no-install-recommends greybird-gtk-theme papirus-icon-theme breeze-cursor-theme fonts-noto-color-emoji 2>/dev/null || true
+
+	# Fonte Hack: o nome do pacote mudou em versões mais recentes do Ubuntu
+	apt-get install -y --no-install-recommends fonts-hack-ttf 2>/dev/null || apt-get install -y --no-install-recommends fonts-hack 2>/dev/null || true
 }
 
 install_global_files() {
@@ -113,18 +110,18 @@ apply_user() {
 	fi
 
 	# Garante permissões corretas
-	chown -R "$user:" "$xfce_dir" 2>/dev/null || true
+	chown -R "$user:" "$xfce_dir" "$home_dir/.local" 2>/dev/null || true
 	chmod -R u+rwX "$xfce_dir" 2>/dev/null || true
 
-	# Atalhos .desktop por usuário (fallback quando não é root)
-	if ! is_root; then
-		mkdir -p "$home_dir/.local/share/applications"
-		if [ -d "$XFCE_CONFIG_SRC/desktop" ]; then
-			cp -f "$XFCE_CONFIG_SRC/desktop/"*.desktop "$home_dir/.local/share/applications/" 2>/dev/null || true
-		fi
-		if command -v update-desktop-database >/dev/null 2>&1; then
-			update-desktop-database "$home_dir/.local/share/applications" 2>/dev/null || true
-		fi
+	# Atalhos .desktop por usuário
+	local user_app_dir="$home_dir/.local/share/applications"
+	mkdir -p "$user_app_dir"
+	if [ -d "$XFCE_CONFIG_SRC/desktop" ]; then
+		cp -f "$XFCE_CONFIG_SRC/desktop/"*.desktop "$user_app_dir/" 2>/dev/null || true
+		chmod 644 "$user_app_dir/"*.desktop 2>/dev/null || true
+	fi
+	if command -v update-desktop-database >/dev/null 2>&1; then
+		update-desktop-database "$user_app_dir" 2>/dev/null || true
 	fi
 
 	echo "[*] Configuração XFCE aplicada para $user"
