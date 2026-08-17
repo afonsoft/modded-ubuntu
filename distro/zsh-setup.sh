@@ -8,9 +8,11 @@ set -u
 #   zsh-setup.sh --user USUARIO  # configura um usuario no Ubuntu (proot)
 #   zsh-setup.sh --all           # root + todos os usuarios regulares do Ubuntu
 
-OMZ_INSTALL_URL="https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+OMZ_REPO="https://github.com/ohmyzsh/ohmyzsh.git"
 P10K_REPO="https://github.com/romkatv/powerlevel10k.git"
 FONT_URL="https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf"
+GIT_CLONE_TIMEOUT="120"
+CURL_MAX_TIME="90"
 
 log() {
     echo "[zsh-setup] $*" >&2
@@ -20,6 +22,43 @@ is_termux() {
     # Dentro do proot o /data/data/com.termux/files/usr fica bind-mountado,
     # entao a existencia do diretorio nao basta. Usa TERMUX_VERSION ou HOME do Termux.
     [ -n "${TERMUX_VERSION:-}" ] || [ "${HOME:-}" = "/data/data/com.termux/files/home" ]
+}
+
+# Clona um repositorio git com limite de tempo, para evitar travamentos
+# em redes lentas ou indisponiveis dentro do PRoot/Termux.
+run_git_clone() {
+    local repo="$1"
+    local dest="$2"
+    local tmp_config
+
+    tmp_config="$(mktemp)"
+    cat > "$tmp_config" <<EOF
+[http]
+    lowSpeedLimit = 1000
+    lowSpeedTime = 30
+[core]
+    askpass =
+EOF
+
+    export GIT_CONFIG_GLOBAL="$tmp_config"
+    export GIT_TERMINAL_PROMPT=0
+    export GIT_ASKPASS=true
+
+    local rc=0
+    if command -v timeout >/dev/null 2>&1; then
+        timeout "$GIT_CLONE_TIMEOUT" git clone --depth=1 --single-branch -- "$repo" "$dest" || rc=$?
+    else
+        git clone --depth=1 --single-branch -- "$repo" "$dest" || rc=$?
+    fi
+
+    unset GIT_CONFIG_GLOBAL GIT_TERMINAL_PROMPT GIT_ASKPASS
+    rm -f "$tmp_config"
+    return $rc
+}
+
+run_curl() {
+    command -v curl >/dev/null 2>&1 || return 1
+    curl -fsSL --connect-timeout 10 --max-time "$CURL_MAX_TIME" --retry 3 --retry-delay 2 "$@"
 }
 
 run_as_target() {
@@ -101,19 +140,16 @@ install_oh_my_zsh() {
         return 0
     fi
 
-    log "Instalando Oh My Zsh para $user..."
-    (
-        export RUNZSH=no
-        export CHSH=no
-        export HOME="$home"
-        export ZSH="$omz_dir"
-        if command -v curl >/dev/null 2>&1; then
-            sh -c "$(curl -fsSL --retry 3 --retry-delay 2 "$OMZ_INSTALL_URL")" "" --unattended 2>/dev/null || true
-        fi
-    )
+    log "Instalando Oh My Zsh para $user... (repo: $OMZ_REPO)"
 
     if [ -d "$omz_dir" ]; then
+        rm -rf "$omz_dir"
+    fi
+
+    if run_git_clone "$OMZ_REPO" "$omz_dir"; then
         chown -R "$user:" "$omz_dir" 2>/dev/null || true
+    else
+        log "Aviso: nao foi possivel clonar Oh My Zsh para $user (rede/tempo esgotado)."
     fi
 }
 
@@ -124,16 +160,16 @@ install_powerlevel10k() {
 
     if [ -d "$p10k_dir/.git" ]; then
         log "Atualizando Powerlevel10k para $user..."
-        git -C "$p10k_dir" pull --ff-only 2>/dev/null || true
+        git -C "$p10k_dir" -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30 pull --ff-only 2>/dev/null || true
         return 0
     fi
 
     log "Instalando Powerlevel10k para $user..."
     mkdir -p "$home/.oh-my-zsh/custom/themes"
-    git clone --depth=1 -- "$P10K_REPO" "$p10k_dir" 2>/dev/null || true
-
-    if [ -d "$p10k_dir" ]; then
+    if run_git_clone "$P10K_REPO" "$p10k_dir"; then
         chown -R "$user:" "$p10k_dir" 2>/dev/null || true
+    else
+        log "Aviso: nao foi possivel clonar Powerlevel10k para $user (rede/tempo esgotado)."
     fi
 }
 
@@ -253,7 +289,7 @@ install_font() {
         fi
 
         if command -v curl >/dev/null 2>&1; then
-            if curl -fL --retry 3 --retry-delay 2 -o "$termux_dir/font.ttf" "$FONT_URL" 2>/dev/null; then
+            if run_curl -o "$termux_dir/font.ttf" "$FONT_URL" 2>/dev/null; then
                 log "Fonte MesloLGS NF instalada em $termux_dir/font.ttf"
             else
                 log "Aviso: nao foi possivel baixar a fonte MesloLGS NF para Termux"
@@ -276,7 +312,7 @@ install_font() {
     fi
 
     if command -v curl >/dev/null 2>&1; then
-        if curl -fL --retry 3 --retry-delay 2 -o "$font_dir/MesloLGS-NF-Regular.ttf" "$FONT_URL" 2>/dev/null; then
+        if run_curl -o "$font_dir/MesloLGS-NF-Regular.ttf" "$FONT_URL" 2>/dev/null; then
             log "Fonte MesloLGS NF instalada em $font_dir"
         else
             log "Aviso: nao foi possivel baixar a fonte MesloLGS NF"

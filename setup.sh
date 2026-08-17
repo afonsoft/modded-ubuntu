@@ -337,8 +337,9 @@ EOF
     chmod +x "$termux_prefix/bin/ubuntu"
 
     # Configura zsh + Oh My Zsh + Powerlevel10k no shell do Termux
+    local zsh_setup_log="$HOME/.zsh-setup-termux.log"
     if [[ -e "$CURR_DIR/distro/zsh-setup.sh" ]]; then
-        bash "$CURR_DIR/distro/zsh-setup.sh" --termux 2>/dev/null || true
+        bash "$CURR_DIR/distro/zsh-setup.sh" --termux 2>&1 | tee -a "$zsh_setup_log" || true
     fi
 
     termux_reload_settings
