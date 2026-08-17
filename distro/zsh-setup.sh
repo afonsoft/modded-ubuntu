@@ -172,6 +172,10 @@ export TERM=xterm-256color
 
 # Carrega a configuracao do Powerlevel10k
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
+
+# Garante que gitstatus esteja desabilitado em PRoot/Termux.
+# Se o .p10k.zsh for antigo, essa linha suprime o erro mesmo apos source.
+typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
 EOF
 
     chown "$user:" "$zshrc" 2>/dev/null || true
@@ -225,6 +229,11 @@ typeset -g POWERLEVEL9K_RIGHT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
 
 # Restringe o VCS apenas ao git e limita icones extras
 typeset -g POWERLEVEL9K_VCS_BACKENDS=(git)
+
+# Desabilita o daemon gitstatus para evitar erro "gitstatus failed to initialize"
+# em PRoot/Termux (falta de rede, arquitetura ou permissao para executar o binario).
+# O segmento vcs passa a usar git diretamente (mais lento, mas funcional).
+typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
 EOF
 
     chown "$user:" "$p10k" 2>/dev/null || true
