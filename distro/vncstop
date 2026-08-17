@@ -11,17 +11,24 @@ for cmd in vncserver tigervncserver; do
     fi
 done
 
+_vnc_dirs=("${HOME}/.vnc" "${HOME}/.config/tigervnc")
+
 if [[ -n "$_vncserver_cmd" ]]; then
-    for pidfile in "${HOME}"/.vnc/*:*.pid; do
-        [ -f "$pidfile" ] || continue
-        display="${pidfile##*:}"
-        display=":${display%.pid}"
-        "$_vncserver_cmd" -kill "$display" >/dev/null 2>&1 || true
+    for vnc_dir in "${_vnc_dirs[@]}"; do
+        for pidfile in "${vnc_dir}"/*:*.pid; do
+            [ -f "$pidfile" ] || continue
+            display="${pidfile##*:}"
+            display=":${display%.pid}"
+            "$_vncserver_cmd" -kill "$display" >/dev/null 2>&1 || true
+        done
     done
 fi
 
 pkill -f "Xtigervnc" >/dev/null 2>&1 || true
 pkill -f "Xvnc" >/dev/null 2>&1 || true
 
-rm -rf "${HOME}"/.vnc/*.pid "${HOME}"/.vnc/*.log
+for vnc_dir in "${_vnc_dirs[@]}"; do
+    rm -rf "${vnc_dir}"/*.pid "${vnc_dir}"/*.log
+done
+
 rm -rf /tmp/.X*-lock /tmp/.X11-unix/X*
