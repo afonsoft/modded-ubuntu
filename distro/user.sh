@@ -40,7 +40,7 @@ install_sudo() {
     echo -e "\n${R} [${W}-${R}]${C} Installing Sudo...${W}"
     apt update -y || { log "Failed to update apt"; exit 1; }
     apt install sudo -y || { log "Failed to install sudo"; exit 1; }
-    apt install wget apt-utils locales-all dialog tzdata -y || { log "Failed to install additional packages"; exit 1; }
+    apt install wget apt-utils locales-all dialog tzdata zsh git curl ca-certificates unzip fontconfig -y || { log "Failed to install additional packages"; exit 1; }
     log "Sudo installation completed."
     echo -e "\n${R} [${W}-${R}]${G} Sudo Successfully Installed!${W}"
 }
@@ -129,6 +129,13 @@ login() {
     fi
     usermod -aG sudo "$user" || { log "Failed to add user to sudo group"; exit 1; }
     echo "${user}:${pass}" | chpasswd || { log "Failed to set password"; exit 1; }
+
+    # Configura zsh + Oh My Zsh + Powerlevel10k para root e para o usuario criado
+    if [[ -e '/usr/local/bin/zsh-setup' ]]; then
+        bash /usr/local/bin/zsh-setup --all 2>/dev/null || true
+    elif [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh' ]]; then
+        bash /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh --all 2>/dev/null || true
+    fi
 
     # Evita duplicar a linha no sudoers se o script for executado mais de uma vez.
     if ! grep -q "^${user} ALL=(ALL:ALL) NOPASSWD:ALL" /etc/sudoers; then

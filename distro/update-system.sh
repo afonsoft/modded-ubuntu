@@ -290,6 +290,26 @@ update_systemd_vnc_service() {
     fi
 }
 
+update_zsh_config() {
+    log "Atualizando configuração do zsh..."
+    echo -e "${C} [*] Atualizando zsh + Oh My Zsh + Powerlevel10k...${W}"
+
+    local zsh_script="/usr/local/bin/zsh-setup"
+
+    if [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh ]; then
+        cp -f /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh "$zsh_script"
+    elif command -v curl >/dev/null 2>&1; then
+        curl -fsSL --retry 3 --retry-delay 2 \
+            "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/zsh-setup.sh" \
+            -o "$zsh_script" 2>/dev/null || true
+    fi
+    chmod +x "$zsh_script" 2>/dev/null || true
+
+    if [ -x "$zsh_script" ]; then
+        bash "$zsh_script" --all 2>/dev/null || true
+    fi
+}
+
 update_xfce_config() {
     log "Atualizando configurações XFCE, .desktop e systemd..."
     echo -e "${C} [*] Atualizando configurações XFCE, .desktop e systemd...${W}"
@@ -366,6 +386,7 @@ main() {
     fix_sound
     update_vnc_scripts
     update_gui_scripts
+    update_zsh_config
     update_xfce_config
     cleanup
 
