@@ -299,6 +299,18 @@ Dicas para melhor latência e qualidade no S26: / Tips for best quality and lowe
 - Use `-zliblevel 0` (já configurado) para conexões locais, reduzindo o uso de CPU.
 - Mantenha o wake-lock ativo (`termux-wake-lock`) durante sessões longas.
 
+## Capturas de tela / Screenshots
+
+Interface XFCE com o papel de parede tecnologia, tema Greybird-dark, ícones Papirus-Dark e o menu Whisker com os lançadores favoritos (Devin Desktop, Chromium, Thunar, Claude Code, OpenCode, Antigravity, Firefox e LibreOffice quando instalados).
+
+<p align="center">
+  <img src="./screenshots/xfce-desktop.png" alt="Área de trabalho do modded-ubuntu" width="80%">
+</p>
+
+<p align="center">
+  <img src="./screenshots/xfce-menu.png" alt="Menu Whisker com favoritos" width="80%">
+</p>
+
 ## Ferramentas de desenvolvimento / Development tools
 
 Durante `sudo bash gui.sh` você pode instalar:

@@ -43,9 +43,9 @@
       <property name="command-switchuser" type="string" value=""/>
       <property name="command-menueditor" type="string" value="alacarte"/>
       <property name="favorites" type="array">
-        <value type="string" value="devin-desktop.desktop"/>
+        <value type="string" value="devin.desktop"/>
         <value type="string" value="firefox.desktop"/>
-        <value type="string" value="chromium-browser.desktop"/>
+        <value type="string" value="chromium.desktop"/>
         <value type="string" value="xfce4-terminal.desktop"/>
         <value type="string" value="thunar.desktop"/>
         <value type="string" value="claude-code.desktop"/>
@@ -59,7 +59,7 @@
       <property name="position-profile-alternate" type="bool" value="true"/>
     </property>
     <property name="plugin-2" type="string" value="separator">
-      <property name="expand" type="bool" value="true"/>
+      <property name="expand" type="bool" value="false"/>
       <property name="style" type="uint" value="0"/>
     </property>
     <property name="plugin-3" type="string" value="tasklist">
@@ -69,7 +69,7 @@
       <property name="flat-buttons" type="bool" value="true"/>
     </property>
     <property name="plugin-4" type="string" value="separator">
-      <property name="expand" type="bool" value="false"/>
+      <property name="expand" type="bool" value="true"/>
       <property name="style" type="uint" value="0"/>
     </property>
     <property name="plugin-5" type="string" value="systray">
