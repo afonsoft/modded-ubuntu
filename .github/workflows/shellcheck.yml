@@ -19,3 +19,4 @@ jobs:
         scandir: './'
         ignore_names: 'proot-distro.sh'
         severity: warning
+        ignore_paths: distro/zsh-assets
