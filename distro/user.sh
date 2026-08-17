@@ -82,17 +82,17 @@ export LANGUAGE=en_US:en' >> /root/.bashrc
 read_credentials() {
     if [ -n "${MODDED_USER:-}" ]; then
         user="$MODDED_USER"
-        if ! [[ "$user" =~ ^[a-z]+$ ]]; then
-            echo -e "${R}MODDED_USER must be lowercase and contain no special characters.${W}" >&2
+        if ! [[ "$user" =~ ^[a-z][a-z0-9_-]*$ ]]; then
+            echo -e "${R}MODDED_USER deve comecar com letra e conter apenas letras minusculas, numeros, '_' ou '-'.${W}" >&2
             exit 1
         fi
     else
         while true; do
             read -p $' \e[1;31m[\e[0m\e[1;77m~\e[0m\e[1;31m]\e[0m\e[1;92m Input Username [Lowercase] : \e[0m\e[1;96m' user
-            if [[ "$user" =~ ^[a-z]+$ ]]; then
+            if [[ "$user" =~ ^[a-z][a-z0-9_-]*$ ]]; then
                 break
             else
-                echo -e "${R}Username must be lowercase and contain no special characters.${W}"
+                echo -e "${R}Username deve comecar com letra e conter apenas letras minusculas, numeros, '_' ou '-'.${W}"
             fi
         done
     fi

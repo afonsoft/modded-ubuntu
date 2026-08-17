@@ -2,6 +2,7 @@
 Name=Devin Desktop
 Comment=Devin Desktop IDE
 Exec=devin-desktop
+TryExec=devin-desktop
 Type=Application
 Terminal=false
 Icon=applications-development

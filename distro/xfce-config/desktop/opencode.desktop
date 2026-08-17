@@ -2,6 +2,7 @@
 Name=OpenCode
 Comment=OpenCode AI CLI
 Exec=opencode
+TryExec=opencode
 Type=Application
 Terminal=true
 Icon=applications-development

@@ -2,6 +2,7 @@
 Name=Claude Code
 Comment=Assistente de codificação Claude Code
 Exec=claude
+TryExec=claude
 Type=Application
 Terminal=true
 Icon=utilities-terminal

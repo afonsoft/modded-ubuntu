@@ -38,8 +38,6 @@ detect_user() {
 	echo "$user_name"
 }
 
-username=$(detect_user)
-
 user_home() {
 	local user="$1"
 	local home_dir=""
@@ -270,11 +268,13 @@ install_chromium() {
 }
 
 install_firefox() {
-	[[ $(command -v firefox) ]] && echo "${Y}Firefox is already Installed!${W}\n" || {
-		echo -e "${G}Installing ${Y}Firefox${W}"
+	echo -e "${G}Installing ${Y}Firefox${W}"
+	if [ -x /usr/local/bin/firefox.sh ]; then
+		bash /usr/local/bin/firefox.sh
+	else
 		bash <(curl -fsSL "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/firefox.sh")
-		echo -e "${G} Firefox Installed Successfully\n${W}"
-	}
+	fi
+	echo -e "${G} Firefox Installed Successfully\n${W}"
 }
 
 install_git_gh() {
@@ -726,7 +726,8 @@ config() {
 
 	echo -e "${R} [${W}-${R}]${C} Aplicando tema, ícones, papel de parede e layout XFCE..\n"${W}
 	if command -v xfce-apply >/dev/null 2>&1; then
-		xfce-apply --user "$username"
+		# Aplica o tema, painel, ícones, papel de parede e atalhos para todos os usuários.
+		xfce-apply --all
 	else
 		echo -e "${Y} xfce-apply não encontrado. Pulando customizações XFCE.\n${W}"
 	fi
