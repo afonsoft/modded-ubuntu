@@ -282,6 +282,12 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/zsh-setup"
     fi
 
+    if [[ -d "$CURR_DIR/distro/zsh-assets" ]]; then
+        mkdir -p "$UBUNTU_DIR/usr/local/share/modded-ubuntu"
+        rm -rf "$UBUNTU_DIR/usr/local/share/modded-ubuntu/zsh-assets"
+        cp -r "$CURR_DIR/distro/zsh-assets" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
+    fi
+
     if [[ -e "$CURR_DIR/distro/xfce-apply.sh" ]]; then
         cp -f "$CURR_DIR/distro/xfce-apply.sh" "$UBUNTU_DIR/usr/local/bin/xfce-apply"
         chmod +x "$UBUNTU_DIR/usr/local/bin/xfce-apply"

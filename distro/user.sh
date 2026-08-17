@@ -133,11 +133,15 @@ login() {
     # Configura zsh + Oh My Zsh + Powerlevel10k para root e para o usuario criado
     local zsh_setup_log="${PREFIX:-/data/data/com.termux/files/usr}/tmp/zsh-setup.log"
     if [[ -e '/usr/local/bin/zsh-setup' ]]; then
-        log "Configurando zsh para todos os usuarios (log em $zsh_setup_log)..."
-        bash /usr/local/bin/zsh-setup --all 2>&1 | tee -a "$zsh_setup_log" || true
+        log "Configurando zsh para root (log em $zsh_setup_log)..."
+        bash /usr/local/bin/zsh-setup --user root 2>&1 | tee -a "$zsh_setup_log" || true
+        log "Configurando zsh para $user (log em $zsh_setup_log)..."
+        bash /usr/local/bin/zsh-setup --user "$user" 2>&1 | tee -a "$zsh_setup_log" || true
     elif [[ -e '/data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh' ]]; then
-        log "Configurando zsh para todos os usuarios (log em $zsh_setup_log)..."
-        bash /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh --all 2>&1 | tee -a "$zsh_setup_log" || true
+        log "Configurando zsh para root (log em $zsh_setup_log)..."
+        bash /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh --user root 2>&1 | tee -a "$zsh_setup_log" || true
+        log "Configurando zsh para $user (log em $zsh_setup_log)..."
+        bash /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh --user "$user" 2>&1 | tee -a "$zsh_setup_log" || true
     fi
 
     # Evita duplicar a linha no sudoers se o script for executado mais de uma vez.
