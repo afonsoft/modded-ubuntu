@@ -1,0 +1,13 @@
+[Unit]
+Description=modded-ubuntu VNC server
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/vncstart
+ExecStop=/usr/local/bin/vncstop
+Environment="VNC_GEOMETRY=1440x720"
+
+[Install]
+WantedBy=default.target
