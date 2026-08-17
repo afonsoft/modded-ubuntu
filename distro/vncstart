@@ -78,6 +78,7 @@ echo "Iniciando VNC em localhost:1 (geometria: $geometry)..."
     -depth 24 \
     -zliblevel 0 \
     -extension MIT-SHM \
+    -rfbauth "$passwd_file" \
     -name modded-ubuntu \
     -xstartup /usr/bin/xfce4-session
 

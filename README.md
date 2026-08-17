@@ -134,14 +134,34 @@ sudo bash gui.sh
 12. Defina a qualidade da imagem como **Alta** para melhor qualidade. / Set Picture Quality to **High** for better quality.
 13. Conecte-se e digite a senha. Aproveite! / Connect and enter the password. Enjoy!
 
+### Atualizando o modded-ubuntu / Updating modded-ubuntu
+
+Para atualizar os scripts VNC, pacotes do Ubuntu e configurações sem reinstalar tudo: / To update the VNC scripts, Ubuntu packages, and settings without reinstalling everything:
+
+- **Dentro do Ubuntu:** / **Inside Ubuntu:**
+
+  ```bash
+  sudo update-system
+  ```
+
+- **No Termux (atualiza o repositório e roda o `update-system` dentro do Ubuntu):** / **In Termux (updates the repository and runs `update-system` inside Ubuntu):**
+
+  ```bash
+  cd ~/modded-ubuntu && bash update.sh
+  ```
+
+> O `update-system` baixa `vncstart`, `vncstop`, `vncstart-fhd` e `vncstart-qhd` direto do `master`, então qualquer correção recente já é aplicada automaticamente. / `update-system` downloads `vncstart`, `vncstop`, `vncstart-fhd`, and `vncstart-qhd` directly from `master`, so any recent fix is applied automatically.
+
 ### `vncstart` trava ou não retorna / `vncstart` hangs or does not return
 
-Se o `vncstart` "travar" sem mostrar nada ou exigir uma senha que você não consegue digitar, o problema é que o TigerVNC precisa de um arquivo de senha (`~/.vnc/passwd`) e, sem ele, fica esperando entrada interativa. / If `vncstart` "hangs" with no output or asks for a password you cannot type, it is because TigerVNC needs a password file (`~/.vnc/passwd`) and, without it, waits for interactive input.
+Se o `vncstart` "travar" sem mostrar nada, o TigerVNC provavelmente está esperando uma senha interativamente. / If `vncstart` "hangs" with no output, TigerVNC is probably waiting for a password interactively.
 
 A versão atual do `vncstart` já resolve isso: / The current version of `vncstart` already fixes this:
 
 - Se houver um TTY, ele pergunta a senha de forma segura. / If a TTY is available, it securely prompts for a password.
 - Se não houver TTY (por exemplo, auto-start no `.bashrc`), ele define a senha padrão `modded`. / If no TTY is available (e.g., auto-start in `.bashrc`), it sets the default password `modded`.
+
+O arquivo de senha pode estar em `~/.vnc/passwd` ou em `~/.config/tigervnc/passwd`, dependendo da versão/configuração do TigerVNC. / The password file can be at `~/.vnc/passwd` or `~/.config/tigervnc/passwd`, depending on the TigerVNC version/configuration.
 
 Para definir sua própria senha antes de iniciar: / To set your own password before starting:
 
@@ -153,11 +173,11 @@ Para trocar a senha depois: / To change the password later:
 
 ```bash
 vncstop
-rm ~/.vnc/passwd
+rm ~/.vnc/passwd ~/.config/tigervnc/passwd 2>/dev/null || true
 vncstart
 ```
 
-> Se você já tem uma instalação antiga, atualize os scripts com `bash update-system.sh` (dentro do Ubuntu) ou reinstale o `vncstart` manualmente: `sudo curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vncstart -o /usr/local/bin/vncstart && sudo chmod +x /usr/local/bin/vncstart`.
+> Se você já tem uma instalação antiga, rode `sudo update-system` dentro do Ubuntu para atualizar todos os scripts. / If you already have an old installation, run `sudo update-system` inside Ubuntu to update all scripts.
 
 ## Dicas para o Termux / Termux tips
 
@@ -313,9 +333,12 @@ No `gui.sh`, a opção `Kali Linux Tools` executa o `tools.sh --minimal`, evitan
 | `vncstop` | Para o servidor VNC / Stop VNC server |
 | `vncstart-fhd` | Inicia VNC em 2340x1080 / Start VNC at 2340x1080 |
 | `vncstart-qhd` | Inicia VNC em 3088x1440 / Start VNC at 3088x1440 |
+| `sudo update-system` | Atualiza scripts VNC e pacotes do Ubuntu / Update VNC scripts and Ubuntu packages |
 | `s26-optimize` | Aplica otimizações para high-DPI / Apply high-DPI optimizations |
 | `bash fix-signal9.sh` | Corrige erro signal 9 (Phantom Process Killer) / Fix signal 9 error (Phantom Process Killer) |
 | `bash remove.sh` | Remove o Ubuntu modded / Remove the modded Ubuntu OS |
+
+> O `update.sh` (na pasta `~/modded-ubuntu` do Termux) atualiza o repositório e executa o `update-system` dentro do Ubuntu. / `update.sh` (in the `~/modded-ubuntu` folder of Termux) updates the repository and runs `update-system` inside Ubuntu.
 
 ### Iniciar VNC automaticamente / Auto-start VNC Server
 
