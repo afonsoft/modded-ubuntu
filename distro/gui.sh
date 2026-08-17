@@ -15,6 +15,23 @@ esac
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Adiciona chaves GPG de forma compatível com Ubuntu antigo e novo.
+# O apt-key foi removido em versões recentes; usamos gpg como fallback.
+add_apt_key() {
+	local key_id="$1"
+	if command -v apt-key >/dev/null 2>&1; then
+		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys "$key_id" 2>/dev/null || true
+		return 0
+	fi
+	if command -v gpg >/dev/null 2>&1; then
+		mkdir -p /etc/apt/trusted.gpg.d
+		rm -f /tmp/modded-keyring.gpg
+		gpg --no-default-keyring --keyring /tmp/modded-keyring.gpg --keyserver keyserver.ubuntu.com --recv-keys "$key_id" >/dev/null 2>&1 || true
+		gpg --no-default-keyring --keyring /tmp/modded-keyring.gpg --export "$key_id" 2>/dev/null | gpg --dearmor > "/etc/apt/trusted.gpg.d/modded-${key_id}.gpg" 2>/dev/null || true
+		rm -f /tmp/modded-keyring.gpg
+	fi
+}
+
 # Evita que pacotes tentem iniciar serviços dentro do PRoot
 if [ ! -f /usr/sbin/policy-rc.d ]; then
 	printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
@@ -255,11 +272,11 @@ install_chromium() {
 		apt purge chromium* chromium-browser* snapd -y
 		apt install gnupg2 software-properties-common --no-install-recommends -y
 		echo -e "deb http://ftp.debian.org/debian stable main\ndeb http://ftp.debian.org/debian stable-updates main" >> /etc/apt/sources.list
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DCC9EFBF77E11517 || true
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138 || true
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AA8E81B4331F7F50 || true
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A || true
-		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 || true
+		add_apt_key DCC9EFBF77E11517
+		add_apt_key 648ACFD622F3D138
+		add_apt_key AA8E81B4331F7F50
+		add_apt_key 112695A0E562B32A
+		add_apt_key 3B4FE6ACC0B21F32
 		apt update -y
 		apt install chromium -y
 		sed -i 's/chromium %U/chromium --no-sandbox %U/g' /usr/share/applications/chromium.desktop
@@ -720,7 +737,7 @@ config() {
 	banner
 	sound_fix
 
-	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 || true
+	add_apt_key 3B4FE6ACC0B21F32
 	yes | apt upgrade || true
 	yes | apt install gtk2-engines-murrine gtk2-engines-pixbuf sassc optipng inkscape libglib2.0-dev-bin || true
 
