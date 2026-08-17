@@ -10,7 +10,168 @@
           <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
         </property>
       </property>
+      <property name="monitor1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitor2" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitor3" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorscreen" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorVirtual1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorVirtual-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorVirtual-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorVGA-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
       <property name="monitorVGA-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorVGA-2" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorHDMI-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorHDMI-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorHDMI-2" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorDP-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorDP-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorDP-2" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorDVI-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorDVI-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorDVI-2" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorLVDS-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitorLVDS-1" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitoreDP" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitoreDP-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="4"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg"/>
+        </property>
+      </property>
+      <property name="monitoreDP-1" type="empty">
         <property name="workspace0" type="empty">
           <property name="color-style" type="int" value="0"/>
           <property name="image-style" type="int" value="4"/>
