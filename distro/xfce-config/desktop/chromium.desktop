@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Chromium
+Comment=Navegador web Chromium
+Exec=chromium --no-sandbox %U
+Type=Application
+Terminal=false
+Icon=chromium
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
