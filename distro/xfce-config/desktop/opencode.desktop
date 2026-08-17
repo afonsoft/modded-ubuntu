@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=OpenCode
+Comment=OpenCode AI CLI
+Exec=opencode
+Type=Application
+Terminal=true
+Icon=applications-development
+Categories=Development;

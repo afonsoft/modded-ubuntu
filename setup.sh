@@ -267,6 +267,17 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/gui.sh"
     fi
 
+    if [[ -e "$CURR_DIR/distro/xfce-apply.sh" ]]; then
+        cp -f "$CURR_DIR/distro/xfce-apply.sh" "$UBUNTU_DIR/usr/local/bin/xfce-apply"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/xfce-apply"
+    fi
+
+    if [[ -d "$CURR_DIR/distro/xfce-config" ]]; then
+        mkdir -p "$UBUNTU_DIR/usr/local/share/modded-ubuntu"
+        rm -rf "$UBUNTU_DIR/usr/local/share/modded-ubuntu/xfce-config"
+        cp -r "$CURR_DIR/distro/xfce-config" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
+    fi
+
     # Optional Termux performance tweaks for Samsung S26 / high-end devices
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         mkdir -p "$HOME/.termux"

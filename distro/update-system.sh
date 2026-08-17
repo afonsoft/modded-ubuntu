@@ -191,6 +191,43 @@ update_gui_scripts() {
     done
 }
 
+update_xfce_config() {
+    log "Atualizando configurações XFCE..."
+    echo -e "${C} [*] Atualizando configurações XFCE...${W}"
+
+    if ! command -v curl >/dev/null 2>&1; then
+        warn "curl não encontrado. Pulando atualização das configurações XFCE."
+        return 0
+    fi
+
+    local base_url="https://github.com/afonsoft/modded-ubuntu/archive/refs/heads/master.tar.gz"
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+
+    if curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/repo.tar.gz" "$base_url" >/dev/null 2>&1; then
+        if tar -xzf "${tmp_dir}/repo.tar.gz" -C "$tmp_dir" >/dev/null 2>&1; then
+            local repo_dir
+            repo_dir=$(find "$tmp_dir" -maxdepth 1 -type d -name "modded-ubuntu-*" | head -n 1)
+            if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/xfce-apply.sh" ]; then
+                cp -f "${repo_dir}/distro/xfce-apply.sh" /usr/local/bin/xfce-apply
+                chmod +x /usr/local/bin/xfce-apply
+                rm -rf /usr/local/share/modded-ubuntu/xfce-config
+                mkdir -p /usr/local/share/modded-ubuntu
+                cp -r "${repo_dir}/distro/xfce-config" /usr/local/share/modded-ubuntu/
+                log "xfce-apply e xfce-config atualizados."
+            fi
+        fi
+    else
+        warn "Falha ao baixar atualização do XFCE. Usando versão local."
+    fi
+
+    if [ -x /usr/local/bin/xfce-apply ]; then
+        /usr/local/bin/xfce-apply --all
+    fi
+
+    rm -rf "$tmp_dir"
+}
+
 cleanup() {
     log "Limpando pacotes e caches..."
     echo -e "${C} [*] Limpando caches...${W}"
@@ -220,6 +257,7 @@ main() {
     fix_sound
     update_vnc_scripts
     update_gui_scripts
+    update_xfce_config
     cleanup
 
     echo -e "${G} [+] Atualização concluída!${W}"

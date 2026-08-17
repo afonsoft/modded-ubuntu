@@ -392,6 +392,13 @@ install_antigravity() {
 	fi
 }
 
+install_libreoffice() {
+	echo -e "${G}Installing ${Y}LibreOffice Basic${W}"
+	apt-get update -y
+	apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress libreoffice-gtk3
+	echo -e "${C} LibreOffice Basic Installed Successfully\n${W}"
+}
+
 install_devin_cli() {
 	if command -v devin >/dev/null 2>&1; then
 		echo -e "${Y}Devin CLI is already Installed!${W}"
@@ -552,6 +559,16 @@ install_tools() {
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" TOOLS_OPTION
 	banner
 
+	cat <<- EOF
+		${Y} ---${G} LibreOffice Basic ${Y}---
+
+		${C} [${W}1${C}] Instalar Writer + Calc + Impress
+		${C} [${W}2${C}] Pular (Default)
+
+	EOF
+	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" LO_OPTION
+	banner
+
 	# Install Browsers
 	if [[ ${BROWSER_OPTION} == 2 ]]; then
 		install_chromium
@@ -643,6 +660,11 @@ install_tools() {
 			;;
 		*) echo -e "${Y} [!] Skipping Additional Tools Installation\n" ;;
 	esac
+
+	# Install LibreOffice Basic (opcional)
+	if [ "${LO_OPTION:-2}" = "1" ]; then
+		install_libreoffice
+	fi
 }
 
 downloader(){
@@ -701,28 +723,13 @@ config() {
 	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 || true
 	yes | apt upgrade || true
 	yes | apt install gtk2-engines-murrine gtk2-engines-pixbuf sassc optipng inkscape libglib2.0-dev-bin || true
-	mv -vf /usr/share/backgrounds/xfce/xfce-verticals.png /usr/share/backgrounds/xfce/xfceverticals-old.png || true
-	temp_folder=$(mktemp -d -p "$HOME")
-	{ banner; sleep 1; cd "$temp_folder" || exit 1; }
 
-	echo -e "${R} [${W}-${R}]${C} Downloading Required Files..\n"${W}
-	downloader "fonts.tar.gz" "https://github.com/afonsoft/modded-ubuntu/releases/download/config/fonts.tar.gz"
-	downloader "icons.tar.gz" "https://github.com/afonsoft/modded-ubuntu/releases/download/config/icons.tar.gz"
-	downloader "wallpaper.tar.gz" "https://github.com/afonsoft/modded-ubuntu/releases/download/config/wallpaper.tar.gz"
-	downloader "gtk-themes.tar.gz" "https://github.com/afonsoft/modded-ubuntu/releases/download/config/gtk-themes.tar.gz"
-	downloader "ubuntu-settings.tar.gz" "https://github.com/afonsoft/modded-ubuntu/releases/download/config/ubuntu-settings.tar.gz"
-
-	echo -e "${R} [${W}-${R}]${C} Unpacking Files..\n"${W}
-	tar -xvzf fonts.tar.gz -C "/usr/local/share/fonts/"
-	tar -xvzf icons.tar.gz -C "/usr/share/icons/"
-	tar -xvzf wallpaper.tar.gz -C "/usr/share/backgrounds/xfce/"
-	tar -xvzf gtk-themes.tar.gz -C "/usr/share/themes/"
-	tar -xvzf ubuntu-settings.tar.gz -C "/home/$username/"
-	rm -fr "$temp_folder"
-
-	echo -e "${R} [${W}-${R}]${C} Purging Unnecessary Files.."${W}
-	rem_theme
-	rem_icon
+	echo -e "${R} [${W}-${R}]${C} Aplicando tema, ícones, papel de parede e layout XFCE..\n"${W}
+	if command -v xfce-apply >/dev/null 2>&1; then
+		xfce-apply --user "$username"
+	else
+		echo -e "${Y} xfce-apply não encontrado. Pulando customizações XFCE.\n${W}"
+	fi
 
 	echo -e "${R} [${W}-${R}]${C} Rebuilding Font Cache..\n"${W}
 	fc-cache -fv

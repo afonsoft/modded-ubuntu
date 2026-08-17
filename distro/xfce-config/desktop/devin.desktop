@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Devin Desktop
+Comment=Devin Desktop IDE
+Exec=devin-desktop
+Type=Application
+Terminal=false
+Icon=applications-development
+Categories=Development;

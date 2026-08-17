@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Antigravity
+Comment=Google Antigravity CLI
+Exec=agy
+Type=Application
+Terminal=true
+Icon=applications-development
+Categories=Development;

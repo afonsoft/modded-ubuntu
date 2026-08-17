@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-panel" version="1.0">
+  <property name="configver" type="int" value="2"/>
+  <property name="panels" type="array">
+    <value type="int" value="1"/>
+    <property name="dark-mode" type="bool" value="true"/>
+    <property name="panel-1" type="empty">
+      <property name="position" type="string" value="p=6;x=0;y=0"/>
+      <property name="length" type="double" value="100"/>
+      <property name="position-locked" type="bool" value="true"/>
+      <property name="icon-size" type="uint" value="20"/>
+      <property name="size" type="uint" value="38"/>
+      <property name="mode" type="uint" value="0"/>
+      <property name="plugin-ids" type="array">
+        <value type="int" value="1"/>
+        <value type="int" value="2"/>
+        <value type="int" value="3"/>
+        <value type="int" value="4"/>
+        <value type="int" value="5"/>
+        <value type="int" value="6"/>
+        <value type="int" value="7"/>
+      </property>
+      <property name="background-style" type="uint" value="0"/>
+    </property>
+  </property>
+  <property name="plugins" type="empty">
+    <property name="plugin-1" type="string" value="whiskermenu">
+      <property name="button-icon" type="string" value="start-here"/>
+      <property name="button-title" type="string" value="Menu"/>
+      <property name="show-button-title" type="bool" value="false"/>
+      <property name="launcher-show-description" type="bool" value="false"/>
+      <property name="category-show-name" type="bool" value="true"/>
+      <property name="default-category" type="int" value="1"/>
+      <property name="recent-items-max" type="int" value="10"/>
+      <property name="favorites-in-recent" type="bool" value="false"/>
+      <property name="position-search-alternate" type="bool" value="false"/>
+      <property name="position-categories-alternate" type="bool" value="false"/>
+      <property name="position-categories-horizontal" type="bool" value="false"/>
+      <property name="menu-width" type="int" value="500"/>
+      <property name="menu-height" type="int" value="600"/>
+      <property name="menu-opacity" type="int" value="100"/>
+      <property name="command-switchuser" type="string" value=""/>
+      <property name="command-menueditor" type="string" value="alacarte"/>
+      <property name="favorites" type="array">
+        <value type="string" value="devin-desktop.desktop"/>
+        <value type="string" value="firefox.desktop"/>
+        <value type="string" value="chromium-browser.desktop"/>
+        <value type="string" value="xfce4-terminal.desktop"/>
+        <value type="string" value="thunar.desktop"/>
+        <value type="string" value="claude-code.desktop"/>
+        <value type="string" value="opencode.desktop"/>
+        <value type="string" value="antigravity.desktop"/>
+        <value type="string" value="libreoffice-writer.desktop"/>
+      </property>
+      <property name="recent" type="array">
+      </property>
+      <property name="position-commands-alternate" type="bool" value="false"/>
+      <property name="position-profile-alternate" type="bool" value="true"/>
+    </property>
+    <property name="plugin-2" type="string" value="separator">
+      <property name="expand" type="bool" value="true"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-3" type="string" value="tasklist">
+      <property name="group-label" type="uint" value="1"/>
+      <property name="window-scrolling" type="bool" value="false"/>
+      <property name="show-labels" type="bool" value="true"/>
+      <property name="flat-buttons" type="bool" value="true"/>
+    </property>
+    <property name="plugin-4" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-5" type="string" value="systray">
+      <property name="square-icons" type="bool" value="true"/>
+      <property name="known-legacy-items" type="array">
+      </property>
+      <property name="known-items" type="array">
+      </property>
+      <property name="single-row" type="bool" value="false"/>
+      <property name="hidden-items" type="array">
+      </property>
+      <property name="icon-size" type="int" value="22"/>
+      <property name="hide-new-items" type="bool" value="false"/>
+      <property name="symbolic-icons" type="bool" value="false"/>
+      <property name="hidden-legacy-items" type="array">
+      </property>
+    </property>
+    <property name="plugin-6" type="string" value="clock">
+      <property name="timezone" type="string" value=""/>
+      <property name="command" type="string" value=""/>
+      <property name="digital-layout" type="uint" value="1"/>
+      <property name="digital-time-font" type="string" value="Sans Bold 12"/>
+      <property name="digital-date-font" type="string" value="Sans 8"/>
+      <property name="digital-date-format" type="string" value="%d/%m/%Y"/>
+      <property name="digital-time-format" type="string" value="%H:%M"/>
+      <property name="tooltip-format" type="string" value="%A, %d de %B de %Y"/>
+    </property>
+    <property name="plugin-7" type="string" value="actions"/>
+  </property>
+</channel>

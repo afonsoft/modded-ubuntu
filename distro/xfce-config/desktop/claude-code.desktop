@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Claude Code
+Comment=Assistente de codificação Claude Code
+Exec=claude
+Type=Application
+Terminal=true
+Icon=utilities-terminal
+Categories=Development;
