@@ -278,6 +278,18 @@ permission() {
         cp -r "$CURR_DIR/distro/xfce-config" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
     fi
 
+    if [[ -d "$CURR_DIR/distro/systemd" ]]; then
+        mkdir -p "$UBUNTU_DIR/usr/local/share/modded-ubuntu"
+        rm -rf "$UBUNTU_DIR/usr/local/share/modded-ubuntu/systemd"
+        cp -r "$CURR_DIR/distro/systemd" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
+    fi
+
+    if [[ -d "$CURR_DIR/patches" ]]; then
+        mkdir -p "$UBUNTU_DIR/usr/local/share/modded-ubuntu"
+        rm -rf "$UBUNTU_DIR/usr/local/share/modded-ubuntu/patches"
+        cp -r "$CURR_DIR/patches" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
+    fi
+
     # Optional Termux performance tweaks for Samsung S26 / high-end devices
     if [[ -n "${TERMUX_VERSION:-}" ]]; then
         mkdir -p "$HOME/.termux"

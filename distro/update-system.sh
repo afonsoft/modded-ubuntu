@@ -191,39 +191,148 @@ update_gui_scripts() {
     done
 }
 
-update_xfce_config() {
-    log "Atualizando configurações XFCE..."
-    echo -e "${C} [*] Atualizando configurações XFCE...${W}"
+update_desktop_files() {
+    log "Atualizando atalhos .desktop do menu..."
+    echo -e "${C} [*] Atualizando atalhos .desktop...${W}"
 
-    if ! command -v curl >/dev/null 2>&1; then
-        warn "curl não encontrado. Pulando atualização das configurações XFCE."
+    local repo_dir="${1:-}"
+    local desktop_src="/usr/local/share/modded-ubuntu/xfce-config/desktop"
+
+    if [ -n "$repo_dir" ] && [ -d "${repo_dir}/distro/xfce-config/desktop" ]; then
+        desktop_src="${repo_dir}/distro/xfce-config/desktop"
+    fi
+
+    # Instala/atualiza os .desktop globais do modded-ubuntu
+    local global_app_dir="/usr/local/share/applications"
+    mkdir -p "$global_app_dir"
+    if [ -d "$desktop_src" ]; then
+        cp -f "$desktop_src/"*.desktop "$global_app_dir/" 2>/dev/null || true
+        chmod 644 "$global_app_dir/"*.desktop 2>/dev/null || true
+    fi
+
+    # Aplica o patch do VS Code: sem sandbox dentro do PRoot
+    local code_patch="/usr/local/share/modded-ubuntu/patches/code.desktop"
+    if [ -n "$repo_dir" ] && [ -f "${repo_dir}/patches/code.desktop" ]; then
+        code_patch="${repo_dir}/patches/code.desktop"
+    fi
+    if [ -f "$code_patch" ]; then
+        cp -f "$code_patch" "$global_app_dir/code.desktop" 2>/dev/null || true
+        chmod 644 "$global_app_dir/code.desktop" 2>/dev/null || true
+        cp -f "$code_patch" "/usr/share/applications/code.desktop" 2>/dev/null || true
+        chmod 644 "/usr/share/applications/code.desktop" 2>/dev/null || true
+    fi
+
+    # Corrige o .desktop do Chromium caso ainda venha sem --no-sandbox
+    if [ -f "/usr/share/applications/chromium.desktop" ]; then
+        sed -i 's/chromium %U/chromium --no-sandbox %U/g' "/usr/share/applications/chromium.desktop" 2>/dev/null || true
+    fi
+    if [ -f "$global_app_dir/chromium.desktop" ]; then
+        sed -i 's/chromium %U/chromium --no-sandbox %U/g' "$global_app_dir/chromium.desktop" 2>/dev/null || true
+    fi
+
+    if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$global_app_dir" 2>/dev/null || true
+        update-desktop-database "/usr/share/applications" 2>/dev/null || true
+    fi
+
+    # Atualiza os atalhos por usuário
+    awk -F: '$3 >= 1000 && $3 < 65534 {print $1, $6}' /etc/passwd 2>/dev/null | while IFS=' ' read -r username home_dir; do
+        if [ ! -d "$home_dir" ]; then
+            continue
+        fi
+        user_app_dir="$home_dir/.local/share/applications"
+        mkdir -p "$user_app_dir"
+        if [ -d "$desktop_src" ]; then
+            cp -f "$desktop_src/"*.desktop "$user_app_dir/" 2>/dev/null || true
+            chmod 644 "$user_app_dir/"*.desktop 2>/dev/null || true
+        fi
+        if [ -f "$code_patch" ]; then
+            cp -f "$code_patch" "$user_app_dir/code.desktop" 2>/dev/null || true
+            chmod 644 "$user_app_dir/code.desktop" 2>/dev/null || true
+        fi
+        chown -R "$username:" "$home_dir/.local" 2>/dev/null || true
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database "$user_app_dir" 2>/dev/null || true
+        fi
+    done
+}
+
+update_systemd_vnc_service() {
+    log "Atualizando configuração systemd do VNC..."
+    echo -e "${C} [*] Atualizando configuração systemd do VNC...${W}"
+
+    local repo_dir="${1:-}"
+    local service_src="/usr/local/share/modded-ubuntu/systemd/modded-ubuntu-vnc.service"
+    local service_dest="/etc/systemd/user/modded-ubuntu-vnc.service"
+
+    if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/systemd/modded-ubuntu-vnc.service" ]; then
+        service_src="${repo_dir}/distro/systemd/modded-ubuntu-vnc.service"
+    fi
+
+    if [ ! -f "$service_src" ]; then
+        warn "Arquivo de serviço systemd não encontrado. Pulando."
         return 0
     fi
+
+    mkdir -p "/etc/systemd/user"
+    cp -f "$service_src" "$service_dest"
+    chmod 644 "$service_dest"
+    log "Serviço systemd do VNC atualizado em $service_dest"
+
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl daemon-reload 2>/dev/null || true
+        awk -F: '$3 >= 1000 && $3 < 65534 {print $1}' /etc/passwd 2>/dev/null | while IFS=' ' read -r username; do
+            user_id=$(id -u "$username" 2>/dev/null || echo "")
+            if [ -n "$user_id" ]; then
+                XDG_RUNTIME_DIR="/run/user/$user_id" su -s /bin/bash -c "systemctl --user daemon-reload 2>/dev/null || true" "$username" 2>/dev/null || true
+            fi
+        done
+    fi
+}
+
+update_xfce_config() {
+    log "Atualizando configurações XFCE, .desktop e systemd..."
+    echo -e "${C} [*] Atualizando configurações XFCE, .desktop e systemd...${W}"
 
     local base_url="https://github.com/afonsoft/modded-ubuntu/archive/refs/heads/master.tar.gz"
     local tmp_dir
     tmp_dir="$(mktemp -d)"
+    local repo_dir=""
+    local download_ok=0
 
-    if curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/repo.tar.gz" "$base_url" >/dev/null 2>&1; then
+    if command -v curl >/dev/null 2>&1 && \
+       curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/repo.tar.gz" "$base_url" >/dev/null 2>&1; then
         if tar -xzf "${tmp_dir}/repo.tar.gz" -C "$tmp_dir" >/dev/null 2>&1; then
-            local repo_dir
             repo_dir=$(find "$tmp_dir" -maxdepth 1 -type d -name "modded-ubuntu-*" | head -n 1)
-            if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/xfce-apply.sh" ]; then
-                cp -f "${repo_dir}/distro/xfce-apply.sh" /usr/local/bin/xfce-apply
-                chmod +x /usr/local/bin/xfce-apply
-                rm -rf /usr/local/share/modded-ubuntu/xfce-config
-                mkdir -p /usr/local/share/modded-ubuntu
-                cp -r "${repo_dir}/distro/xfce-config" /usr/local/share/modded-ubuntu/
-                log "xfce-apply e xfce-config atualizados."
-            fi
+            download_ok=1
         fi
+    fi
+
+    if [ "$download_ok" -eq 1 ] && [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/xfce-apply.sh" ]; then
+        cp -f "${repo_dir}/distro/xfce-apply.sh" /usr/local/bin/xfce-apply
+        chmod +x /usr/local/bin/xfce-apply
+        rm -rf /usr/local/share/modded-ubuntu/xfce-config
+        rm -rf /usr/local/share/modded-ubuntu/systemd
+        rm -rf /usr/local/share/modded-ubuntu/patches
+        mkdir -p /usr/local/share/modded-ubuntu
+        cp -r "${repo_dir}/distro/xfce-config" /usr/local/share/modded-ubuntu/
+        if [ -d "${repo_dir}/distro/systemd" ]; then
+            cp -r "${repo_dir}/distro/systemd" /usr/local/share/modded-ubuntu/
+        fi
+        if [ -d "${repo_dir}/patches" ]; then
+            cp -r "${repo_dir}/patches" /usr/local/share/modded-ubuntu/
+        fi
+        log "xfce-apply, xfce-config, systemd e patches atualizados."
     else
-        warn "Falha ao baixar atualização do XFCE. Usando versão local."
+        warn "Falha ao baixar atualização do repositório. Usando versão local."
     fi
 
     if [ -x /usr/local/bin/xfce-apply ]; then
         /usr/local/bin/xfce-apply --all
     fi
+
+    update_desktop_files "$repo_dir"
+    update_systemd_vnc_service "$repo_dir"
 
     rm -rf "$tmp_dir"
 }
