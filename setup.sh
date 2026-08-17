@@ -112,13 +112,18 @@ package() {
         fi
 
         pkg upgrade -y
-        packs=(pulseaudio proot-distro termux-am)
+        packs=(pulseaudio proot-distro termux-am zsh git curl)
         for x in "${packs[@]}"; do
             if ! pkg install -y "$x"; then
                 log "Failed to install package: $x"
                 echo -e "\n${R} [${W}-${R}]${G} Failed to install package: ${Y}$x${C}${W}"
                 exit 1
             fi
+        done
+
+        # Pacotes opcionais para fontes e utilitarios
+        for x in unzip ttf-nerd-fonts-symbols fontconfig; do
+            pkg install -y "$x" 2>/dev/null || true
         done
     fi
 }
@@ -267,6 +272,11 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/gui.sh"
     fi
 
+    if [[ -e "$CURR_DIR/distro/zsh-setup.sh" ]]; then
+        cp -f "$CURR_DIR/distro/zsh-setup.sh" "$UBUNTU_DIR/usr/local/bin/zsh-setup"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/zsh-setup"
+    fi
+
     if [[ -e "$CURR_DIR/distro/xfce-apply.sh" ]]; then
         cp -f "$CURR_DIR/distro/xfce-apply.sh" "$UBUNTU_DIR/usr/local/bin/xfce-apply"
         chmod +x "$UBUNTU_DIR/usr/local/bin/xfce-apply"
@@ -320,6 +330,12 @@ exec proot-distro login --no-sysvipc ubuntu
 EOF
     fi
     chmod +x "$termux_prefix/bin/ubuntu"
+
+    # Configura zsh + Oh My Zsh + Powerlevel10k no shell do Termux
+    if [[ -e "$CURR_DIR/distro/zsh-setup.sh" ]]; then
+        bash "$CURR_DIR/distro/zsh-setup.sh" --termux 2>/dev/null || true
+    fi
+
     termux_reload_settings
 
     if [[ -e "$PREFIX/bin/ubuntu" ]]; then
