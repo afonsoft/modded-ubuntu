@@ -2,6 +2,7 @@
 Name=Antigravity
 Comment=Google Antigravity CLI
 Exec=agy
+TryExec=agy
 Type=Application
 Terminal=true
 Icon=applications-development

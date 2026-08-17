@@ -270,11 +270,13 @@ install_chromium() {
 }
 
 install_firefox() {
-	[[ $(command -v firefox) ]] && echo "${Y}Firefox is already Installed!${W}\n" || {
-		echo -e "${G}Installing ${Y}Firefox${W}"
+	echo -e "${G}Installing ${Y}Firefox${W}"
+	if [ -x /usr/local/bin/firefox.sh ]; then
+		bash /usr/local/bin/firefox.sh
+	else
 		bash <(curl -fsSL "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/firefox.sh")
-		echo -e "${G} Firefox Installed Successfully\n${W}"
-	}
+	fi
+	echo -e "${G} Firefox Installed Successfully\n${W}"
 }
 
 install_git_gh() {

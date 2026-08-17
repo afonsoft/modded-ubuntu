@@ -35,7 +35,8 @@ if [[ -z "$_vncpasswd_cmd" ]]; then
     exit 1
 fi
 
-mkdir -p "${HOME}/.vnc"
+# TigerVNC migra ~/.vnc para ~/.config/tigervnc; garante que o destino exista.
+mkdir -p "${HOME}/.vnc" "${HOME}/.config/tigervnc"
 
 if [[ ! -f "$passwd_file" ]]; then
     if [[ -t 0 ]]; then

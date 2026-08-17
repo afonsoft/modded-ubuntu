@@ -2,6 +2,7 @@
 Name=Chromium
 Comment=Navegador web Chromium
 Exec=chromium --no-sandbox %U
+TryExec=chromium
 Type=Application
 Terminal=false
 Icon=chromium

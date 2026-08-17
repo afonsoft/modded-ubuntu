@@ -17,7 +17,9 @@ log() {
 }
 
 is_termux() {
-    [ -n "${TERMUX_VERSION:-}" ] || [ -d "/data/data/com.termux/files/usr" ]
+    # Dentro do proot o /data/data/com.termux/files/usr fica bind-mountado,
+    # entao a existencia do diretorio nao basta. Usa TERMUX_VERSION ou HOME do Termux.
+    [ -n "${TERMUX_VERSION:-}" ] || [ "${HOME:-}" = "/data/data/com.termux/files/home" ]
 }
 
 run_as_target() {

@@ -174,8 +174,27 @@ update_vnc_scripts() {
 }
 
 update_gui_scripts() {
-    log "Atualizando gui.sh nos diretórios dos usuários..."
+    log "Atualizando gui.sh e firefox.sh..."
     echo -e "${C} [*] Atualizando gui.sh...${W}"
+
+    local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
+    local scripts=("gui.sh" "firefox.sh")
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+
+    local script
+    for script in "${scripts[@]}"; do
+        local tmp_file="${tmp_dir}/${script}"
+        local dest="/usr/local/bin/${script}"
+        if curl --fail --retry 3 --retry-delay 2 --location --output "$tmp_file" "${base_url}/${script}" >/dev/null 2>&1; then
+            cp -f "$tmp_file" "$dest"
+            chmod +x "$dest"
+            log "${script} atualizado em ${dest}"
+        else
+            warn "Falha ao baixar ${script}. Versão atual mantida."
+        fi
+    done
+    rm -rf "$tmp_dir"
 
     if [ ! -f /usr/local/bin/gui.sh ]; then
         warn "/usr/local/bin/gui.sh não encontrado. Pulando atualização do gui.sh."
