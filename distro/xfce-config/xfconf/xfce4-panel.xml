@@ -6,11 +6,11 @@
     <value type="int" value="1"/>
     <property name="dark-mode" type="bool" value="true"/>
     <property name="panel-1" type="empty">
-      <property name="position" type="string" value="p=6;x=0;y=0"/>
+      <property name="position" type="string" value="p=10;x=0;y=0"/>
       <property name="length" type="double" value="100"/>
       <property name="position-locked" type="bool" value="true"/>
-      <property name="icon-size" type="uint" value="20"/>
-      <property name="size" type="uint" value="38"/>
+      <property name="icon-size" type="uint" value="22"/>
+      <property name="size" type="uint" value="42"/>
       <property name="mode" type="uint" value="0"/>
       <property name="plugin-ids" type="array">
         <value type="int" value="1"/>
@@ -20,6 +20,13 @@
         <value type="int" value="5"/>
         <value type="int" value="6"/>
         <value type="int" value="7"/>
+        <value type="int" value="8"/>
+        <value type="int" value="9"/>
+        <value type="int" value="10"/>
+        <value type="int" value="11"/>
+        <value type="int" value="12"/>
+        <value type="int" value="13"/>
+        <value type="int" value="14"/>
       </property>
       <property name="background-style" type="uint" value="0"/>
     </property>
@@ -43,36 +50,74 @@
       <property name="command-switchuser" type="string" value=""/>
       <property name="command-menueditor" type="string" value="alacarte"/>
       <property name="favorites" type="array">
-        <value type="string" value="devin.desktop"/>
+        <value type="string" value="thunar.desktop"/>
         <value type="string" value="firefox.desktop"/>
         <value type="string" value="chromium.desktop"/>
+        <value type="string" value="code.desktop"/>
         <value type="string" value="xfce4-terminal.desktop"/>
-        <value type="string" value="thunar.desktop"/>
+        <value type="string" value="devin.desktop"/>
+        <value type="string" value="mousepad.desktop"/>
+        <value type="string" value="obsidian.desktop"/>
         <value type="string" value="claude-code.desktop"/>
         <value type="string" value="opencode.desktop"/>
         <value type="string" value="antigravity.desktop"/>
-        <value type="string" value="libreoffice-writer.desktop"/>
       </property>
       <property name="recent" type="array">
       </property>
       <property name="position-commands-alternate" type="bool" value="false"/>
       <property name="position-profile-alternate" type="bool" value="true"/>
     </property>
-    <property name="plugin-2" type="string" value="separator">
-      <property name="expand" type="bool" value="false"/>
-      <property name="style" type="uint" value="0"/>
+    <property name="plugin-2" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="thunar.desktop"/>
+      </property>
     </property>
-    <property name="plugin-3" type="string" value="tasklist">
+    <property name="plugin-3" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="firefox.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-4" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="chromium.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-5" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="code.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-6" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="xfce4-terminal.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-7" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="devin.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-8" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="mousepad.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-9" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="obsidian.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-10" type="string" value="tasklist">
       <property name="group-label" type="uint" value="1"/>
       <property name="window-scrolling" type="bool" value="false"/>
       <property name="show-labels" type="bool" value="true"/>
       <property name="flat-buttons" type="bool" value="true"/>
     </property>
-    <property name="plugin-4" type="string" value="separator">
+    <property name="plugin-11" type="string" value="separator">
       <property name="expand" type="bool" value="true"/>
       <property name="style" type="uint" value="0"/>
     </property>
-    <property name="plugin-5" type="string" value="systray">
+    <property name="plugin-12" type="string" value="systray">
       <property name="square-icons" type="bool" value="true"/>
       <property name="known-legacy-items" type="array">
       </property>
@@ -87,7 +132,7 @@
       <property name="hidden-legacy-items" type="array">
       </property>
     </property>
-    <property name="plugin-6" type="string" value="clock">
+    <property name="plugin-13" type="string" value="clock">
       <property name="timezone" type="string" value=""/>
       <property name="command" type="string" value=""/>
       <property name="digital-layout" type="uint" value="1"/>
@@ -97,6 +142,6 @@
       <property name="digital-time-format" type="string" value="%H:%M"/>
       <property name="tooltip-format" type="string" value="%A, %d de %B de %Y"/>
     </property>
-    <property name="plugin-7" type="string" value="actions"/>
+    <property name="plugin-14" type="string" value="actions"/>
   </property>
 </channel>

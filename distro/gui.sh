@@ -117,7 +117,7 @@ package() {
 		apt-mark hold udisks2
 	fi
 
-	packs=(sudo gnupg2 curl nano git xz-utils python3 at-spi2-core xfce4 xfce4-goodies xfce4-terminal librsvg2-common menu inetutils-tools dialog exo-utils tigervnc-standalone-server tigervnc-common tigervnc-tools dbus-x11 fonts-beng fonts-beng-extra gtk2-engines-murrine gtk2-engines-pixbuf apt-transport-https)
+	packs=(sudo gnupg2 curl nano git xz-utils python3 at-spi2-core xfce4 xfce4-goodies xfce4-terminal mousepad librsvg2-common menu inetutils-tools dialog exo-utils tigervnc-standalone-server tigervnc-common tigervnc-tools dbus-x11 fonts-beng fonts-beng-extra gtk2-engines-murrine gtk2-engines-pixbuf apt-transport-https)
 	for hulu in "${packs[@]}"; do
 		type -p "$hulu" &>/dev/null || {
 			echo -e "\n${R} [${W}-${R}]${G} Installing package : ${Y}$hulu${W}"
@@ -163,6 +163,50 @@ install_htop() {
         apt-get install -yq htop
         echo -e "${G} htop Installed Successfully\n${W}"
     }
+}
+
+install_obsidian() {
+	if command -v obsidian >/dev/null 2>&1; then
+		echo -e "${Y}Obsidian is already Installed!${W}"
+		return 0
+	fi
+	if [[ "$arch" == arm ]]; then
+		echo -e "${Y} [!] Obsidian is not supported on 32-bit ARM (armhf/armv7) in this setup. Skipping.${W}"
+		return 0
+	fi
+	echo -e "${G}Installing ${Y}Obsidian${W}"
+	apt-get update -y
+	apt-get install -y --no-install-recommends curl
+
+	local deb_arch obsidian_url obsidian_deb
+	deb_arch=$(dpkg --print-architecture)
+	obsidian_url=$(curl -fsSL --retry 3 --retry-delay 2 "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest" | grep "browser_download_url" | grep "${deb_arch}.deb" | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+	if [ -z "$obsidian_url" ]; then
+		echo -e "${Y} Obsidian .deb not found for architecture ${deb_arch}. Skipping.${W}"
+		return 1
+	fi
+
+	obsidian_deb=$(mktemp --suffix=.deb)
+	if curl -fsSL --retry 3 --retry-delay 2 -o "$obsidian_deb" "$obsidian_url"; then
+		dpkg -i "$obsidian_deb" 2>/dev/null || apt-get install -f -y
+	else
+		echo -e "${Y} Failed to download Obsidian. Skipping.${W}"
+	fi
+	rm -f "$obsidian_deb"
+
+	# Sobrescreve o .desktop padrão para garantir --no-sandbox no PRoot.
+	if [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/xfce-config/desktop/obsidian.desktop ]; then
+		cp -f /data/data/com.termux/files/home/modded-ubuntu/distro/xfce-config/desktop/obsidian.desktop /usr/local/share/applications/obsidian.desktop 2>/dev/null || true
+		cp -f /data/data/com.termux/files/home/modded-ubuntu/distro/xfce-config/desktop/obsidian.desktop /usr/share/applications/obsidian.desktop 2>/dev/null || true
+	fi
+
+	if command -v update-desktop-database >/dev/null 2>&1; then
+		update-desktop-database /usr/share/applications 2>/dev/null || true
+		update-desktop-database /usr/local/share/applications 2>/dev/null || true
+	fi
+
+	echo -e "${C} Obsidian Installed Successfully\n${W}"
 }
 
 install_kali_tools() {
@@ -569,8 +613,9 @@ install_tools() {
 		${C} [${W}3${C}] Wireshark
 		${C} [${W}4${C}] GIMP
 		${C} [${W}5${C}] htop
-		${C} [${W}6${C}] All of the above
-		${C} [${W}7${C}] Skip! (Default)
+		${C} [${W}6${C}] Obsidian
+		${C} [${W}7${C}] All of the above
+		${C} [${W}8${C}] Skip! (Default)
 
 	EOF
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" TOOLS_OPTION
@@ -668,12 +713,14 @@ install_tools() {
 		3) install_wireshark ;;
 		4) install_gimp ;;
 		5) install_htop ;;
-		6)
+		6) install_obsidian ;;
+		7)
 			install_kali_tools
 			install_ghost_framework
 			install_wireshark
 			install_gimp
 			install_htop
+			install_obsidian
 			;;
 		*) echo -e "${Y} [!] Skipping Additional Tools Installation\n" ;;
 	esac
