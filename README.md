@@ -136,7 +136,7 @@ sudo bash gui.sh
 
 ### Atualizando o modded-ubuntu / Updating modded-ubuntu
 
-Para atualizar os scripts VNC, pacotes do Ubuntu e configurações sem reinstalar tudo: / To update the VNC scripts, Ubuntu packages, and settings without reinstalling everything:
+Para atualizar os scripts VNC, pacotes do Ubuntu, configurações e o menu `gui.sh` sem reinstalar tudo: / To update VNC scripts, Ubuntu packages, settings, and the `gui.sh` menu without reinstalling everything:
 
 - **Dentro do Ubuntu:** / **Inside Ubuntu:**
 
@@ -151,6 +151,8 @@ Para atualizar os scripts VNC, pacotes do Ubuntu e configurações sem reinstala
   ```
 
 > O `update-system` baixa `vncstart`, `vncstop`, `vncstart-fhd` e `vncstart-qhd` direto do `master`, então qualquer correção recente já é aplicada automaticamente. / `update-system` downloads `vncstart`, `vncstop`, `vncstart-fhd`, and `vncstart-qhd` directly from `master`, so any recent fix is applied automatically.
+>
+> A partir desta versão, o `update-system` também re-executa o `gui.sh` em modo não interativo (`gui.sh --update`), garantindo que novos pacotes base (ex.: `mousepad`) e novas opções (ex.: **Obsidian**) sejam instalados em instalações existentes. / From this version onwards, `update-system` also re-runs `gui.sh` in non-interactive mode (`gui.sh --update`), ensuring new base packages (e.g., `mousepad`) and new options (e.g., **Obsidian**) are installed on existing setups.
 
 ### `vncstart` trava ou não retorna / `vncstart` hangs or does not return
 

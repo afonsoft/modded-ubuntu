@@ -836,11 +836,33 @@ cleanup() {
 	echo -e "${G} [*] Limpeza concluída.${W}"
 }
 
+update_mode() {
+	check_root
+	banner
+	echo -e "${C} [*] Modo de atualização: reinstalando/atualizando pacotes base, Obsidian e configurações XFCE...${W}"
+	package
+	install_obsidian
+	config
+	echo -e "${G} [*] Atualização concluída. Reinicie o Termux/Ubuntu se desejar.${W}"
+	cleanup
+}
+
 # ----------------------------
 
-check_root
-package
-install_tools
-config
-note
-cleanup
+case "${1:-}" in
+	--update|update)
+		update_mode
+		;;
+	""|-h|--help)
+		check_root
+		package
+		install_tools
+		config
+		note
+		cleanup
+		;;
+	*)
+		echo "Uso: $(basename "$0") [--update]"
+		exit 1
+		;;
+esac

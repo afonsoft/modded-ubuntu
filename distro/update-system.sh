@@ -431,6 +431,32 @@ cleanup() {
     rm -f /tmp/update-system.log.* 2>/dev/null || true
 }
 
+run_gui_update() {
+    log "Re-executando gui.sh em modo de atualização para aplicar novos pacotes e opções..."
+    echo -e "${C} [*] Re-executando gui.sh em modo de atualização...${W}"
+
+    if [ ! -f /usr/local/bin/gui.sh ]; then
+        warn "/usr/local/bin/gui.sh não encontrado. Pulando re-execução do gui.sh."
+        return 0
+    fi
+
+    # Copia gui.sh atualizado para os diretórios home dos usuários comuns, como faz update_gui_scripts
+    awk -F: '$3 >= 1000 && $3 < 65534 {print $1, $6}' /etc/passwd 2>/dev/null | while read -r username home_dir; do
+        if [ -d "$home_dir" ]; then
+            cp -f /usr/local/bin/gui.sh "$home_dir/gui.sh"
+            chown "$username:" "$home_dir/gui.sh" 2>/dev/null || true
+            log "gui.sh atualizado em $home_dir/gui.sh"
+        fi
+    done
+
+    if bash /usr/local/bin/gui.sh --update; then
+        log "gui.sh --update concluído com sucesso."
+        echo -e "${G} [*] gui.sh --update concluído.${W}"
+    else
+        warn "gui.sh --update retornou erro. Configurações básicas já foram aplicadas."
+    fi
+}
+
 main() {
     if [ "$(id -u)" -ne 0 ]; then
         echo -e "${Y} [!] Execute como root dentro do ubuntu (ex.: sudo update-system)${W}"
@@ -446,6 +472,7 @@ main() {
     fix_sound
     update_vnc_scripts
     update_gui_scripts
+    run_gui_update
     update_zsh_config
     update_xfce_config
     cleanup
