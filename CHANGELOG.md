@@ -3,6 +3,13 @@
 ## [Unreleased]
 
 ### Added
+- Modo `--update` em `distro/gui.sh`: reinstala/atualiza pacotes base, instala novidades (ex.: Obsidian) e reaplica configurações XFCE sem interação, para que instalações existentes recebam as novas opções automaticamente.
+- `distro/update-system.sh` agora re-executa `bash /usr/local/bin/gui.sh --update` durante a atualização, garantindo que usuários antigos tenham as novas opções e pacotes base sem precisar reinstalar tudo.
+
+### Changed
+- `README.md` atualizado para refletir que o `update-system` re-executa o `gui.sh` e aplica novos pacotes/opções em instalações existentes.
+
+### Added
 - `install.sh` one-liner installer: download and run `curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/install.sh | bash` to clone the repo and execute `setup.sh` automatically. Runs `pkg update` and installs `git`, `curl`, `wget`, `proot-distro` and `pulseaudio` at the start; writes logs to `~/modded-ubuntu-install.log`; and backs up an existing `~/modded-ubuntu` directory instead of prompting.
 - `update.sh` (Termux) e `distro/update-system.sh` (dentro do Ubuntu) para atualizar instalações existentes: atualizam pacotes via `apt`, reforçam locale `en_US.UTF-8` e timezone `America/Sao_Paulo` e limpam caches/temporários sem reinstalar o rootfs.
 - Development tools menu in `distro/gui.sh`:
