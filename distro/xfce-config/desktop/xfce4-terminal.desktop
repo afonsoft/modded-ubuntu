@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Terminal
+Comment=Emulador de terminal XFCE
+Exec=xfce4-terminal
+TryExec=xfce4-terminal
+Type=Application
+Terminal=false
+Icon=utilities-terminal
+Categories=System;TerminalEmulator;

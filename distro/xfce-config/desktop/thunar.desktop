@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Gerenciador de Arquivos
+Comment=Gerencie arquivos e pastas
+Exec=thunar %F
+TryExec=thunar
+Type=Application
+Terminal=false
+Icon=system-file-manager
+Categories=System;FileTools;FileManager;
+MimeType=inode/directory;

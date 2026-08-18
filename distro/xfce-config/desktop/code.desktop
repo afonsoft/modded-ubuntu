@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Visual Studio Code:
+Comment=Code Editing. Redefined.
+Exec=code --no-sandbox %F
+TryExec=code
+Type=Application
+Terminal=false
+Icon=vscode
+Categories=Development;IDE;
+MimeType=text/plain;
