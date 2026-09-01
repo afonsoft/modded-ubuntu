@@ -52,6 +52,13 @@ install_global_files() {
 		chmod 644 "$wp_dir/modded-ubuntu-tech.jpg"
 	fi
 
+	local script_dir
+	script_dir=$(cd "$(dirname "$0")" && pwd)
+	if [ -f "$script_dir/set-wallpaper.sh" ]; then
+		cp -f "$script_dir/set-wallpaper.sh" /usr/local/bin/set-wallpaper
+		chmod +x /usr/local/bin/set-wallpaper
+	fi
+
 	# Atalhos .desktop globais
 	local app_dir="/usr/local/share/applications"
 	mkdir -p "$app_dir"
@@ -101,10 +108,10 @@ apply_user() {
 		cp -f "$XFCE_CONFIG_SRC/helpers.rc" "$xfce_dir/helpers.rc"
 	fi
 
-	# Se não for root, mantém uma cópia local do papel de parede e atualiza o caminho
+	# Mantém uma cópia local do papel de parede e atualiza o caminho para usuários comuns
+	mkdir -p "$xfce_dir/wallpaper"
+	cp -f "$XFCE_CONFIG_SRC/wallpaper/modded-ubuntu-tech.jpg" "$xfce_dir/wallpaper/" 2>/dev/null || true
 	if ! is_root; then
-		mkdir -p "$xfce_dir/wallpaper"
-		cp -f "$XFCE_CONFIG_SRC/wallpaper/modded-ubuntu-tech.jpg" "$xfce_dir/wallpaper/" 2>/dev/null || true
 		sed -i "s|/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg|$xfce_dir/wallpaper/modded-ubuntu-tech.jpg|g" \
 			"$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" 2>/dev/null || true
 	fi
@@ -124,7 +131,76 @@ apply_user() {
 		update-desktop-database "$user_app_dir" 2>/dev/null || true
 	fi
 
+	install_desktop_icons "$user" "$home_dir"
+	local autostart_dir="$home_dir/.config/autostart"
+	mkdir -p "$autostart_dir"
+	cat > "$autostart_dir/modded-ubuntu-wallpaper.desktop" <<'EOF'
+[Desktop Entry]
+Exec=/bin/bash -c 'sleep 3; /usr/local/bin/set-wallpaper'
+Type=Application
+X-GNOME-Autostart-enabled=true
+Name=Papel de parede modded-ubuntu
+EOF
+	chown "$user:" "$autostart_dir/modded-ubuntu-wallpaper.desktop" 2>/dev/null || true
+
 	echo "[*] Configuração XFCE aplicada para $user"
+	if [ "$user" = "$(id -un)" ] && [ -n "${DISPLAY:-}" ]; then
+		/usr/local/bin/set-wallpaper 2>/dev/null || true
+	fi
+}
+
+install_desktop_icons() {
+	local user="$1"
+	local home_dir="$2"
+	local desktop_dir="$home_dir/Desktop"
+	local xdg_dirs="$home_dir/.config/user-dirs.dirs"
+	if [ -f "$xdg_dirs" ]; then
+		local configured_dir
+		configured_dir=$(sed -n 's/^XDG_DESKTOP_DIR="\([^"]*\)"/\1/p' "$xdg_dirs" | head -n 1)
+		if [ -n "$configured_dir" ]; then
+			desktop_dir="${configured_dir/\$HOME/$home_dir}"
+		fi
+	fi
+	mkdir -p "$desktop_dir"
+
+	local entries=(
+		xfce4-terminal.desktop
+		thunar.desktop
+		code.desktop
+		claude-desktop.desktop
+		opencode-desktop.desktop
+		firefox.desktop
+		chromium.desktop
+	)
+	local entry source try_exec exec_line binary
+	for entry in "${entries[@]}"; do
+		source=""
+		for candidate in "$XFCE_CONFIG_SRC/desktop/$entry" \
+			"/usr/local/share/applications/$entry" \
+			"/usr/share/applications/$entry"; do
+			if [ -f "$candidate" ]; then
+				source="$candidate"
+				break
+			fi
+		done
+		[ -n "$source" ] || continue
+
+		try_exec=$(sed -n 's/^TryExec=//p' "$source" | head -n 1)
+		exec_line=$(sed -n 's/^Exec=//p' "$source" | head -n 1)
+		binary="${try_exec:-$exec_line}"
+		binary="${binary%% *}"
+		binary="${binary#\"}"
+		binary="${binary%\"}"
+		if [[ "$binary" = /* ]]; then
+			[ -x "$binary" ] || continue
+		elif ! command -v "$binary" >/dev/null 2>&1; then
+			continue
+		fi
+
+		cp -f "$source" "$desktop_dir/$entry"
+		chmod +x "$desktop_dir/$entry"
+		chown "$user:" "$desktop_dir/$entry" 2>/dev/null || true
+	done
 }
 
 apply_all() {

@@ -88,32 +88,33 @@ install_dotnet_global_tools() {
 }
 
 install_vscode_csharp_extensions() {
-	if ! command -v code >/dev/null 2>&1; then
-		warn "Visual Studio Code não instalado. Pulando extensões C#."
-		return 0
-	fi
-
-	local target_user
-	target_user=$(detect_user)
-	if [ -z "$target_user" ]; then
-		target_user="root"
-	fi
-
-	log "Instalando extensões C# do VS Code para o usuário: $target_user"
-
 	local extensions=(
 		"ms-dotnettools.vscode-dotnet-runtime"
 		"ms-dotnettools.csharp"
 		"ms-dotnettools.csdevkit"
 	)
-
-	for ext in "${extensions[@]}"; do
-		if sudo -u "$target_user" -H code --no-sandbox --install-extension "$ext" --force 2>/dev/null; then
-			log "Extensão $ext instalada."
-		else
-			warn "Não foi possível instalar a extensão $ext"
-		fi
-	done
+	local helper=""
+	local downloaded=0
+	if [ -f /usr/local/bin/vscode-ext ]; then
+		helper=/usr/local/bin/vscode-ext
+	elif [ -f "$(dirname "$0")/vscode-ext.sh" ]; then
+		helper="$(dirname "$0")/vscode-ext.sh"
+	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/vscode-ext.sh ]; then
+		helper=/data/data/com.termux/files/home/modded-ubuntu/distro/vscode-ext.sh
+	else
+		helper=$(mktemp)
+		downloaded=1
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vscode-ext.sh -o "$helper" || {
+			warn "Não foi possível obter o helper de extensões do VS Code."
+			rm -f "$helper"
+			return 0
+		}
+		chmod +x "$helper"
+	fi
+	bash "$helper" "${extensions[@]}" || true
+	if [ "$downloaded" -eq 1 ]; then
+		rm -f "$helper"
+	fi
 }
 
 cleanup() {
