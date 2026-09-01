@@ -166,6 +166,18 @@ Para atualizar os scripts VNC, pacotes do Ubuntu, configurações e o menu `gui.
 >
 > O update reaplica as extensões do VS Code, o papel de parede e os ícones da área de trabalho. Use `--with-desktops` para atualizar também os aplicativos desktop de IA.
 
+### Acesso VNC na rede local
+
+O `vncstart` continua usando o display `:1` e a porta `5901`, mas agora aceita conexões pela rede local. Em outra máquina conectada ao mesmo Wi-Fi, aponte o VNC Viewer para `<IP>:5901`. A senha padrão é `modded` quando nenhuma senha já foi definida; altere-a com `vncpasswd`.
+
+Variáveis opcionais:
+
+- `VNC_GEOMETRY` — define a resolução, por exemplo `2400x1080`.
+- `VNC_DPI` — ajusta a densidade da interface; o padrão é `96`.
+- `VNC_ZLIB_LEVEL` — controla a compressão, com padrão `0`, recomendado para a rede local.
+
+Para melhor fluidez, mantenha o compositor do XFCE desligado. No VNC Viewer, ajuste a qualidade da imagem conforme a velocidade da rede e o desempenho desejado.
+
 ### `vncstart` trava ou não retorna / `vncstart` hangs or does not return
 
 Se o `vncstart` "travar" sem mostrar nada, o TigerVNC provavelmente está esperando uma senha interativamente. / If `vncstart` "hangs" with no output, TigerVNC is probably waiting for a password interactively.
@@ -330,6 +342,7 @@ Interface XFCE com o papel de parede tecnologia, tema Greybird-dark, ícones Pap
 Durante `sudo bash gui.sh` você pode instalar:
 
 - **Visual Studio Code:** via repositório Microsoft APT (pulado em ARM 32-bit).
+- **Chromium:** instalado pelo PPA XtraDeb, com um shim que aplica `--no-sandbox` e `--disable-gpu` no PRoot. Repositórios Debian não são adicionados ao `sources.list`.
 - **OpenCode CLI:** Node.js LTS e `opencode-ai` global (`opencode`).
 - **OpenCode Desktop:** pacote `.deb` oficial para amd64 e arm64, instalado em `/opt/OpenCode`.
 - **Git + GitHub CLI (`gh`):** adiciona Git e o repositório oficial `gh`.

@@ -117,7 +117,7 @@ package() {
 		apt-mark hold udisks2
 	fi
 
-	packs=(sudo gnupg2 curl nano git xz-utils python3 at-spi2-core xfce4 xfce4-goodies xfce4-terminal mousepad librsvg2-common menu inetutils-tools dialog exo-utils tigervnc-standalone-server tigervnc-common tigervnc-tools dbus-x11 fonts-beng fonts-beng-extra gtk2-engines-murrine gtk2-engines-pixbuf apt-transport-https)
+	packs=(sudo gnupg2 curl nano git xz-utils python3 at-spi2-core xfce4 xfce4-goodies xfce4-terminal mousepad librsvg2-common menu inetutils-tools dialog exo-utils tigervnc-standalone-server tigervnc-common tigervnc-tools dbus-x11 fonts-beng fonts-beng-extra gtk2-engines-murrine gtk2-engines-pixbuf apt-transport-https x11-xserver-utils fonts-dejavu-core fonts-liberation fonts-noto-color-emoji greybird-gtk-theme papirus-icon-theme)
 	for hulu in "${packs[@]}"; do
 		type -p "$hulu" &>/dev/null || {
 			echo -e "\n${R} [${W}-${R}]${G} Installing package : ${Y}$hulu${W}"
@@ -314,21 +314,12 @@ install_sublime() {
 }
 
 install_chromium() {
-	[[ $(command -v chromium) ]] && echo "${Y}Chromium is already Installed!${W}\n" || {
-		echo -e "${G}Installing ${Y}Chromium${W}"
-		apt purge chromium* chromium-browser* snapd -y
-		apt install gnupg2 software-properties-common --no-install-recommends -y
-		echo -e "deb http://ftp.debian.org/debian stable main\ndeb http://ftp.debian.org/debian stable-updates main" >> /etc/apt/sources.list
-		add_apt_key DCC9EFBF77E11517
-		add_apt_key 648ACFD622F3D138
-		add_apt_key AA8E81B4331F7F50
-		add_apt_key 112695A0E562B32A
-		add_apt_key 3B4FE6ACC0B21F32
-		apt update -y
-		apt install chromium -y
-		sed -i 's/chromium %U/chromium --no-sandbox %U/g' /usr/share/applications/chromium.desktop
-		echo -e "${G} Chromium Installed Successfully\n${W}"
-	}
+	echo -e "${G}Installing ${Y}Chromium via XtraDeb${W}"
+	if [ -x /usr/local/bin/chromium.sh ]; then
+		bash /usr/local/bin/chromium.sh
+	else
+		bash <(curl -fsSL "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/chromium.sh")
+	fi
 }
 
 install_firefox() {

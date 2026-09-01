@@ -93,6 +93,7 @@ apply_user() {
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$backup_dir/" 2>/dev/null || true
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$backup_dir/" 2>/dev/null || true
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xsettings.xml" "$backup_dir/" 2>/dev/null || true
+		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfwm4.xml" "$backup_dir/" 2>/dev/null || true
 	fi
 
 	# Aplica os arquivos de configuração
@@ -142,6 +143,14 @@ X-GNOME-Autostart-enabled=true
 Name=Papel de parede modded-ubuntu
 EOF
 	chown "$user:" "$autostart_dir/modded-ubuntu-wallpaper.desktop" 2>/dev/null || true
+	cat > "$autostart_dir/modded-ubuntu-display.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Ajustes de tela modded-ubuntu
+Exec=/bin/bash -c 'sleep 2; xset s off; xset s noblank; xset -dpms'
+X-GNOME-Autostart-enabled=true
+EOF
+	chown "$user:" "$autostart_dir/modded-ubuntu-display.desktop" 2>/dev/null || true
 
 	echo "[*] Configuração XFCE aplicada para $user"
 	if [ "$user" = "$(id -un)" ] && [ -n "${DISPLAY:-}" ]; then

@@ -188,11 +188,11 @@ update_vnc_scripts() {
 }
 
 update_gui_scripts() {
-    log "Atualizando gui.sh e firefox.sh..."
+    log "Atualizando gui.sh, firefox.sh, chromium.sh e setup_xtradeb.sh..."
     echo -e "${C} [*] Atualizando gui.sh...${W}"
 
     local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
-    local scripts=("gui.sh" "firefox.sh")
+    local scripts=("gui.sh" "firefox.sh" "chromium.sh" "setup_xtradeb.sh")
     local repo_dir
     repo_dir=$(get_repo_dir)
     local tmp_dir
