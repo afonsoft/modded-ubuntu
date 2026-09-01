@@ -178,6 +178,14 @@ Variáveis opcionais:
 
 Para melhor fluidez, mantenha o compositor do XFCE desligado. No VNC Viewer, ajuste a qualidade da imagem conforme a velocidade da rede e o desempenho desejado.
 
+A interface usa uma barra superior com menu, janelas abertas, bandeja do sistema e relógio, além de um dock inferior centralizado no estilo macOS com atalhos para Home (Thunar), Firefox, Chromium, terminal e VS Code. O dock usa autohide inteligente e ícones de 40px. A translucidez dos painéis só aparece se o compositor do xfwm4 estiver ligado:
+
+```bash
+xfconf-query -c xfwm4 -p /general/use_compositing -s true
+```
+
+O compositor continua desligado por padrão para melhorar o desempenho no VNC.
+
 ### `vncstart` trava ou não retorna / `vncstart` hangs or does not return
 
 Se o `vncstart` "travar" sem mostrar nada, o TigerVNC provavelmente está esperando uma senha interativamente. / If `vncstart` "hangs" with no output, TigerVNC is probably waiting for a password interactively.
