@@ -37,18 +37,20 @@ O **modded-ubuntu** é um ambiente Ubuntu personalizado e otimizado para rodar e
 - VLC/MPV Media Player (opcional) / VLC/MPV media player (optional)
 - Visual Studio Code (`arm64`/`aarch64` e x64; pulado em `armhf`/`armv7` 32-bit) / Visual Studio Code (arm64/aarch64 and x64; skipped on 32-bit armhf/armv7)
 - Sublime Text Editor (`arm64`/`aarch64` e x64; pulado em `armhf`/`armv7` 32-bit) / Sublime Text Editor (arm64/aarch64 and x64; skipped on 32-bit armhf/armv7)
-- OpenCode CLI (opcional) / OpenCode CLI (optional)
+- OpenCode CLI/Desktop (opcional) / OpenCode CLI/Desktop (optional)
 - Git + GitHub CLI (`gh`) (opcional) / Git + GitHub CLI (`gh`) (optional)
 - Ferramentas essenciais de desenvolvimento (opcional) / Essential development tools (optional):
   - `build-essential`, `python3-pip`, `python3-venv`
   - `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`
 - .NET SDK 10.0 + ferramentas C# (opcional) / .NET SDK 10.0 + C# tooling (optional)
 - Node.js LTS instalado diretamente via NodeSource .deb (sem NVM) / Node.js LTS installed directly via NodeSource .deb (no NVM)
-- Angular 20 CLI + extensões do VS Code: (opcional) / Angular 20 CLI + VS Code: extensions (optional)
+- Angular (CLI mais recente) + extensões do VS Code (opcional) / Latest Angular CLI + VS Code extensions (optional)
 - Instalação full-stack C# + Angular (opcional) / Full-Stack C# + Angular install option (optional)
 - Assistentes de IA para código (opcionais) / AI coding assistants (optional):
   - **Claude Code CLI** (`claude`)
+  - **Claude Desktop** (`claude-desktop`)
   - **Antigravity CLI** (`agy`)
+  - **OpenCode CLI/Desktop** (`opencode` / `/opt/OpenCode`)
   - **Devin CLI** (`devin`)
   - **Devin Desktop** IDE (instalação via APT; depende da arquitetura do dispositivo)
 - Fácil para iniciantes / Beginner-friendly
@@ -148,11 +150,21 @@ Para atualizar os scripts VNC, pacotes do Ubuntu, configurações e o menu `gui.
 
   ```bash
   cd ~/modded-ubuntu && bash update.sh
+  bash update.sh --with-desktops
+  ```
+
+  Ou diretamente pelo repositório remoto:
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash -s -- --with-desktops
   ```
 
 > O `update-system` baixa `vncstart`, `vncstop`, `vncstart-fhd` e `vncstart-qhd` direto do `master`, então qualquer correção recente já é aplicada automaticamente. / `update-system` downloads `vncstart`, `vncstop`, `vncstart-fhd`, and `vncstart-qhd` directly from `master`, so any recent fix is applied automatically.
 >
 > A partir desta versão, o `update-system` também re-executa o `gui.sh` em modo não interativo (`gui.sh --update`), garantindo que novos pacotes base (ex.: `mousepad`) e novas opções (ex.: **Obsidian**) sejam instalados em instalações existentes. / From this version onwards, `update-system` also re-runs `gui.sh` in non-interactive mode (`gui.sh --update`), ensuring new base packages (e.g., `mousepad`) and new options (e.g., **Obsidian**) are installed on existing setups.
+>
+> O update reaplica as extensões do VS Code, o papel de parede e os ícones da área de trabalho. Use `--with-desktops` para atualizar também os aplicativos desktop de IA.
 
 ### `vncstart` trava ou não retorna / `vncstart` hangs or does not return
 
@@ -318,12 +330,14 @@ Interface XFCE com o papel de parede tecnologia, tema Greybird-dark, ícones Pap
 Durante `sudo bash gui.sh` você pode instalar:
 
 - **Visual Studio Code:** via repositório Microsoft APT (pulado em ARM 32-bit).
-- **OpenCode CLI:** Node.js LTS e `@opencode-ai/cli` global.
+- **OpenCode CLI:** Node.js LTS e `opencode-ai` global (`opencode`).
+- **OpenCode Desktop:** pacote `.deb` oficial para amd64 e arm64, instalado em `/opt/OpenCode`.
 - **Git + GitHub CLI (`gh`):** adiciona Git e o repositório oficial `gh`.
 - **Essential Dev Stack:** `build-essential`, `python3-pip`, `python3-venv`, `nodejs`, `npm`, `cmake`, `make`, `gcc`, `g++`.
 - **.NET SDK 10.0 + C# tooling:** instala o SDK 10.0 (se o pacote Ubuntu não estiver disponível, usa `dotnet-install.sh` como fallback), adiciona as ferramentas globais `dotnet-ef` e `dotnet-aspnet-codegenerator` em `/usr/local/bin`, e instala as extensões C# do VS Code: quando o editor está presente. Verifique com `dotnet --version` e `dotnet tool list --tool-path /usr/local/bin`.
 - **AI Coding Assistants:**
   - **Claude Code CLI:** instala o pacote `@anthropic-ai/claude-code` globalmente (`claude`).
+  - **Claude Desktop:** adiciona o repositório APT oficial e instala `claude-desktop` para amd64 e arm64.
   - **Antigravity CLI:** baixa e instala o binário nativo `agy` em `/usr/local/bin`.
   - **Devin CLI:** baixa o instalador do `devin`, remove a etapa `devin setup` para evitar o login durante a instalação, instala o binário e cria symlink em `/usr/local/bin`.
   - **Devin Desktop:** adiciona o repositório APT `windsurf-stable` e instala o pacote `devin-desktop`. Pode falhar em arquiteturas não suportadas pelo repositório.

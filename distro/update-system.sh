@@ -391,6 +391,14 @@ update_xfce_config() {
     if [ "$download_ok" -eq 1 ] && [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/xfce-apply.sh" ]; then
         cp -f "${repo_dir}/distro/xfce-apply.sh" /usr/local/bin/xfce-apply
         chmod +x /usr/local/bin/xfce-apply
+        if [ -f "${repo_dir}/distro/vscode-ext.sh" ]; then
+            cp -f "${repo_dir}/distro/vscode-ext.sh" /usr/local/bin/vscode-ext
+            chmod +x /usr/local/bin/vscode-ext
+        fi
+        if [ -f "${repo_dir}/distro/set-wallpaper.sh" ]; then
+            cp -f "${repo_dir}/distro/set-wallpaper.sh" /usr/local/bin/set-wallpaper
+            chmod +x /usr/local/bin/set-wallpaper
+        fi
         rm -rf /usr/local/share/modded-ubuntu/xfce-config
         rm -rf /usr/local/share/modded-ubuntu/systemd
         rm -rf /usr/local/share/modded-ubuntu/patches
@@ -402,7 +410,7 @@ update_xfce_config() {
         if [ -d "${repo_dir}/patches" ]; then
             cp -r "${repo_dir}/patches" /usr/local/share/modded-ubuntu/
         fi
-        log "xfce-apply, xfce-config, systemd e patches atualizados."
+        log "xfce-apply, vscode-ext, set-wallpaper, xfce-config, systemd e patches atualizados."
     else
         warn "Falha ao obter atualização do repositório. Usando versão local."
     fi
@@ -410,6 +418,7 @@ update_xfce_config() {
     if [ -x /usr/local/bin/xfce-apply ]; then
         /usr/local/bin/xfce-apply --all
     fi
+    log "Papel de parede e ícones da área de trabalho reaplicados."
 
     update_desktop_files "$repo_dir"
     update_systemd_vnc_service "$repo_dir"
@@ -449,7 +458,14 @@ run_gui_update() {
         fi
     done
 
-    if bash /usr/local/bin/gui.sh --update; then
+    if [ "${MODDED_INSTALL_DESKTOPS:-0}" = "1" ]; then
+        if MODDED_INSTALL_DESKTOPS=1 bash /usr/local/bin/gui.sh --update; then
+            log "gui.sh --update com desktops concluído com sucesso."
+            echo -e "${G} [*] gui.sh --update com desktops concluído.${W}"
+        else
+            warn "gui.sh --update com desktops retornou erro. Configurações básicas já foram aplicadas."
+        fi
+    elif bash /usr/local/bin/gui.sh --update; then
         log "gui.sh --update concluído com sucesso."
         echo -e "${G} [*] gui.sh --update concluído.${W}"
     else

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Atualiza uma instalação existente do modded-ubuntu.
 # Uso (no Termux):
-#   cd ~/modded-ubuntu && bash update.sh
+#   cd ~/modded-ubuntu && bash update.sh [--with-desktops]
 # ou
-#   curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash -s -- [--with-desktops]
 
 set -e
 
@@ -19,6 +19,27 @@ log() {
     printf '%s\n' "${msg}"
     printf '%s\n' "${msg}" >> "${LOG_FILE}"
 }
+
+case "${1:-}" in
+    "")
+        ;;
+    -h|--help)
+        cat <<'EOF'
+Uso: bash update.sh [--with-desktops]
+
+Atualiza os scripts, pacotes e configurações de uma instalação existente.
+Use --with-desktops para atualizar também Claude Desktop, OpenCode Desktop
+e Devin Desktop.
+EOF
+        exit 0
+        ;;
+    --with-desktops)
+        ;;
+    *)
+        echo "Uso: bash update.sh [--with-desktops]" >&2
+        exit 1
+        ;;
+esac
 
 if [ ! -d "${INSTALL_DIR}/.git" ]; then
     log "Clonando repositório em ${INSTALL_DIR}..."
@@ -37,7 +58,12 @@ log "[+] Executando setup.sh para atualizar scripts/helpers..."
 bash setup.sh
 
 log "[+] Atualizando pacotes e configurações dentro do Ubuntu..."
-if ! proot-distro login --no-sysvipc ubuntu -- bash /usr/local/bin/update-system; then
+if [ "${1:-}" = "--with-desktops" ]; then
+    update_command=(proot-distro login --no-sysvipc ubuntu -- env MODDED_INSTALL_DESKTOPS=1 bash /usr/local/bin/update-system)
+else
+    update_command=(proot-distro login --no-sysvipc ubuntu -- bash /usr/local/bin/update-system)
+fi
+if ! "${update_command[@]}"; then
     log "[!] update-system retornou erro. Verifique o log dentro do proot em /tmp/update-system.log" >&2
     exit 1
 fi

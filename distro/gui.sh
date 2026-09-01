@@ -261,7 +261,10 @@ install_opencode() {
 	echo -e "${G}Installing ${Y}Node.js and OpenCode CLI${W}"
 	install_node
 	hash -r 2>/dev/null || true
-	npm install -g @opencode-ai/cli
+	if ! npm install -g opencode-ai; then
+		echo -e "${Y} Falha ao instalar o OpenCode CLI via npm; usando o instalador oficial.${W}"
+		curl -fsSL https://opencode.ai/install | bash
+	fi
 	hash -r 2>/dev/null || true
 
 	# O pacote pode expor o binário como opencode, lildax ou opencode2.
@@ -394,7 +397,7 @@ install_node() {
 }
 
 install_angular_tooling() {
-	echo -e "${G}Installing ${Y}Angular 20 + VS Code: extensions${W}"
+	echo -e "${G}Installing ${Y}Angular (CLI mais recente) + extensões do VS Code${W}"
 	if [ -f /usr/local/bin/angular-setup ]; then
 		bash /usr/local/bin/angular-setup
 	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/angular.sh ]; then
@@ -406,7 +409,7 @@ install_angular_tooling() {
 		bash "$angular_script"
 		rm -f "$angular_script"
 	fi
-	echo -e "${C} Angular 20 tooling finished\n${W}"
+	echo -e "${C} Ferramentas Angular (CLI mais recente) concluídas\n${W}"
 }
 
 install_fullstack() {
@@ -435,7 +438,7 @@ install_claude_code() {
 }
 
 install_antigravity() {
-	if command -v agy >/dev/null 2>&1; then
+	if command -v agy >/dev/null 2>&1 && [ "${1:-}" != "--update" ]; then
 		echo -e "${Y}Antigravity CLI is already Installed!${W}"
 		return 0
 	fi
@@ -461,7 +464,7 @@ install_libreoffice() {
 }
 
 install_devin_cli() {
-	if command -v devin >/dev/null 2>&1; then
+	if command -v devin >/dev/null 2>&1 && [ "${1:-}" != "--update" ]; then
 		echo -e "${Y}Devin CLI is already Installed!${W}"
 		return 0
 	fi
@@ -502,6 +505,9 @@ install_devin_cli() {
 }
 
 install_devin_desktop() {
+	if [ -f /usr/share/applications/devin-desktop.desktop ]; then
+		sed -i '/^Exec=/ { /--no-sandbox/! s|$| --no-sandbox|; }' /usr/share/applications/devin-desktop.desktop
+	fi
 	if command -v devin-desktop >/dev/null 2>&1; then
 		echo -e "${Y}Devin Desktop is already Installed!${W}"
 		return 0
@@ -520,9 +526,162 @@ install_devin_desktop() {
 	apt-get install -y apt-transport-https
 	apt-get update -y
 	if apt-get install -y devin-desktop; then
+		if [ -f /usr/share/applications/devin-desktop.desktop ]; then
+			sed -i '/^Exec=/ { /--no-sandbox/! s|$| --no-sandbox|; }' /usr/share/applications/devin-desktop.desktop
+		fi
 		echo -e "${C} Devin Desktop Installed Successfully\n${W}"
 	else
 		echo -e "${Y} Devin Desktop install failed (package may be unavailable for this architecture or repository unreachable).\n${W}"
+	fi
+}
+
+install_opencode_desktop() {
+	local force="${1:-}"
+	local deb_arch
+	case "$arch" in
+		amd64) deb_arch=amd64 ;;
+		arm64) deb_arch=arm64 ;;
+		arm)
+			echo -e "${Y} OpenCode Desktop não está disponível para ARM 32-bit. Pulando.${W}"
+			return 0
+			;;
+		*)
+			echo -e "${Y} OpenCode Desktop não é compatível com a arquitetura ${arch}. Pulando.${W}"
+			return 0
+			;;
+	esac
+	if [ -e /opt/OpenCode/ai.opencode.desktop ] && [ "$force" != "--update" ]; then
+		echo -e "${Y}OpenCode Desktop já está instalado.${W}"
+		return 0
+	fi
+
+	echo -e "${G}Instalando ${Y}OpenCode Desktop${W}"
+	local deb_file
+	deb_file=$(mktemp --suffix=.deb)
+	local url="https://github.com/anomalyco/opencode/releases/latest/download/opencode-desktop-linux-${deb_arch}.deb"
+	local install_ok=0
+	if curl -fL --retry 3 "$url" -o "$deb_file"; then
+		if apt-get install -y "$deb_file"; then
+			install_ok=1
+		else
+			dpkg -i "$deb_file" >/dev/null 2>&1 || true
+			apt-get -f install -y >/dev/null 2>&1 || true
+			if dpkg-query -W -f='${Status}' opencode 2>/dev/null | grep -q 'install ok installed'; then
+				install_ok=1
+			fi
+		fi
+	else
+		echo -e "${Y} Não foi possível baixar o OpenCode Desktop.${W}"
+	fi
+	rm -f "$deb_file"
+
+	if [ "$install_ok" -eq 1 ]; then
+		if [ -f /usr/share/applications/opencode-desktop.desktop ]; then
+			sed -i '/^Exec=/ { /--no-sandbox/! s|$| --no-sandbox|; }' /usr/share/applications/opencode-desktop.desktop
+		fi
+		echo -e "${C} OpenCode Desktop instalado com sucesso.${W}"
+	else
+		echo -e "${Y} Falha ao instalar o OpenCode Desktop; continuando.${W}"
+	fi
+}
+
+install_claude_desktop() {
+	case "$arch" in
+		arm)
+			echo -e "${Y} Claude Desktop não está disponível para ARM 32-bit. Pulando.${W}"
+			return 0
+			;;
+	esac
+	if command -v claude-desktop >/dev/null 2>&1; then
+		echo -e "${Y}Claude Desktop já está instalado.${W}"
+		if [ -f /usr/share/applications/claude-desktop.desktop ]; then
+			sed -i '/^Exec=/ { /--no-sandbox/! s|$| --no-sandbox|; }' /usr/share/applications/claude-desktop.desktop
+		fi
+		return 0
+	fi
+
+	echo -e "${G}Instalando ${Y}Claude Desktop${W}"
+	apt-get update -y
+	apt-get install -y curl ca-certificates
+	mkdir -p /usr/share/keyrings
+	if ! curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc \
+		https://downloads.claude.ai/claude-desktop/key.asc; then
+		echo -e "${Y} Não foi possível baixar a chave do Claude Desktop.${W}"
+		return 0
+	fi
+	echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main" \
+		> /etc/apt/sources.list.d/claude-desktop.list
+	apt-get update -y
+	if apt-get install -y --no-install-recommends claude-desktop; then
+		if [ -f /usr/share/applications/claude-desktop.desktop ]; then
+			sed -i '/^Exec=/ { /--no-sandbox/! s|$| --no-sandbox|; }' /usr/share/applications/claude-desktop.desktop
+		fi
+		echo -e "${C} Claude Desktop instalado com sucesso.${W}"
+	else
+		echo -e "${Y} Falha ao instalar o Claude Desktop; continuando.${W}"
+	fi
+}
+
+resolve_vscode_ext_helper() {
+	if [ -x /usr/local/bin/vscode-ext ]; then
+		printf '%s\n' /usr/local/bin/vscode-ext
+	elif [ -x "$(dirname "$0")/vscode-ext.sh" ]; then
+		printf '%s\n' "$(dirname "$0")/vscode-ext.sh"
+	elif [ -x /data/data/com.termux/files/home/modded-ubuntu/distro/vscode-ext.sh ]; then
+		printf '%s\n' /data/data/com.termux/files/home/modded-ubuntu/distro/vscode-ext.sh
+	else
+		return 1
+	fi
+}
+
+refresh_vscode_extensions() {
+	if ! command -v code >/dev/null 2>&1; then
+		return 0
+	fi
+	local helper
+	local downloaded=0
+	helper=$(resolve_vscode_ext_helper 2>/dev/null) || {
+		helper=$(mktemp)
+		downloaded=1
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vscode-ext.sh -o "$helper" || {
+			rm -f "$helper"
+			return 0
+		}
+		chmod +x "$helper"
+	}
+	bash "$helper" \
+		Angular.ng-template johnpapa.Angular2 dbaeumer.vscode-eslint \
+		esbenp.prettier-vscode EditorConfig.EditorConfig christian-kohler.path-intellisense \
+		formulahendry.auto-rename-tag PKief.material-icon-theme \
+		ms-dotnettools.vscode-dotnet-runtime ms-dotnettools.csharp ms-dotnettools.csdevkit || true
+	if [ "$downloaded" -eq 1 ]; then
+		rm -f "$helper"
+	fi
+}
+
+update_ai_tools() {
+	echo -e "${C} [*] Atualizando somente as ferramentas de IA já instaladas...${W}"
+	if command -v opencode >/dev/null 2>&1; then
+		npm install -g opencode-ai@latest || true
+	fi
+	if command -v claude >/dev/null 2>&1; then
+		npm install -g --prefix /usr/local @anthropic-ai/claude-code@latest || true
+	fi
+	if command -v agy >/dev/null 2>&1; then
+		install_antigravity --update || true
+	fi
+	if command -v devin >/dev/null 2>&1; then
+		install_devin_cli --update || true
+	fi
+
+	local apt_tools=()
+	dpkg-query -W -f='${Status}' claude-desktop 2>/dev/null | grep -q 'install ok installed' && apt_tools+=(claude-desktop)
+	dpkg-query -W -f='${Status}' devin-desktop 2>/dev/null | grep -q 'install ok installed' && apt_tools+=(devin-desktop)
+	if [ "${#apt_tools[@]}" -gt 0 ]; then
+		apt-get install -y --only-upgrade "${apt_tools[@]}" || true
+	fi
+	if [ -d /opt/OpenCode ]; then
+		install_opencode_desktop --update || true
 	fi
 }
 
@@ -582,7 +741,7 @@ install_tools() {
 		${C} [${W}2${C}] Essential Dev Stack (build-essential, python3-pip, nodejs, npm, cmake)
 		${C} [${W}3${C}] .NET SDK 10.0 + C# tooling
 		${C} [${W}4${C}] Node.js LTS (direct)
-		${C} [${W}5${C}] Angular 20 + VS Code: extensions
+		${C} [${W}5${C}] Angular (CLI mais recente) + extensões do VS Code
 		${C} [${W}6${C}] Full-Stack C# + Angular
 		${C} [${W}7${C}] All of the above
 		${C} [${W}8${C}] Skip! (Default)
@@ -595,11 +754,14 @@ install_tools() {
 		${Y} ---${G} Select AI Coding Assistants ${Y}---
 
 		${C} [${W}1${C}] Claude Code CLI
-		${C} [${W}2${C}] Antigravity CLI (agy)
-		${C} [${W}3${C}] Devin CLI
-		${C} [${W}4${C}] Devin Desktop
-		${C} [${W}5${C}] All of the above
-		${C} [${W}6${C}] Skip! (Default)
+		${C} [${W}2${C}] Claude Desktop
+		${C} [${W}3${C}] OpenCode CLI
+		${C} [${W}4${C}] OpenCode Desktop
+		${C} [${W}5${C}] Antigravity CLI (agy)
+		${C} [${W}6${C}] Devin CLI
+		${C} [${W}7${C}] Devin Desktop
+		${C} [${W}8${C}] All of the above
+		${C} [${W}9${C}] Skip! (Default)
 
 	EOF
 	read -n1 -p "${R} [${G}~${R}]${Y} Select an Option: ${G}" AI_OPTION
@@ -694,11 +856,17 @@ install_tools() {
 	# Install AI Coding Assistants
 	case $AI_OPTION in
 		1) install_claude_code ;;
-		2) install_antigravity ;;
-		3) install_devin_cli ;;
-		4) install_devin_desktop ;;
-		5)
+		2) install_claude_desktop ;;
+		3) install_opencode ;;
+		4) install_opencode_desktop ;;
+		5) install_antigravity ;;
+		6) install_devin_cli ;;
+		7) install_devin_desktop ;;
+		8)
 			install_claude_code
+			install_claude_desktop
+			install_opencode
+			install_opencode_desktop
 			install_antigravity
 			install_devin_cli
 			install_devin_desktop
@@ -839,10 +1007,17 @@ cleanup() {
 update_mode() {
 	check_root
 	banner
-	echo -e "${C} [*] Modo de atualização: reinstalando/atualizando pacotes base, Obsidian e configurações XFCE...${W}"
+	echo -e "${C} [*] Atualização: pacotes base, ferramentas de IA, extensões do VS Code e configurações XFCE...${W}"
 	package
 	install_obsidian
+	update_ai_tools
+	refresh_vscode_extensions
 	config
+	if [ "${MODDED_INSTALL_DESKTOPS:-0}" = "1" ]; then
+		install_claude_desktop
+		install_opencode_desktop
+		install_devin_desktop
+	fi
 	echo -e "${G} [*] Atualização concluída. Reinicie o Termux/Ubuntu se desejar.${W}"
 	cleanup
 }
