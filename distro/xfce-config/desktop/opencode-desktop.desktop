@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=OpenCode Desktop
+Exec=/opt/OpenCode/ai.opencode.desktop --no-sandbox %U
+TryExec=/opt/OpenCode/ai.opencode.desktop
+Icon=ai.opencode.desktop
+Terminal=false
+Type=Application
+Categories=Development;
