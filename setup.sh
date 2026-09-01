@@ -262,6 +262,16 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/angular-setup"
     fi
 
+    if [[ -e "$CURR_DIR/distro/vscode-ext.sh" ]]; then
+        cp -f "$CURR_DIR/distro/vscode-ext.sh" "$UBUNTU_DIR/usr/local/bin/vscode-ext"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/vscode-ext"
+    fi
+
+    if [[ -e "$CURR_DIR/distro/set-wallpaper.sh" ]]; then
+        cp -f "$CURR_DIR/distro/set-wallpaper.sh" "$UBUNTU_DIR/usr/local/bin/set-wallpaper"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/set-wallpaper"
+    fi
+
     if [[ -e "$CURR_DIR/distro/update-system.sh" ]]; then
         cp -f "$CURR_DIR/distro/update-system.sh" "$UBUNTU_DIR/usr/local/bin/update-system"
         chmod +x "$UBUNTU_DIR/usr/local/bin/update-system"

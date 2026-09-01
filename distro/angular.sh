@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Angular tooling para o modded-ubuntu
-# Instala o Angular CLI e as extensões do VS Code: para desenvolvimento Angular 20
+# Instala o Angular CLI e as extensões do VS Code para desenvolvimento Angular
 # Pode ser executado standalone ou chamado por distro/gui.sh
 
 R="$(printf '\033[1;31m')"
@@ -66,11 +66,11 @@ ensure_nodejs() {
 install_angular_cli() {
 	log "Instalando Angular CLI..."
 
-	# Tenta a versão 20; se falhar (ainda não publicada), usa a última disponível
-	if npm install -g @angular/cli@20; then
-		log "Angular CLI v20 instalado."
+	# Tenta a versão mais recente; se falhar, usa o pacote sem sufixo de versão
+	if npm install -g @angular/cli@latest; then
+		log "Angular CLI mais recente instalado."
 	else
-		warn "Não foi possível instalar @angular/cli@20; usando a última versão."
+		warn "Não foi possível instalar @angular/cli@latest; usando o fallback."
 		npm install -g @angular/cli || warn "Não foi possível instalar o Angular CLI"
 	fi
 
@@ -91,19 +91,6 @@ install_angular_cli() {
 }
 
 install_vscode_angular_extensions() {
-	if ! command -v code >/dev/null 2>&1; then
-		warn "Visual Studio Code: não instalado. Pulando extensões Angular."
-		return 0
-	fi
-
-	local target_user
-	target_user=$(detect_user)
-	if [ -z "$target_user" ]; then
-		target_user="root"
-	fi
-
-	log "Instalando extensões do VS Code: para Angular 20 no usuário: $target_user"
-
 	local extensions=(
 		"Angular.ng-template"
 		"johnpapa.Angular2"
@@ -114,14 +101,28 @@ install_vscode_angular_extensions() {
 		"formulahendry.auto-rename-tag"
 		"PKief.material-icon-theme"
 	)
-
-	for ext in "${extensions[@]}"; do
-		if sudo -u "$target_user" -H code --no-sandbox --install-extension "$ext" --force 2>/dev/null; then
-			log "Extensão $ext instalada."
-		else
-			warn "Não foi possível instalar a extensão $ext"
-		fi
-	done
+	local helper=""
+	local downloaded=0
+	if [ -f /usr/local/bin/vscode-ext ]; then
+		helper=/usr/local/bin/vscode-ext
+	elif [ -f "$(dirname "$0")/vscode-ext.sh" ]; then
+		helper="$(dirname "$0")/vscode-ext.sh"
+	elif [ -f /data/data/com.termux/files/home/modded-ubuntu/distro/vscode-ext.sh ]; then
+		helper=/data/data/com.termux/files/home/modded-ubuntu/distro/vscode-ext.sh
+	else
+		helper=$(mktemp)
+		downloaded=1
+		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vscode-ext.sh -o "$helper" || {
+			warn "Não foi possível obter o helper de extensões do VS Code."
+			rm -f "$helper"
+			return 0
+		}
+		chmod +x "$helper"
+	fi
+	bash "$helper" "${extensions[@]}" || true
+	if [ "$downloaded" -eq 1 ]; then
+		rm -f "$helper"
+	fi
 }
 
 cleanup() {
@@ -142,7 +143,7 @@ main() {
 	install_angular_cli
 	install_vscode_angular_extensions
 	cleanup
-	log "Stack Angular 20 configurado."
+	log "Stack Angular (CLI mais recente) configurado."
 }
 
 main "$@"
