@@ -314,21 +314,12 @@ install_sublime() {
 }
 
 install_chromium() {
-	[[ $(command -v chromium) ]] && echo "${Y}Chromium is already Installed!${W}\n" || {
-		echo -e "${G}Installing ${Y}Chromium${W}"
-		apt purge chromium* chromium-browser* snapd -y
-		apt install gnupg2 software-properties-common --no-install-recommends -y
-		echo -e "deb http://ftp.debian.org/debian stable main\ndeb http://ftp.debian.org/debian stable-updates main" >> /etc/apt/sources.list
-		add_apt_key DCC9EFBF77E11517
-		add_apt_key 648ACFD622F3D138
-		add_apt_key AA8E81B4331F7F50
-		add_apt_key 112695A0E562B32A
-		add_apt_key 3B4FE6ACC0B21F32
-		apt update -y
-		apt install chromium -y
-		sed -i 's/chromium %U/chromium --no-sandbox %U/g' /usr/share/applications/chromium.desktop
-		echo -e "${G} Chromium Installed Successfully\n${W}"
-	}
+	echo -e "${G}Installing ${Y}Chromium via XtraDeb${W}"
+	if [ -x /usr/local/bin/chromium.sh ]; then
+		bash /usr/local/bin/chromium.sh
+	else
+		bash <(curl -fsSL "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/chromium.sh")
+	fi
 }
 
 install_firefox() {

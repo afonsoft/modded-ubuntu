@@ -287,6 +287,16 @@ permission() {
         chmod +x "$UBUNTU_DIR/usr/local/bin/firefox.sh"
     fi
 
+    if [[ -e "$CURR_DIR/distro/chromium.sh" ]]; then
+        cp -f "$CURR_DIR/distro/chromium.sh" "$UBUNTU_DIR/usr/local/bin/chromium.sh"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/chromium.sh"
+    fi
+
+    if [[ -e "$CURR_DIR/distro/setup_xtradeb.sh" ]]; then
+        cp -f "$CURR_DIR/distro/setup_xtradeb.sh" "$UBUNTU_DIR/usr/local/bin/setup_xtradeb.sh"
+        chmod +x "$UBUNTU_DIR/usr/local/bin/setup_xtradeb.sh"
+    fi
+
     if [[ -e "$CURR_DIR/distro/zsh-setup.sh" ]]; then
         cp -f "$CURR_DIR/distro/zsh-setup.sh" "$UBUNTU_DIR/usr/local/bin/zsh-setup"
         chmod +x "$UBUNTU_DIR/usr/local/bin/zsh-setup"
