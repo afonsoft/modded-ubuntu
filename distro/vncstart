@@ -77,7 +77,11 @@ echo "Iniciando VNC em localhost:1 (geometria: $geometry)..."
 "$_vncserver_cmd" :1 \
     -geometry "$geometry" \
     -depth 24 \
-    -zliblevel 0 \
+    -dpi "${VNC_DPI:-96}" \
+    -AlwaysShared \
+    -AcceptSetDesktopSize=1 \
+    -localhost no \
+    -zliblevel "${VNC_ZLIB_LEVEL:-0}" \
     -extension MIT-SHM \
     -rfbauth "$passwd_file" \
     -name modded-ubuntu \
@@ -85,3 +89,15 @@ echo "Iniciando VNC em localhost:1 (geometria: $geometry)..."
 
 sleep 1
 "$_vncserver_cmd" -list
+
+echo
+echo "Conexoes VNC:"
+echo "  localhost:1"
+echo "  porta 5901"
+if command -v hostname >/dev/null 2>&1; then
+    IFS=' ' read -r -a ip_addresses <<< "$(hostname -I 2>/dev/null || true)"
+    for ip in "${ip_addresses[@]}"; do
+        [ -n "$ip" ] && echo "  ${ip}:5901"
+    done
+fi
+echo "Na mesma rede local, aponte o viewer para <IP>:5901."
