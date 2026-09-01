@@ -66,11 +66,75 @@ Use this skill when asked to validate changes to `setup.sh`, `distro/user.sh`, `
    - Source it and call `sound_fix`
    - Confirm `bash ~/.sound` is added via `mktemp` (not in-place redirect) and the `exec proot-distro` line is not corrupted
 
-6. Run lint:
+6. Run lint (mirror the CI configuration):
    ```bash
    bash -n setup.sh distro/user.sh distro/gui.sh
-   shellcheck -S warning setup.sh distro/user.sh distro/gui.sh
+   # .github/workflows/shellcheck.yml ignores distro/proot-distro.sh (vendored upstream file
+   # that has pre-existing SC2239/SC2046/SC1090 findings). Exclude it or you will get false failures:
+   shellcheck -S warning setup.sh remove.sh $(ls distro/*.sh | grep -v proot-distro.sh) \
+       distro/vncstart distro/vncstop distro/vncstart-fhd distro/vncstart-qhd
+   xmllint --noout distro/xfce-config/xfconf/*.xml   # needs libxml2-utils
    ```
+
+## Testing the GUI / VNC session (appearance, XFCE, browsers)
+
+To actually *see* the desktop instead of only asserting on files:
+
+1. Publish the VNC port when creating the container. The Devin box itself already uses host
+   port 5901 for its own display, so map a different host port:
+   ```bash
+   docker run -d --name mu-test -p 5911:5901 \
+     -v "$PWD:/data/data/com.termux/files/home/modded-ubuntu" \
+     -v /tmp/modded-ubuntu-test:/termux-logs termux/termux-docker:latest sleep infinity
+   ```
+2. A full `gui.sh` run is slow. To provision only what a desktop needs, install the `packs`
+   array from `distro/gui.sh` package-by-package inside the rootfs (this also proves every
+   package name still resolves on the target Ubuntu release):
+   ```bash
+   for p in "${packs[@]}"; do apt-get install -y --no-install-recommends "$p" || echo "FAILED: $p"; done
+   ```
+3. `vncstart` must run as the created user: `proot-distro login --user test --no-sysvipc ubuntu
+   --shared-tmp --fix-low-ports -- bash /home/test/script.sh`. With no TTY it auto-creates the
+   default password `modded`.
+4. **Xvnc log location**: TigerVNC on recent Ubuntu writes to
+   `~/.config/tigervnc/<host>:1.log`, *not* `~/.vnc/*.log`. Check it for
+   `Listening for VNC connections on all interface(s), port 5901` and for
+   `Bad command line option` / `unrecognized` when validating new `vncserver` arguments.
+5. `ps -ef | grep Xtigervnc` is the reliable way to confirm which arguments the TigerVNC
+   perl wrapper actually forwarded (e.g. `-dpi 96`, `-AlwaysShared=1`,
+   `-AcceptSetDesktopSize=1`, `-localhost=0`, `-ZlibLevel 0`).
+6. When the `proot-distro login` session exits, its children become zombies and the desktop
+   dies. Keep the session alive with a backgrounded exec that ends in `sleep`:
+   ```bash
+   docker exec -d -u system mu-test bash -lc \
+     "proot-distro login --user test --no-sysvipc ubuntu --shared-tmp --fix-low-ports -- \
+      bash -c 'vncstart; sleep 3000'"
+   ```
+7. Connect from the host GUI (install `tigervnc-viewer` if missing):
+   `DISPLAY=:0 vncviewer 127.0.0.1:5911`, type the password, then maximize with
+   `DISPLAY=:0 wmctrl -r "modded-ubuntu - TigerVNC" -b add,maximized_vert,maximized_horz`.
+8. Useful in-session assertions (run in the XFCE terminal so they appear on the recording):
+   `xdpyinfo | grep resolution`, `xrdb -query | grep dpi`,
+   `xfconf-query -c xsettings -p /Xft/DPI`, `xfconf-query -c xfwm4 -p /general/use_compositing`,
+   `xset q | grep -A2 'Screen Saver'`. Note `xfconf-query` needs `DISPLAY` set, otherwise it
+   fails with "Cannot autolaunch D-Bus without X11 $DISPLAY".
+9. Expect these harmless PRoot warnings in the Xvnc log; they are not failures:
+   `Failed to get a systemd proxy`, `Failed to get system bus`,
+   `pm-is-supported ... No such file or directory`, `Glycin running without sandbox`,
+   `Xlib: extension "DPMS" missing` / `server does not have extension for -dpms option`.
+
+## Testing APT/PPA helpers (e.g. `setup_xtradeb.sh`, `chromium.sh`)
+
+- Record `md5sum /etc/apt/sources.list` before and after: helper scripts must never append to it.
+- After adding a repo, run `apt-get update` verbosely and check that pre-existing
+  `archive.ubuntu.com` entries still appear in `apt-cache policy` (no `NO_PUBKEY` / `is not signed`).
+- Verify the imported key fingerprint with
+  `gpg --show-keys --with-colons /etc/apt/keyrings/<name>.gpg | grep ^fpr`.
+- Run the helper twice and compare `stat -c %s` of the generated `.sources` file to prove idempotency.
+- The container is `amd64` and Ubuntu `resolute` (26.04); the XtraDeb PPA does publish
+  `resolute/main amd64`, so the "package unavailable" fallback branch of `chromium.sh` is
+  normally *not* exercised there. If you need to test that branch, temporarily point the
+  script at a non-existent suite instead of assuming it works.
 
 ## Devin secrets needed
 
