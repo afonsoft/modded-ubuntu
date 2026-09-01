@@ -5,6 +5,8 @@ log() {
     echo "[chromium-install] $*" >&2
 }
 
+setup_script=""
+downloaded=0
 chromium_bin=""
 if [ -f /usr/bin/chromium ]; then
     chromium_bin=/usr/bin/chromium
@@ -13,8 +15,6 @@ elif [ -f /usr/bin/chromium-browser ]; then
 fi
 
 if [ -z "$chromium_bin" ]; then
-    setup_script=""
-    downloaded=0
     if [ -f /usr/local/bin/setup_xtradeb.sh ]; then
         setup_script=/usr/local/bin/setup_xtradeb.sh
     elif [ -f "$(dirname "$0")/setup_xtradeb.sh" ]; then
@@ -40,8 +40,8 @@ if [ -z "$chromium_bin" ]; then
         exit 0
     fi
 
-    if ! apt-get install -y --no-install-recommends chromium >/dev/null 2>&1; then
-        apt-get install -y --no-install-recommends chromium-browser >/dev/null 2>&1 || true
+    if ! apt-get install -y --no-install-recommends chromium; then
+        apt-get install -y --no-install-recommends chromium-browser || true
     fi
 
     if [ -f /usr/bin/chromium ]; then

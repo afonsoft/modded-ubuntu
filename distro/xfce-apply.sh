@@ -93,6 +93,7 @@ apply_user() {
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$backup_dir/" 2>/dev/null || true
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$backup_dir/" 2>/dev/null || true
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xsettings.xml" "$backup_dir/" 2>/dev/null || true
+		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfwm4.xml" "$backup_dir/" 2>/dev/null || true
 	fi
 
 	# Aplica os arquivos de configuração
