@@ -28,6 +28,20 @@ is_root() {
 	[ "$(id -u)" -eq 0 ]
 }
 
+reload_panel() {
+	command -v xfce4-panel >/dev/null 2>&1 || return 0
+	[ -n "${DISPLAY:-}" ] || return 0
+	# Recarrega a configuração; se o painel estiver rodando, reinicia para
+	# que o segundo painel (dock) seja criado na sessão atual
+	if pgrep -x xfce4-panel >/dev/null 2>&1; then
+		xfce4-panel --quit 2>/dev/null || true
+		sleep 1
+		(setsid xfce4-panel >/dev/null 2>&1 &)
+	else
+		xfce4-panel -r 2>/dev/null || true
+	fi
+}
+
 install_packages() {
 	if ! command -v apt-get >/dev/null 2>&1; then
 		return 0
@@ -37,7 +51,7 @@ install_packages() {
 	apt-get update -y >/dev/null 2>&1 || true
 
 	# Temas e ícones principais
-	apt-get install -y --no-install-recommends greybird-gtk-theme papirus-icon-theme breeze-cursor-theme fonts-noto-color-emoji 2>/dev/null || true
+	apt-get install -y --no-install-recommends xfce4-whiskermenu-plugin greybird-gtk-theme papirus-icon-theme breeze-cursor-theme fonts-noto-color-emoji 2>/dev/null || true
 
 	# Fonte Hack: o nome do pacote mudou em versões mais recentes do Ubuntu
 	apt-get install -y --no-install-recommends fonts-hack-ttf 2>/dev/null || apt-get install -y --no-install-recommends fonts-hack 2>/dev/null || true
@@ -223,9 +237,7 @@ apply_all() {
 	done
 
 	# Recarrega o painel se houver uma sessão XFCE ativa
-	if command -v xfce4-panel >/dev/null 2>&1; then
-		xfce4-panel -r 2>/dev/null || true
-	fi
+	reload_panel
 }
 
 main() {
@@ -242,8 +254,8 @@ main() {
 				install_global_files
 			fi
 			apply_user "$2"
-			if command -v xfce4-panel >/dev/null 2>&1 && [ "$(id -un)" = "$2" ]; then
-				xfce4-panel -r 2>/dev/null || true
+			if [ "$(id -un)" = "$2" ]; then
+				reload_panel
 			fi
 			;;
 		--all)
