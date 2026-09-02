@@ -138,33 +138,67 @@ sudo bash gui.sh
 
 ### Atualizando o modded-ubuntu / Updating modded-ubuntu
 
-Para atualizar os scripts VNC, pacotes do Ubuntu, configurações e o menu `gui.sh` sem reinstalar tudo: / To update VNC scripts, Ubuntu packages, settings, and the `gui.sh` menu without reinstalling everything:
+Atualize sem reinstalar nada: o fluxo abaixo traz as novidades do repositório, recopia os scripts para dentro do Ubuntu e reaplica as configurações. / Update without reinstalling anything: the flow below pulls the latest repository changes, re-copies the scripts into Ubuntu, and re-applies the settings.
 
-- **Dentro do Ubuntu:** / **Inside Ubuntu:**
+#### 1. Atualizar o repositório e rodar o update (no Termux) / Update the repository and run the update (in Termux)
 
-  ```bash
-  sudo update-system
-  ```
+```bash
+cd ~/modded-ubuntu
+git pull --ff-only
+bash update.sh
+```
 
-- **No Termux (atualiza o repositório e roda o `update-system` dentro do Ubuntu):** / **In Termux (updates the repository and runs `update-system` inside Ubuntu):**
+Para atualizar também Claude Desktop, OpenCode Desktop e Devin Desktop: / To also update Claude Desktop, OpenCode Desktop, and Devin Desktop:
 
-  ```bash
-  cd ~/modded-ubuntu && bash update.sh
-  bash update.sh --with-desktops
-  ```
+```bash
+bash update.sh --with-desktops
+```
 
-  Ou diretamente pelo repositório remoto:
+O `git pull` é opcional: o próprio `update.sh` atualiza `~/modded-ubuntu` (ou clona, se a pasta não existir) antes de continuar. Rode-o à mão apenas se quiser revisar o que mudou antes de aplicar. / The `git pull` is optional: `update.sh` itself updates `~/modded-ubuntu` (or clones it, if the folder is missing) before continuing.
 
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash
-  curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash -s -- --with-desktops
-  ```
+Se o `git pull` reclamar de alterações locais, guarde-as antes com `git -C ~/modded-ubuntu stash`. / If `git pull` complains about local changes, stash them first with `git -C ~/modded-ubuntu stash`.
 
-> O `update-system` baixa `vncstart`, `vncstop`, `vncstart-fhd` e `vncstart-qhd` direto do `master`, então qualquer correção recente já é aplicada automaticamente. / `update-system` downloads `vncstart`, `vncstop`, `vncstart-fhd`, and `vncstart-qhd` directly from `master`, so any recent fix is applied automatically.
->
-> A partir desta versão, o `update-system` também re-executa o `gui.sh` em modo não interativo (`gui.sh --update`), garantindo que novos pacotes base (ex.: `mousepad`) e novas opções (ex.: **Obsidian**) sejam instalados em instalações existentes. / From this version onwards, `update-system` also re-runs `gui.sh` in non-interactive mode (`gui.sh --update`), ensuring new base packages (e.g., `mousepad`) and new options (e.g., **Obsidian**) are installed on existing setups.
->
-> O update reaplica as extensões do VS Code, o papel de parede e os ícones da área de trabalho. Use `--with-desktops` para atualizar também os aplicativos desktop de IA.
+#### 2. Sem clone local (direto do `master`) / Without a local clone (straight from `master`)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash
+curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/update.sh | bash -s -- --with-desktops
+```
+
+#### 3. Somente dentro do Ubuntu / Inside Ubuntu only
+
+Se você já está na sessão do Ubuntu e só quer atualizar pacotes, scripts e configurações: / If you are already inside the Ubuntu session and only want to update packages, scripts, and settings:
+
+```bash
+sudo update-system
+```
+
+#### O que o update faz / What the update does
+
+Ordem de execução do `update.sh`: atualiza o repositório → `setup.sh` (recopia scripts e helpers para o rootfs) → `update-system` dentro do PRoot. / Execution order of `update.sh`: update the repository → `setup.sh` (re-copies scripts and helpers into the rootfs) → `update-system` inside PRoot.
+
+- Baixa `vncstart`, `vncstop`, `vncstart-fhd` e `vncstart-qhd` direto do `master`, então qualquer correção recente já entra.
+- Re-executa o `gui.sh` em modo não interativo (`gui.sh --update`), instalando novos pacotes base e novas opções em ambientes antigos.
+- Roda `xfce-apply --all`, reaplicando painéis (barra superior + dock inferior), ícones da área de trabalho, tema e fontes.
+- Reaplica o papel de parede (`set-wallpaper`) e as extensões do VS Code (`vscode-ext`).
+- Com `--with-desktops`, atualiza também os aplicativos desktop de IA.
+
+#### Depois de atualizar / After updating
+
+Reinicie a sessão gráfica para que painéis e tema sejam recriados do zero: / Restart the graphical session so panels and theme are recreated from scratch:
+
+```bash
+vncstop && vncstart
+```
+
+#### Conferir o resultado / Check the result
+
+```bash
+tail -n 50 ~/modded-ubuntu-update.log
+git -C ~/modded-ubuntu log --oneline -5
+```
+
+O log da parte executada dentro do Ubuntu fica em `/tmp/update-system.log`. / The log of the part that runs inside Ubuntu is at `/tmp/update-system.log`.
 
 ### Acesso VNC na rede local
 
