@@ -676,6 +676,23 @@ update_ai_tools() {
 	fi
 }
 
+update_chromium() {
+	# Só atualiza se o usuário já tiver escolhido o Chromium alguma vez.
+	if ! command -v chromium >/dev/null 2>&1 \
+		&& ! command -v chromium-browser >/dev/null 2>&1 \
+		&& [ ! -x /usr/local/bin/chromium ]; then
+		return 0
+	fi
+	echo -e "${C} [*] Atualizando Chromium (repositório XtraDeb + shim --no-sandbox)...${W}"
+	local chromium_pkg=""
+	dpkg-query -W -f='${Status}' chromium 2>/dev/null | grep -q 'install ok installed' && chromium_pkg=chromium
+	[ -z "$chromium_pkg" ] && dpkg-query -W -f='${Status}' chromium-browser 2>/dev/null | grep -q 'install ok installed' && chromium_pkg=chromium-browser
+	if [ -n "$chromium_pkg" ]; then
+		apt-get install -y --only-upgrade "$chromium_pkg" || true
+	fi
+	install_chromium || true
+}
+
 install_tools() {
 	banner
 	cat <<- EOF
@@ -1002,6 +1019,7 @@ update_mode() {
 	package
 	install_obsidian
 	update_ai_tools
+	update_chromium
 	refresh_vscode_extensions
 	config
 	if [ "${MODDED_INSTALL_DESKTOPS:-0}" = "1" ]; then
