@@ -230,6 +230,7 @@ apply_all() {
 	if is_root; then
 		install_packages
 		install_global_files
+		apply_user root
 	fi
 
 	awk -F: '$3 >= 1000 && $3 < 65534 {print $1}' /etc/passwd 2>/dev/null | while IFS= read -r user; do
