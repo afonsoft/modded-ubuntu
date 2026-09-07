@@ -42,7 +42,7 @@ collect_wallpapers() {
 	local dir file name existing existing_name
 	for dir in "${wallpaper_dirs[@]}"; do
 		[ -d "$dir" ] || continue
-		for file in "$dir"/*.jpg; do
+		for file in "$dir"/modded-ubuntu-*.jpg; do
 			[ -f "$file" ] || continue
 			name=$(wallpaper_name "$file")
 			existing=0
