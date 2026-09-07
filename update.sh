@@ -55,13 +55,13 @@ cd "${INSTALL_DIR}" || {
     exit 1
 }
 
-log "[+] Executando setup.sh para atualizar scripts/helpers..."
 if command -v pkg >/dev/null 2>&1 && [ "${MODDED_SKIP_TERMUX_UPGRADE:-0}" != "1" ]; then
     export DEBIAN_FRONTEND=noninteractive
     log "[+] Atualizando pacotes do Termux..."
     pkg update -y || true
     pkg upgrade -y || true
 fi
+log "[+] Executando setup.sh para atualizar scripts/helpers..."
 bash setup.sh
 
 log "[+] Atualizando pacotes e configurações dentro do Ubuntu..."

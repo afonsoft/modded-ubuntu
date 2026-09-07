@@ -98,6 +98,7 @@ apply_user() {
 	fi
 
 	local xfce_dir="$home_dir/.config/xfce4"
+	local wallpaper
 	mkdir -p "$xfce_dir/xfconf/xfce-perchannel-xml"
 	mkdir -p "$xfce_dir/panel"
 

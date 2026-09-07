@@ -39,7 +39,7 @@ wallpaper_name() {
 }
 
 collect_wallpapers() {
-	local dir file name existing
+	local dir file name existing existing_name
 	for dir in "${wallpaper_dirs[@]}"; do
 		[ -d "$dir" ] || continue
 		for file in "$dir"/*.jpg; do
@@ -82,7 +82,9 @@ case "$argument" in
 		;;
 	--list)
 		collect_wallpapers
-		printf '%s\n' "${wallpaper_names[@]}"
+		if [ "${#wallpaper_names[@]}" -gt 0 ]; then
+			printf '%s\n' "${wallpaper_names[@]}"
+		fi
 		exit 0
 		;;
 	--random)
