@@ -8,14 +8,107 @@ warn() {
 	printf '%b\n' "${Y}[set-wallpaper] $*${W}"
 }
 
-image="${1:-}"
-if [ -z "$image" ]; then
-	if [ -f "$HOME/.config/xfce4/wallpaper/modded-ubuntu-tech.jpg" ]; then
-		image="$HOME/.config/xfce4/wallpaper/modded-ubuntu-tech.jpg"
-	else
-		image=/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg
-	fi
-fi
+usage() {
+	cat <<-EOF
+	Uso: set-wallpaper [OPCAO|NOME|CAMINHO]
+
+	Opcoes:
+	  --list             lista os papeis de parede disponiveis
+	  --random           escolhe um papel de parede aleatoriamente
+	  -h, --help         mostra esta ajuda
+	EOF
+}
+
+wallpaper_dirs=(
+	"${HOME}/.config/xfce4/wallpaper"
+	"/usr/share/backgrounds/xfce"
+)
+
+wallpaper_names=()
+wallpaper_paths=()
+
+wallpaper_name() {
+	local filename="${1##*/}"
+	filename="${filename%.jpg}"
+	case "$filename" in
+		modded-ubuntu-*)
+			filename="${filename#modded-ubuntu-}"
+			;;
+	esac
+	printf '%s\n' "$filename"
+}
+
+collect_wallpapers() {
+	local dir file name existing
+	for dir in "${wallpaper_dirs[@]}"; do
+		[ -d "$dir" ] || continue
+		for file in "$dir"/*.jpg; do
+			[ -f "$file" ] || continue
+			name=$(wallpaper_name "$file")
+			existing=0
+			for existing_name in "${wallpaper_names[@]}"; do
+				if [ "$existing_name" = "$name" ]; then
+					existing=1
+					break
+				fi
+			done
+			[ "$existing" -eq 0 ] || continue
+			wallpaper_names+=("$name")
+			wallpaper_paths+=("$file")
+		done
+	done
+}
+
+resolve_wallpaper_name() {
+	local name="$1"
+	local dir candidate
+	for dir in "${wallpaper_dirs[@]}"; do
+		for candidate in "$name" "$name.jpg" "modded-ubuntu-$name.jpg"; do
+			if [ -f "$dir/$candidate" ]; then
+				printf '%s\n' "$dir/$candidate"
+				return 0
+			fi
+		done
+	done
+	return 1
+}
+
+image=""
+argument="${1:-}"
+case "$argument" in
+	-h|--help)
+		usage
+		exit 0
+		;;
+	--list)
+		collect_wallpapers
+		printf '%s\n' "${wallpaper_names[@]}"
+		exit 0
+		;;
+	--random)
+		collect_wallpapers
+		if [ "${#wallpaper_paths[@]}" -gt 0 ]; then
+			image="${wallpaper_paths[$((RANDOM % ${#wallpaper_paths[@]}))]}"
+		else
+			warn "Nenhum papel de parede encontrado; pulando."
+			exit 0
+		fi
+		;;
+	"")
+		if [ -f "$HOME/.config/xfce4/wallpaper/modded-ubuntu-tech.jpg" ]; then
+			image="$HOME/.config/xfce4/wallpaper/modded-ubuntu-tech.jpg"
+		else
+			image=/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg
+		fi
+		;;
+	*)
+		if [[ "$argument" == */* ]] || [ -f "$argument" ]; then
+			image="$argument"
+		else
+			image=$(resolve_wallpaper_name "$argument" || true)
+		fi
+		;;
+esac
 
 if [ ! -f "$image" ]; then
 	warn "Imagem de papel de parede não encontrada; pulando."

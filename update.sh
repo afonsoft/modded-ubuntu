@@ -30,6 +30,7 @@ Uso: bash update.sh [--with-desktops]
 Atualiza os scripts, pacotes e configurações de uma instalação existente.
 Use --with-desktops para atualizar também Claude Desktop, OpenCode Desktop
 e Devin Desktop.
+Defina MODDED_SKIP_TERMUX_UPGRADE=1 para pular a atualização dos pacotes do Termux.
 EOF
         exit 0
         ;;
@@ -55,6 +56,12 @@ cd "${INSTALL_DIR}" || {
 }
 
 log "[+] Executando setup.sh para atualizar scripts/helpers..."
+if command -v pkg >/dev/null 2>&1 && [ "${MODDED_SKIP_TERMUX_UPGRADE:-0}" != "1" ]; then
+    export DEBIAN_FRONTEND=noninteractive
+    log "[+] Atualizando pacotes do Termux..."
+    pkg update -y || true
+    pkg upgrade -y || true
+fi
 bash setup.sh
 
 log "[+] Atualizando pacotes e configurações dentro do Ubuntu..."

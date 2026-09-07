@@ -61,10 +61,12 @@ install_global_files() {
 	# Papel de parede global
 	local wp_dir="/usr/share/backgrounds/xfce"
 	mkdir -p "$wp_dir"
-	if [ -f "$XFCE_CONFIG_SRC/wallpaper/modded-ubuntu-tech.jpg" ]; then
-		cp -f "$XFCE_CONFIG_SRC/wallpaper/modded-ubuntu-tech.jpg" "$wp_dir/"
-		chmod 644 "$wp_dir/modded-ubuntu-tech.jpg"
-	fi
+	local wallpaper
+	for wallpaper in "$XFCE_CONFIG_SRC/wallpaper/"*.jpg; do
+		[ -f "$wallpaper" ] || continue
+		cp -f "$wallpaper" "$wp_dir/"
+		chmod 644 "$wp_dir/$(basename "$wallpaper")"
+	done
 
 	local script_dir
 	script_dir=$(cd "$(dirname "$0")" && pwd)
@@ -125,7 +127,11 @@ apply_user() {
 
 	# Mantém uma cópia local do papel de parede e atualiza o caminho para usuários comuns
 	mkdir -p "$xfce_dir/wallpaper"
-	cp -f "$XFCE_CONFIG_SRC/wallpaper/modded-ubuntu-tech.jpg" "$xfce_dir/wallpaper/" 2>/dev/null || true
+	for wallpaper in "$XFCE_CONFIG_SRC/wallpaper/"*.jpg; do
+		[ -f "$wallpaper" ] || continue
+		cp -f "$wallpaper" "$xfce_dir/wallpaper/" 2>/dev/null || true
+		chmod 644 "$xfce_dir/wallpaper/$(basename "$wallpaper")" 2>/dev/null || true
+	done
 	if ! is_root; then
 		sed -i "s|/usr/share/backgrounds/xfce/modded-ubuntu-tech.jpg|$xfce_dir/wallpaper/modded-ubuntu-tech.jpg|g" \
 			"$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" 2>/dev/null || true

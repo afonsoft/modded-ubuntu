@@ -674,6 +674,10 @@ update_ai_tools() {
 	if [ -d /opt/OpenCode ]; then
 		install_opencode_desktop --update || true
 	fi
+	if command -v code >/dev/null 2>&1; then
+		echo -e "${C} [*] Atualizando VS Code...${W}"
+		apt-get install -y --only-upgrade code || true
+	fi
 }
 
 update_chromium() {
