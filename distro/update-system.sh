@@ -419,6 +419,7 @@ update_xfce_config() {
         /usr/local/bin/xfce-apply --all
     fi
     log "Papel de parede e ícones da área de trabalho reaplicados."
+    log "Painel e dock reaplicados; para consistência completa, reinicie a sessão com: vncstop && vncstart."
 
     update_desktop_files "$repo_dir"
     update_systemd_vnc_service "$repo_dir"
