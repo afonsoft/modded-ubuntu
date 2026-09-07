@@ -123,6 +123,60 @@ To actually *see* the desktop instead of only asserting on files:
    `pm-is-supported ... No such file or directory`, `Glycin running without sandbox`,
    `Xlib: extension "DPMS" missing` / `server does not have extension for -dpms option`.
 
+## Testing the XFCE appearance/panel layout (`xfce-apply.sh`, `xfce4-panel.xml`)
+
+1. **xfconfd persists runtime overrides — always reset before re-testing shipped values.** When an
+   XFCE session ends, `xfconfd` writes the live channel back to
+   `~/.config/xfce4/xfconf/xfce-perchannel-xml/*.xml`, so any `xfconf-query -s` you ran to explore
+   a layout becomes the "shipped" value of the next session. To test the versioned XML honestly:
+   stop the session, `rm -rf <home>/.config`, re-run `xfce-apply --all`, then start `vncstart`
+   again, and confirm the value in the file (e.g. `grep -A2 panel-2 ... | grep position`) before
+   trusting the screenshot.
+2. Panel placement can only be judged from real geometry, not from the XML. Use
+   `xwininfo -root -tree | grep 'xfce4-panel"'` in the session: the top bar should be
+   `<screenW>x34+0+0` and a bottom-centered dock `<w>x52+<(screenW-w)/2>+<screenH-52>`.
+   A dock reported at `+0+0` is drawn at the TOP-LEFT over panel-1. `p=11` has rendered top-left
+   in this XFCE/TigerVNC runtime while `p=10` produced the intended bottom-center placement —
+   if a dock looks misplaced, test `p=10` before assuming the config is fine.
+   Expect 3 windows to match that grep: the two panels plus a harmless 10x10 helper window.
+3. Not every property in the versioned XML survives into the live channel. Verify each one you
+   care about individually (`xfconf-query -c xfce4-panel -p /panels/panel-2/disable-struts`);
+   a missing property prints "does not exist". Check struts behaviourally too:
+   `xprop -root _NET_WORKAREA` should shrink by the top panel's height (e.g. `0, 34, W, H-34`);
+   if it stays `0, 0, W, H`, maximized windows will have their titlebar hidden under the top bar.
+4. Wallpaper: the copied XML may hold the global path while the *live* value differs, because the
+   `modded-ubuntu-wallpaper.desktop` autostart runs `set-wallpaper`, which prefers
+   `$HOME/.config/xfce4/wallpaper/*.jpg`. Always assert the live value with
+   `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitorVNC-0/workspace0/last-image`,
+   not just `grep` on the file.
+5. Desktop icons use `single-click=false`, so open them with a **double-click**. `show-trash=true`
+   does not guarantee a Trash icon is rendered — confirm visually with a zoomed screenshot.
+6. `firefox.desktop`/`code.desktop` usually do not exist in this rootfs, so those dock launchers
+   are silent no-ops. Record that instead of installing the apps.
+7. Testing `xfce-apply --all` idempotency in a live session: run it twice and assert
+   `xfconf-query -c xfce4-panel -p /panels` still prints a 2-item array plus the window count above.
+
+## Chromium may fail to start even with a correct shim
+
+`/usr/local/bin/chromium` (`exec /usr/bin/chromium --no-sandbox --disable-gpu "$@"`) has been seen
+to die with `GPU process exited unexpectedly: exit_code=5` /
+`FATAL ... GPU process isn't usable. Goodbye.` and produce **no window**, especially after the
+container has been restarted. Adding `--disable-software-rasterizer --disable-dev-shm-usage` made
+it start again, so treat a missing window as an environment/flag problem to be diagnosed (run the
+shim in the in-session terminal and read stderr) rather than proof the shim or `.desktop` is wrong.
+Check `xwininfo -root -children | grep -ci chromium` to distinguish "processes running, no window"
+from "never launched".
+
+## Container lifecycle
+
+`mu-test` can end up `Exited (255)` with empty `docker logs` after the box suspends; the VNC
+session and viewer die with it. `docker start mu-test` restores it and the PRoot rootfs
+(including `/root/.config`) survives, but every desktop/VNC process must be started again.
+Re-verify the rootfs still holds the copies under test (e.g.
+`grep -c 'apply_user root' <rootfs>/usr/local/bin/xfce-apply`) before re-testing.
+Do not keep artifacts in `/tmp` on the host or in the container — `/tmp` is wiped; use
+`/home/ubuntu/modded-ubuntu-test/artifacts`.
+
 ## Testing APT/PPA helpers (e.g. `setup_xtradeb.sh`, `chromium.sh`)
 
 - Record `md5sum /etc/apt/sources.list` before and after: helper scripts must never append to it.
