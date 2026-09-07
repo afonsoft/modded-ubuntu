@@ -62,7 +62,7 @@ fi
 
 cat > /usr/local/bin/chromium <<-EOF
 #!/bin/sh
-exec $chromium_bin --no-sandbox --disable-gpu "\$@"
+exec $chromium_bin --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage "\$@"
 EOF
 chmod +x /usr/local/bin/chromium
 
