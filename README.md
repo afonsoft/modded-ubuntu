@@ -177,6 +177,7 @@ sudo update-system
 
 Ordem de execução do `update.sh`: atualiza o repositório → `setup.sh` (recopia scripts e helpers para o rootfs) → `update-system` dentro do PRoot. / Execution order of `update.sh`: update the repository → `setup.sh` (re-copies scripts and helpers into the rootfs) → `update-system` inside PRoot.
 
+- Antes do `setup.sh`, atualiza os pacotes do Termux com `pkg update` e `pkg upgrade`. Para pular essa etapa, use `MODDED_SKIP_TERMUX_UPGRADE=1 bash update.sh`. / Before `setup.sh`, updates Termux packages with `pkg update` and `pkg upgrade`. To skip this step, use `MODDED_SKIP_TERMUX_UPGRADE=1 bash update.sh`.
 - Baixa `vncstart`, `vncstop`, `vncstart-fhd` e `vncstart-qhd` direto do `master`, então qualquer correção recente já entra.
 - Re-executa o `gui.sh` em modo não interativo (`gui.sh --update`), instalando novos pacotes base e novas opções em ambientes antigos.
 - Roda `xfce-apply --all`, reaplicando painéis (barra superior + dock inferior), ícones da área de trabalho, tema e fontes.
@@ -199,6 +200,16 @@ git -C ~/modded-ubuntu log --oneline -5
 ```
 
 O log da parte executada dentro do Ubuntu fica em `/tmp/update-system.log`. / The log of the part that runs inside Ubuntu is at `/tmp/update-system.log`.
+
+### Papéis de parede
+
+Os papéis de parede disponíveis são `tech`, `aurora`, `grid`, `waves` e `rings`. Eles ficam em `~/.config/xfce4/wallpaper` e `/usr/share/backgrounds/xfce`.
+
+```bash
+set-wallpaper --list
+set-wallpaper aurora
+set-wallpaper --random
+```
 
 ### Acesso VNC na rede local
 
