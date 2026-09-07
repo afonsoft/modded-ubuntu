@@ -42,6 +42,21 @@ reload_panel() {
 	fi
 }
 
+# xfconfd regrava o canal ativo sobre os XMLs ao encerrar a sessão; para que a
+# configuração publicada realmente valha, ele precisa ser encerrado antes da cópia.
+stop_xfconfd() {
+	local user="$1"
+	command -v pkill >/dev/null 2>&1 || return 0
+	pkill -x -u "$user" xfconfd 2>/dev/null || true
+	sleep 1
+}
+
+reload_desktop() {
+	command -v xfdesktop >/dev/null 2>&1 || return 0
+	[ -n "${DISPLAY:-}" ] || return 0
+	xfdesktop --reload 2>/dev/null || true
+}
+
 install_packages() {
 	if ! command -v apt-get >/dev/null 2>&1; then
 		return 0
@@ -111,7 +126,12 @@ apply_user() {
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfce4-desktop.xml" "$backup_dir/" 2>/dev/null || true
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xsettings.xml" "$backup_dir/" 2>/dev/null || true
 		cp -f "$xfce_dir/xfconf/xfce-perchannel-xml/xfwm4.xml" "$backup_dir/" 2>/dev/null || true
+		ls -1dt "$xfce_dir"/backup-* 2>/dev/null | tail -n +4 | while read -r old_backup; do
+			[ -d "$old_backup" ] && rm -rf "$old_backup"
+		done
 	fi
+
+	stop_xfconfd "$user"
 
 	# Aplica os arquivos de configuração
 	if [ -d "$XFCE_CONFIG_SRC/xfconf" ]; then
@@ -246,6 +266,7 @@ apply_all() {
 
 	# Recarrega o painel se houver uma sessão XFCE ativa
 	reload_panel
+	reload_desktop
 }
 
 main() {
@@ -264,6 +285,7 @@ main() {
 			apply_user "$2"
 			if [ "$(id -un)" = "$2" ]; then
 				reload_panel
+				reload_desktop
 			fi
 			;;
 		--all)

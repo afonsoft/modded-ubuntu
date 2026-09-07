@@ -182,6 +182,7 @@ Ordem de execução do `update.sh`: atualiza o repositório → `setup.sh` (reco
 - Re-executa o `gui.sh` em modo não interativo (`gui.sh --update`), instalando novos pacotes base e novas opções em ambientes antigos.
 - Roda `xfce-apply --all`, reaplicando painéis (barra superior + dock inferior), ícones da área de trabalho, tema e fontes.
 - Reaplica o papel de parede (`set-wallpaper`) e as extensões do VS Code (`vscode-ext`).
+- Se executado de dentro da sessão gráfica, encerra o `xfconfd` e reinicia o painel para aplicar a nova configuração do dock/barra. Recomenda-se executar `vncstop && vncstart` depois do update.
 - Com `--with-desktops`, atualiza também os aplicativos desktop de IA.
 
 #### Depois de atualizar / After updating
