@@ -212,6 +212,18 @@ set-wallpaper aurora
 set-wallpaper --random
 ```
 
+Capturas reais da sessão XFCE via VNC, com barra superior, dock inferior e ícones da área de trabalho:
+
+![Área de trabalho com o wallpaper tech](docs/screenshots/desktop-tech.jpg)
+
+![Área de trabalho com o wallpaper aurora](docs/screenshots/desktop-aurora.jpg)
+
+![Área de trabalho com o wallpaper grid](docs/screenshots/desktop-grid.jpg)
+
+![Área de trabalho com o wallpaper rings](docs/screenshots/desktop-rings.jpg)
+
+![Área de trabalho com o wallpaper waves](docs/screenshots/desktop-waves.jpg)
+
 ### Acesso VNC na rede local
 
 O `vncstart` continua usando o display `:1` e a porta `5901`, mas agora aceita conexões pela rede local. Em outra máquina conectada ao mesmo Wi-Fi, aponte o VNC Viewer para `<IP>:5901`. A senha padrão é `modded` quando nenhuma senha já foi definida; altere-a com `vncpasswd`.
