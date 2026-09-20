@@ -9,6 +9,10 @@ W="\033[0m"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 # Evita que pacotes tentem iniciar serviços dentro do PRoot
 if [ ! -f /usr/sbin/policy-rc.d ]; then
     printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
@@ -156,7 +160,7 @@ update_vnc_scripts() {
     log "Atualizando scripts VNC..."
     echo -e "${C} [*] Atualizando scripts VNC...${W}"
 
-    local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
+    local base_url="${MODDED_RAW_URL}/distro"
     local scripts=("vncstart" "vncstop" "vncstart-fhd" "vncstart-qhd")
     local repo_dir
     repo_dir=$(get_repo_dir)
@@ -191,7 +195,7 @@ update_gui_scripts() {
     log "Atualizando gui.sh, firefox.sh, chromium.sh e setup_xtradeb.sh..."
     echo -e "${C} [*] Atualizando gui.sh...${W}"
 
-    local base_url="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro"
+    local base_url="${MODDED_RAW_URL}/distro"
     local scripts=("gui.sh" "firefox.sh" "chromium.sh" "setup_xtradeb.sh")
     local repo_dir
     repo_dir=$(get_repo_dir)
@@ -300,39 +304,6 @@ update_desktop_files() {
     done
 }
 
-update_systemd_vnc_service() {
-    log "Atualizando configuração systemd do VNC..."
-    echo -e "${C} [*] Atualizando configuração systemd do VNC...${W}"
-
-    local repo_dir="${1:-}"
-    local service_src="/usr/local/share/modded-ubuntu/systemd/modded-ubuntu-vnc.service"
-    local service_dest="/etc/systemd/user/modded-ubuntu-vnc.service"
-
-    if [ -n "$repo_dir" ] && [ -f "${repo_dir}/distro/systemd/modded-ubuntu-vnc.service" ]; then
-        service_src="${repo_dir}/distro/systemd/modded-ubuntu-vnc.service"
-    fi
-
-    if [ ! -f "$service_src" ]; then
-        warn "Arquivo de serviço systemd não encontrado. Pulando."
-        return 0
-    fi
-
-    mkdir -p "/etc/systemd/user"
-    cp -f "$service_src" "$service_dest"
-    chmod 644 "$service_dest"
-    log "Serviço systemd do VNC atualizado em $service_dest"
-
-    if command -v systemctl >/dev/null 2>&1; then
-        systemctl daemon-reload 2>/dev/null || true
-        awk -F: '$3 >= 1000 && $3 < 65534 {print $1}' /etc/passwd 2>/dev/null | while IFS=' ' read -r username; do
-            user_id=$(id -u "$username" 2>/dev/null || echo "")
-            if [ -n "$user_id" ]; then
-                XDG_RUNTIME_DIR="/run/user/$user_id" su -s /bin/bash -c "systemctl --user daemon-reload 2>/dev/null || true" "$username" 2>/dev/null || true
-            fi
-        done
-    fi
-}
-
 update_zsh_config() {
     log "Atualizando configuração do zsh..."
     echo -e "${C} [*] Atualizando zsh + Oh My Zsh + Powerlevel10k...${W}"
@@ -345,7 +316,7 @@ update_zsh_config() {
         cp -f "${repo_dir}/distro/zsh-setup.sh" "$zsh_script"
     elif command -v curl >/dev/null 2>&1; then
         curl -fsSL --retry 3 --retry-delay 2 \
-            "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/zsh-setup.sh" \
+            "${MODDED_RAW_URL}/distro/zsh-setup.sh" \
             -o "$zsh_script" 2>/dev/null || true
     fi
     chmod +x "$zsh_script" 2>/dev/null || true
@@ -363,8 +334,8 @@ update_zsh_config() {
 }
 
 update_xfce_config() {
-    log "Atualizando configurações XFCE, .desktop e systemd..."
-    echo -e "${C} [*] Atualizando configurações XFCE, .desktop e systemd...${W}"
+    log "Atualizando configurações XFCE e .desktop..."
+    echo -e "${C} [*] Atualizando configurações XFCE e .desktop...${W}"
 
     local repo_dir
     repo_dir=$(get_repo_dir)
@@ -372,9 +343,9 @@ update_xfce_config() {
     tmp_dir="$(mktemp -d)"
     local download_ok=0
 
-    # Prefere o repositorio local do Termux; caso nao exista, baixa o master.
+    # Prefere o repositorio local do Termux; caso nao exista, baixa o ref configurado.
     if [ -z "$repo_dir" ]; then
-        local base_url="https://github.com/afonsoft/modded-ubuntu/archive/refs/heads/master.tar.gz"
+        local base_url="https://github.com/afonsoft/modded-ubuntu/archive/${MODDED_GIT_REF}.tar.gz"
         if command -v curl >/dev/null 2>&1 && \
            curl --fail --retry 3 --retry-delay 2 --location --output "${tmp_dir}/repo.tar.gz" "$base_url" >/dev/null 2>&1; then
             if tar -xzf "${tmp_dir}/repo.tar.gz" -C "$tmp_dir" >/dev/null 2>&1; then
@@ -404,13 +375,10 @@ update_xfce_config() {
         rm -rf /usr/local/share/modded-ubuntu/patches
         mkdir -p /usr/local/share/modded-ubuntu
         cp -r "${repo_dir}/distro/xfce-config" /usr/local/share/modded-ubuntu/
-        if [ -d "${repo_dir}/distro/systemd" ]; then
-            cp -r "${repo_dir}/distro/systemd" /usr/local/share/modded-ubuntu/
-        fi
         if [ -d "${repo_dir}/patches" ]; then
             cp -r "${repo_dir}/patches" /usr/local/share/modded-ubuntu/
         fi
-        log "xfce-apply, vscode-ext, set-wallpaper, xfce-config, systemd e patches atualizados."
+        log "xfce-apply, vscode-ext, set-wallpaper, xfce-config e patches atualizados."
     else
         warn "Falha ao obter atualização do repositório. Usando versão local."
     fi
@@ -422,7 +390,6 @@ update_xfce_config() {
     log "Painel e dock reaplicados; para consistência completa, reinicie a sessão com: vncstop && vncstart."
 
     update_desktop_files "$repo_dir"
-    update_systemd_vnc_service "$repo_dir"
 
     rm -rf "$tmp_dir"
 }

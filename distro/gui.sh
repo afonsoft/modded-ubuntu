@@ -15,6 +15,10 @@ esac
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 # Adiciona chaves GPG de forma compatível com Ubuntu antigo e novo.
 # O apt-key foi removido em versões recentes; usamos gpg como fallback.
 add_apt_key() {
@@ -217,7 +221,7 @@ install_kali_tools() {
         bash /data/data/com.termux/files/home/modded-ubuntu/distro/tools.sh -y --minimal
     else
         echo -e "${G}Downloading tools.sh from remote...${W}"
-        wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/tools.sh" -O /tmp/tools.sh
+        wget -q --show-progress "${MODDED_RAW_URL}/distro/tools.sh" -O /tmp/tools.sh
         chmod +x /tmp/tools.sh
         bash /tmp/tools.sh -y --minimal
     fi
@@ -248,7 +252,7 @@ install_vscode() {
 		echo "deb [arch=${deb_arch} signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
 		apt update -y
 		apt install code -y
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/patches/code.desktop > /usr/share/applications/code.desktop
+		curl -fsSL "${MODDED_RAW_URL}/patches/code.desktop" > /usr/share/applications/code.desktop
 		echo -e "${C} Visual Studio Code Installed Successfully\n${W}"
 	}
 }
@@ -318,7 +322,7 @@ install_chromium() {
 	if [ -x /usr/local/bin/chromium.sh ]; then
 		bash /usr/local/bin/chromium.sh
 	else
-		bash <(curl -fsSL "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/chromium.sh")
+		bash <(curl -fsSL "${MODDED_RAW_URL}/distro/chromium.sh")
 	fi
 }
 
@@ -327,7 +331,7 @@ install_firefox() {
 	if [ -x /usr/local/bin/firefox.sh ]; then
 		bash /usr/local/bin/firefox.sh
 	else
-		bash <(curl -fsSL "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/firefox.sh")
+		bash <(curl -fsSL "${MODDED_RAW_URL}/distro/firefox.sh")
 	fi
 	echo -e "${G} Firefox Installed Successfully\n${W}"
 }
@@ -364,7 +368,7 @@ install_csharp_tools() {
 	else
 		local csharp_script
 		csharp_script=$(mktemp)
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/csharp.sh -o "$csharp_script"
+		curl -fsSL "${MODDED_RAW_URL}/distro/csharp.sh" -o "$csharp_script"
 		bash "$csharp_script"
 		rm -f "$csharp_script"
 	fi
@@ -380,7 +384,7 @@ install_node() {
 	else
 		local node_script
 		node_script=$(mktemp)
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/nodejs.sh -o "$node_script"
+		curl -fsSL "${MODDED_RAW_URL}/distro/nodejs.sh" -o "$node_script"
 		bash "$node_script"
 		rm -f "$node_script"
 	fi
@@ -396,7 +400,7 @@ install_angular_tooling() {
 	else
 		local angular_script
 		angular_script=$(mktemp)
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/angular.sh -o "$angular_script"
+		curl -fsSL "${MODDED_RAW_URL}/distro/angular.sh" -o "$angular_script"
 		bash "$angular_script"
 		rm -f "$angular_script"
 	fi
@@ -634,7 +638,7 @@ refresh_vscode_extensions() {
 	helper=$(resolve_vscode_ext_helper 2>/dev/null) || {
 		helper=$(mktemp)
 		downloaded=1
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vscode-ext.sh -o "$helper" || {
+		curl -fsSL "${MODDED_RAW_URL}/distro/vscode-ext.sh" -o "$helper" || {
 			rm -f "$helper"
 			return 0
 		}

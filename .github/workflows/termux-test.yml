@@ -14,16 +14,31 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run setup in Termux container and validate scripts
+        env:
+          MODDED_USER: tester
+          MODDED_PASS: test123
         run: |
           docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
             -w /data/data/com.termux/files/home/modded-ubuntu \
+            -e MODDED_USER -e MODDED_PASS \
             termux/termux-docker:latest bash -c '
-              pkg update || exit 1
-              pkg install -y pulseaudio proot-distro || exit 1
+              # Termux mirrors occasionally serve stale/incomplete Packages indexes;
+              # retry pkg operations instead of failing on a transient sync.
+              pkg_retry() {
+                local n=0
+                until "$@"; do
+                  n=$((n + 1))
+                  if [ "$n" -ge 5 ]; then
+                    echo "pkg command failed after $n attempts: $*" >&2
+                    return 1
+                  fi
+                  sleep 10
+                done
+              }
+              pkg_retry pkg update || exit 1
+              pkg_retry pkg install -y pulseaudio proot-distro || exit 1
+              # MODDED_USER/MODDED_PASS make setup.sh create the user non-interactively.
               bash ./setup.sh || exit 1
-              ROOTFS="${PREFIX}/var/lib/proot-distro/installed-rootfs/ubuntu"
-              [ -d "$ROOTFS" ] || ROOTFS="${PREFIX}/var/lib/proot-distro/containers/ubuntu/rootfs"
-              mkdir -p "$ROOTFS/root" || exit 1
-              cp distro/gui.sh "$ROOTFS/root/gui.sh" || exit 1
-              proot-distro login ubuntu -- bash -c "bash -n /root/user.sh || exit 1; bash -n /root/gui.sh || exit 1"
+              # Verify the user was created inside the proot and the installed scripts parse.
+              proot-distro login ubuntu -- bash -c "id \"$MODDED_USER\" || exit 1; bash -n /usr/local/bin/gui.sh || exit 1; bash -n /home/$MODDED_USER/gui.sh || exit 1"
             '

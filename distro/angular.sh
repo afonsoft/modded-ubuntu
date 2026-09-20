@@ -8,6 +8,10 @@ Y="$(printf '\033[1;33m')"
 C="$(printf '\033[1;36m')"
 W="$(printf '\033[1;37m')"
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 log()  { echo -e "${C}[angular]${W} $1"; }
 warn() { echo -e "${Y}[angular]${W} $1"; }
 err()  { echo -e "${R}[angular]${W} $1"; }
@@ -57,7 +61,7 @@ ensure_nodejs() {
 	else
 		local node_script
 		node_script=$(mktemp)
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/nodejs.sh -o "$node_script"
+		curl -fsSL "${MODDED_RAW_URL}/distro/nodejs.sh" -o "$node_script"
 		bash "$node_script"
 		rm -f "$node_script"
 	fi
@@ -112,7 +116,7 @@ install_vscode_angular_extensions() {
 	else
 		helper=$(mktemp)
 		downloaded=1
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vscode-ext.sh -o "$helper" || {
+		curl -fsSL "${MODDED_RAW_URL}/distro/vscode-ext.sh" -o "$helper" || {
 			warn "Não foi possível obter o helper de extensões do VS Code."
 			rm -f "$helper"
 			return 0
