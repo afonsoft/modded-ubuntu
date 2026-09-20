@@ -14,13 +14,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run setup in Termux container and validate scripts
-        env:
-          MODDED_USER: tester
-          MODDED_PASS: test123
         run: |
           docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
             -w /data/data/com.termux/files/home/modded-ubuntu \
-            -e MODDED_USER -e MODDED_PASS \
             termux/termux-docker:latest bash -c '
               # Pin the primary Termux repo: the auto-selected mirrors often serve
               # stale/incomplete Packages indexes mid-sync, which breaks pkg update.
@@ -40,6 +36,8 @@ jobs:
               pkg_retry pkg update || exit 1
               pkg_retry pkg install -y pulseaudio proot-distro || exit 1
               # MODDED_USER/MODDED_PASS make setup.sh create the user non-interactively.
+              # (Set inside the container: the termux-docker entrypoint drops docker -e vars.)
+              export MODDED_USER=tester MODDED_PASS=test123
               bash ./setup.sh || exit 1
               # Verify the user was created inside the proot and the installed scripts parse.
               proot-distro login ubuntu -- bash -c "id \"$MODDED_USER\" || exit 1; bash -n /usr/local/bin/gui.sh || exit 1; bash -n /home/$MODDED_USER/gui.sh || exit 1"
