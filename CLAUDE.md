@@ -148,3 +148,4 @@ Plan-and-Execute:
 - [.specs/](.specs/) — SPEC SDD (template: `.specs/TEMPLATE.md`)
 - [.devin/skills/testing-modded-ubuntu/SKILL.md](.devin/skills/testing-modded-ubuntu/SKILL.md) — E2E testing guide
 - [docs/](docs/) — technologies, packages, features
+- [docs/architecture/](docs/architecture/) — ADRs (why decisions were made) + diagrams

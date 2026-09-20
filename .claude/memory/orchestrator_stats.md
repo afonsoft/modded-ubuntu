@@ -7,9 +7,9 @@
 ## Session
 
 - **started_at**: `2026-09-20 23:07 UTC`
-- **current_phase**: `Phase 3` (gaps fixed; pending push + PR)
+- **current_phase**: `Phase 7` (all gaps closed; PR #64 merged; ADR PR pending)
 - **repository**: `afonsoft/modded-ubuntu`
-- **branch**: `feature/devin-20260920-bootstrap-claude-harness`
+- **branch**: `feature/devin-20260920-architecture-adrs`
 - **last_updated**: `2026-09-20`
 
 ---
@@ -54,7 +54,7 @@
 | 2 | `GAP-002` | Hygiene | P4 | `update.sh` lacked exec bit — `chmod +x` applied | T1 Auto | 🟢 done |
 | 3 | `GAP-003` | Hygiene | P4 | `.vscode/settings.json` excluded `SC2034`/`SC2154`, CI did not — exclusions removed, editor now matches CI | T1 Auto | 🟢 done |
 | 4 | `GAP-004` | Hygiene | P4 | `""${W}` double-quote artifacts in `remove.sh` — 8 lines fixed | T1 Auto | 🟢 done |
-| 5 | `GAP-005` | Docs | P4 | No `docs/architecture/` ADRs; architectural decisions live only in git history/README | T2 Batchable | 🔴 open |
+| 5 | `GAP-005` | Docs | P4 | `docs/architecture/` created: 11 ADRs mined from code/git history + README index with Mermaid diagrams | T2 approved by user | 🟢 done |
 
 ## Verified clean
 

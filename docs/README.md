@@ -5,6 +5,7 @@ System documentation for the Ubuntu XFCE4 environment that runs inside Termux (A
 - [technologies.md](technologies.md) — stack, versions and external services
 - [packages.md](packages.md) — packages installed by each script (Termux `pkg` vs rootfs `apt`)
 - [features.md](features.md) — user-facing functionality and optional components
+- [architecture/](architecture/) — ADRs: the *why* behind architectural decisions + system diagrams
 - [screenshots/](screenshots/) — VNC captures of the desktop
 
 > **Rule:** when changing code, consult `docs/` before and update it after.
