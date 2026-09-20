@@ -18,10 +18,10 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
             -w /data/data/com.termux/files/home/modded-ubuntu \
             termux/termux-docker:latest bash -c '
-              # Pin the primary Termux repo: the auto-selected mirrors often serve
-              # stale/incomplete Packages indexes mid-sync, which breaks pkg update.
-              echo "deb https://packages-cf.termux.dev/apt/termux-main stable main" \
-                > "$PREFIX/etc/apt/sources.list"
+              # Pin the primary Termux mirror group ("default" = packages-cf.termux.dev):
+              # without a chosen_mirrors symlink pkg picks a random mirror, and
+              # mirrors mid-sync serve broken Packages/.deb files.
+              ln -sf "$PREFIX/etc/termux/mirrors/default" "$PREFIX/etc/termux/chosen_mirrors"
               pkg_retry() {
                 local n=0
                 until "$@"; do
