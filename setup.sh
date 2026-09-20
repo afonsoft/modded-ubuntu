@@ -142,7 +142,7 @@ distro() {
         echo -e "\n${R} [${W}-${R}]${G} Distro already installed.${W}"
         return 0
     else
-        if ! proot-distro install ubuntu; then
+        if ! proot-distro install ubuntu:26.04; then
             echo -e "\n${R} [${W}-${R}]${G} Error Installing Distro !\n${W}"
             exit 1
         fi

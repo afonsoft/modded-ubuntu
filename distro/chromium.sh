@@ -70,8 +70,7 @@ exec $chromium_bin --no-sandbox --disable-gpu --disable-software-rasterizer --di
 EOF
 chmod +x /usr/local/bin/chromium
 
-for desktop_file in /usr/share/applications/chromium.desktop \
-    /usr/share/applications/chromium-browser.desktop; do
+for desktop_file in /usr/share/applications/*chromium*.desktop; do
     [ -f "$desktop_file" ] || continue
     sed -i \
         -e '/^Exec=/ { s|^Exec=/usr/bin/chromium-browser|Exec=/usr/local/bin/chromium|; s|^Exec=/usr/bin/chromium|Exec=/usr/local/bin/chromium|; s|^Exec=chromium-browser|Exec=/usr/local/bin/chromium|; s|^Exec=chromium|Exec=/usr/local/bin/chromium|; s/ --no-sandbox//g; }' \

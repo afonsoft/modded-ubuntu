@@ -113,6 +113,7 @@ package() {
 	banner
 	echo -e "${R} [${W}-${R}]${C} Checking required packages..."${W}
 	apt-get update -y
+	apt-get --fix-broken install -y || true
 	apt install udisks2 -y
 	if [ -f /var/lib/dpkg/info/udisks2.postinst ]; then
 		rm /var/lib/dpkg/info/udisks2.postinst

@@ -7,6 +7,11 @@ C="$(printf '\033[1;36m')"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Falha cedo em variável não definida ou erro em pipeline; sem `set -e` porque
+# `clear` (banner) falha quando TERM não está definido (execução não interativa).
+set -u
+set -o pipefail
+
 # Ref do repositório usado em downloads remotos (branch, tag ou SHA).
 MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
 MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
@@ -148,10 +153,9 @@ login() {
         bash /data/data/com.termux/files/home/modded-ubuntu/distro/zsh-setup.sh --user "$user" 2>&1 | tee -a "$zsh_setup_log" || true
     fi
 
-    # Evita duplicar a linha no sudoers se o script for executado mais de uma vez.
-    if ! grep -q "^${user} ALL=(ALL:ALL) NOPASSWD:ALL" /etc/sudoers; then
-        echo "$user ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers || { log "Failed to update sudoers file"; exit 1; }
-    fi
+    # Sudo sem senha via drop-in (idempotente, sem editar /etc/sudoers).
+    printf '%s ALL=(ALL:ALL) NOPASSWD:ALL\n' "$user" > /etc/sudoers.d/90-modded-ubuntu || { log "Failed to write sudoers drop-in"; exit 1; }
+    chmod 0440 /etc/sudoers.d/90-modded-ubuntu
 
     # Create the ubuntu command for proot-distro
     local termux_prefix
