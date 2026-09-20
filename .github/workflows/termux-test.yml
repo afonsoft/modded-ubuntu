@@ -22,8 +22,10 @@ jobs:
             -w /data/data/com.termux/files/home/modded-ubuntu \
             -e MODDED_USER -e MODDED_PASS \
             termux/termux-docker:latest bash -c '
-              # Termux mirrors occasionally serve stale/incomplete Packages indexes;
-              # retry pkg operations instead of failing on a transient sync.
+              # Pin the primary Termux repo: the auto-selected mirrors often serve
+              # stale/incomplete Packages indexes mid-sync, which breaks pkg update.
+              echo "deb https://packages-cf.termux.dev/apt/termux-main stable main" \
+                > "$PREFIX/etc/apt/sources.list"
               pkg_retry() {
                 local n=0
                 until "$@"; do
