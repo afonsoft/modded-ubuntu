@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -u
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 log() {
     echo "[chromium-install] $*" >&2
 }
@@ -25,7 +29,7 @@ if [ -z "$chromium_bin" ]; then
         setup_script=$(mktemp)
         downloaded=1
         if ! curl -fsSL \
-            "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/setup_xtradeb.sh" \
+            "${MODDED_RAW_URL}/distro/setup_xtradeb.sh" \
             -o "$setup_script"; then
             rm -f "$setup_script"
             log "Repositorio XtraDeb indisponivel; Chromium nao sera instalado."

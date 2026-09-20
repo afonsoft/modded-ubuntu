@@ -63,6 +63,10 @@ install_firefox() {
 #!/bin/sh
 unset LD_PRELOAD 2>/dev/null || true
 export LD_LIBRARY_PATH=/opt/firefox${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+# O sandbox do Firefox requer namespaces que o PRoot nao emula.
+export MOZ_DISABLE_CONTENT_SANDBOX=1
+export MOZ_DISABLE_GMP_SANDBOX=1
+export MOZ_FAKE_NO_SANDBOX=1
 exec /opt/firefox/firefox "$@"
 EOF
     chmod +x /usr/local/bin/firefox

@@ -5,13 +5,26 @@ log() {
     echo "[xtradeb] $*" >&2
 }
 
+# apt no PRoot pode falhar por lock transitório ou rede instável (Termux).
+apt_retry() {
+    local attempts=0
+    until "$@"; do
+        attempts=$((attempts + 1))
+        if [ "$attempts" -ge 5 ]; then
+            log "Comando apt falhou apos $attempts tentativas: $*"
+            return 1
+        fi
+        sleep 3
+    done
+}
+
 if [ -f /etc/apt/sources.list.d/xtradeb.sources ] &&
     [ -s /etc/apt/keyrings/xtradeb.gpg ]; then
-    apt-get update -y >/dev/null 2>&1 || log "Aviso: apt-get update falhou."
+    apt_retry apt-get update -y >/dev/null 2>&1 || log "Aviso: apt-get update falhou."
     exit 0
 fi
 
-apt-get install -y --no-install-recommends curl gnupg ca-certificates >/dev/null 2>&1 || true
+apt_retry apt-get install -y --no-install-recommends curl gnupg ca-certificates >/dev/null 2>&1 || true
 mkdir -p /root/.gnupg /etc/apt/keyrings
 chmod 700 /root/.gnupg
 
@@ -71,7 +84,7 @@ Components: main
 Signed-By: /etc/apt/keyrings/xtradeb.gpg
 EOF
 
-if ! apt-get update -y >/dev/null 2>&1; then
+if ! apt_retry apt-get update -y >/dev/null 2>&1; then
     log "Aviso: apt-get update retornou erro."
 fi
 log "Repositorio XtraDeb configurado (suite: $suite)."

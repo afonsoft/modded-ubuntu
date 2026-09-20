@@ -20,6 +20,10 @@ resolve_ubuntu_dir() {
 
 UBUNTU_DIR=$(resolve_ubuntu_dir)
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 # Logging function
 log() {
     local LOG_FILE="${PREFIX:-/data/data/com.termux/files/usr}/tmp/script.log"
@@ -210,9 +214,9 @@ setup_vnc() {
         cp -f "$CURR_DIR/distro/vncstart-fhd" "$UBUNTU_DIR/usr/local/bin/vncstart-fhd" 2>/dev/null || true
         cp -f "$CURR_DIR/distro/vncstart-qhd" "$UBUNTU_DIR/usr/local/bin/vncstart-qhd" 2>/dev/null || true
     else
-        downloader "$CURR_DIR/vncstart" "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vncstart"
+        downloader "$CURR_DIR/vncstart" "${MODDED_RAW_URL}/distro/vncstart"
         mv -f "$CURR_DIR/vncstart" "$UBUNTU_DIR/usr/local/bin/vncstart"
-        downloader "$CURR_DIR/vncstop" "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vncstop"
+        downloader "$CURR_DIR/vncstop" "${MODDED_RAW_URL}/distro/vncstop"
         mv -f "$CURR_DIR/vncstop" "$UBUNTU_DIR/usr/local/bin/vncstop"
     fi
     chmod +x "$UBUNTU_DIR/usr/local/bin/vncstart"
@@ -233,7 +237,7 @@ permission() {
     if [[ -d "$CURR_DIR/distro" ]] && [[ -e "$CURR_DIR/distro/user.sh" ]]; then
         cp -f "$CURR_DIR/distro/user.sh" "$UBUNTU_DIR/root/user.sh"
     else
-        downloader "$CURR_DIR/user.sh" "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/user.sh"
+        downloader "$CURR_DIR/user.sh" "${MODDED_RAW_URL}/distro/user.sh"
         mv -f "$CURR_DIR/user.sh" "$UBUNTU_DIR/root/user.sh"
     fi
     chmod +x "$UBUNTU_DIR/root/user.sh"
@@ -319,12 +323,6 @@ permission() {
         cp -r "$CURR_DIR/distro/xfce-config" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
     fi
 
-    if [[ -d "$CURR_DIR/distro/systemd" ]]; then
-        mkdir -p "$UBUNTU_DIR/usr/local/share/modded-ubuntu"
-        rm -rf "$UBUNTU_DIR/usr/local/share/modded-ubuntu/systemd"
-        cp -r "$CURR_DIR/distro/systemd" "$UBUNTU_DIR/usr/local/share/modded-ubuntu/"
-    fi
-
     if [[ -d "$CURR_DIR/patches" ]]; then
         mkdir -p "$UBUNTU_DIR/usr/local/share/modded-ubuntu"
         rm -rf "$UBUNTU_DIR/usr/local/share/modded-ubuntu/patches"
@@ -370,15 +368,39 @@ EOF
 
     termux_reload_settings
 
+    # Cria o usuário automaticamente quando MODDED_USER e MODDED_PASS estão
+    # definidos (instalação não interativa). Caso contrário, mantém o fluxo
+    # manual documentado: `ubuntu` + `bash user.sh`.
+    local user_created=0
+    if [[ -n "${MODDED_USER:-}" && -n "${MODDED_PASS:-}" ]]; then
+        echo -e "\n${R} [${W}-${R}]${C} Creating user ${Y}${MODDED_USER}${C} (non-interactive)...${W}"
+        if proot-distro login --no-sysvipc ubuntu -- env \
+            MODDED_USER="$MODDED_USER" MODDED_PASS="$MODDED_PASS" bash /root/user.sh; then
+            user_created=1
+        else
+            echo -e "\n${R} [${W}-${R}]${Y} Automatic user creation failed; run 'ubuntu' then 'bash user.sh' manually.${W}"
+        fi
+    fi
+
     if [[ -e "$PREFIX/bin/ubuntu" ]]; then
         banner
-        cat <<- EOF
+        if [ "$user_created" -eq 1 ]; then
+            cat <<- EOF
+			${R} [${W}-${R}]${G} Ubuntu-26.04 (CLI) is now Installed on your Termux
+			${R} [${W}-${R}]${G} User ${C}${MODDED_USER}${G} created automatically.
+			${R} [${W}-${R}]${G} Restart your Termux to Prevent Some Issues.
+			${R} [${W}-${R}]${G} Type ${C}ubuntu${G} to run Ubuntu CLI as ${C}${MODDED_USER}${G}.
+			${R} [${W}-${R}]${G} For GUI MODE, run ${C}sudo bash gui.sh${G} inside Ubuntu.${W}
+			EOF
+        else
+            cat <<- EOF
 			${R} [${W}-${R}]${G} Ubuntu-26.04 (CLI) is now Installed on your Termux
 			${R} [${W}-${R}]${G} Restart your Termux to Prevent Some Issues.
 			${R} [${W}-${R}]${G} Type ${C}ubuntu${G} to run Ubuntu CLI.
 			${R} [${W}-${R}]${G} If you Want to Use UBUNTU in GUI MODE then ,
 			${R} [${W}-${R}]${G} Run ${C}ubuntu${G} first & then type ${C}bash user.sh${W}
-		EOF
+			EOF
+        fi
         { echo; sleep 2; exit 0; }
     else
         echo -e "\n${R} [${W}-${R}]${G} Error Installing Distro !${W}"

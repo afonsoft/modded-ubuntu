@@ -9,6 +9,10 @@ W="$(printf '\033[1;37m')"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 # Evita que pacotes tentem iniciar serviços dentro do PRoot
 if [ ! -f /usr/sbin/policy-rc.d ]; then
 	printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
@@ -104,7 +108,7 @@ install_vscode_csharp_extensions() {
 	else
 		helper=$(mktemp)
 		downloaded=1
-		curl -fsSL https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/vscode-ext.sh -o "$helper" || {
+		curl -fsSL "${MODDED_RAW_URL}/distro/vscode-ext.sh" -o "$helper" || {
 			warn "Não foi possível obter o helper de extensões do VS Code."
 			rm -f "$helper"
 			return 0

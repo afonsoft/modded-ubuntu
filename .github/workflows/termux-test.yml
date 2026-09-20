@@ -18,12 +18,27 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/data/data/com.termux/files/home/modded-ubuntu \
             -w /data/data/com.termux/files/home/modded-ubuntu \
             termux/termux-docker:latest bash -c '
-              pkg update || exit 1
-              pkg install -y pulseaudio proot-distro || exit 1
+              # Pin the primary Termux mirror group ("default" = packages-cf.termux.dev):
+              # without a chosen_mirrors symlink pkg picks a random mirror, and
+              # mirrors mid-sync serve broken Packages/.deb files.
+              ln -sf "$PREFIX/etc/termux/mirrors/default" "$PREFIX/etc/termux/chosen_mirrors"
+              pkg_retry() {
+                local n=0
+                until "$@"; do
+                  n=$((n + 1))
+                  if [ "$n" -ge 5 ]; then
+                    echo "pkg command failed after $n attempts: $*" >&2
+                    return 1
+                  fi
+                  sleep 10
+                done
+              }
+              pkg_retry pkg update || exit 1
+              pkg_retry pkg install -y pulseaudio proot-distro || exit 1
+              # MODDED_USER/MODDED_PASS make setup.sh create the user non-interactively.
+              # (Set inside the container: the termux-docker entrypoint drops docker -e vars.)
+              export MODDED_USER=tester MODDED_PASS=test123
               bash ./setup.sh || exit 1
-              ROOTFS="${PREFIX}/var/lib/proot-distro/installed-rootfs/ubuntu"
-              [ -d "$ROOTFS" ] || ROOTFS="${PREFIX}/var/lib/proot-distro/containers/ubuntu/rootfs"
-              mkdir -p "$ROOTFS/root" || exit 1
-              cp distro/gui.sh "$ROOTFS/root/gui.sh" || exit 1
-              proot-distro login ubuntu -- bash -c "bash -n /root/user.sh || exit 1; bash -n /root/gui.sh || exit 1"
+              # Verify the user was created inside the proot and the installed scripts parse.
+              proot-distro login ubuntu -- bash -c "id \"$MODDED_USER\" || exit 1; bash -n /usr/local/bin/gui.sh || exit 1; bash -n /home/$MODDED_USER/gui.sh || exit 1"
             '

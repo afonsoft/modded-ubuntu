@@ -29,7 +29,6 @@ Ubuntu rootfs (proot)
                           firefox, chromium, vscode-ext, xfce-apply, ...)
   distro/xfce-config/ ── versioned xfconf XML, desktop files, autostart
   distro/zsh-assets/ ─── zsh theme/plugin assets (excluded from shellcheck CI)
-  distro/systemd/ ────── systemd-related assets
 ```
 
 Details of the VNC/desktop testing workflow: `.devin/skills/testing-modded-ubuntu/SKILL.md`.

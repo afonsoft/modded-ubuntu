@@ -7,6 +7,10 @@ C="$(printf '\033[1;36m')"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Ref do repositório usado em downloads remotos (branch, tag ou SHA).
+MODDED_GIT_REF="${MODDED_GIT_REF:-master}"
+MODDED_RAW_URL="https://raw.githubusercontent.com/afonsoft/modded-ubuntu/${MODDED_GIT_REF}"
+
 # Evita que pacotes tentem iniciar serviços dentro do PRoot
 if [ ! -f /usr/sbin/policy-rc.d ]; then
     printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
@@ -131,7 +135,7 @@ login() {
     echo "${user}:${pass}" | chpasswd || { log "Failed to set password"; exit 1; }
 
     # Configura zsh + Oh My Zsh + Powerlevel10k para root e para o usuario criado
-    local zsh_setup_log="${PREFIX:-/data/data/com.termux/files/usr}/tmp/zsh-setup.log"
+    local zsh_setup_log="/tmp/zsh-setup.log"
     if [[ -e '/usr/local/bin/zsh-setup' ]]; then
         log "Configurando zsh para root (log em $zsh_setup_log)..."
         bash /usr/local/bin/zsh-setup --user root 2>&1 | tee -a "$zsh_setup_log" || true
@@ -169,7 +173,7 @@ EOF
         cp -f /data/data/com.termux/files/home/modded-ubuntu/distro/gui.sh "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
     else
-        wget -q --show-progress "https://raw.githubusercontent.com/afonsoft/modded-ubuntu/master/distro/gui.sh" -O "/home/$user/gui.sh"
+        wget -q --show-progress "${MODDED_RAW_URL}/distro/gui.sh" -O "/home/$user/gui.sh"
         chmod +x "/home/$user/gui.sh" || { log "Failed to set permissions for gui.sh"; exit 1; }
     fi
 
