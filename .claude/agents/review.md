@@ -41,7 +41,7 @@ For any finding tagged `[BLOCKING]`, include: exact snippet and line; specific f
 ## Common False Positives — Skip These
 - "Missing `set -e`" — these scripts intentionally check exit codes per-step with colored output.
 - "Unquoted variable" when the expansion is a fixed literal or intentional word-splitting is relied upon (verify first).
-- "Unused variable" for color vars `R G Y B C W` used later via `eval`/heredoc, or `SC2034`/`SC2154` (excluded in `.vscode/settings.json`).
+- "Unused variable" for color vars `R G Y B C W` used later via `eval`/heredoc.
 - "Should use a real language" — this is a Bash-only project by design.
 - Flagging vendored `distro/proot-distro.sh` — out of scope, ignored by CI.
 

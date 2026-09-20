@@ -7,7 +7,7 @@
 ## Session
 
 - **started_at**: `2026-09-20 23:07 UTC`
-- **current_phase**: `Phase 2` (audit done; pending commit + report)
+- **current_phase**: `Phase 3` (gaps fixed; pending push + PR)
 - **repository**: `afonsoft/modded-ubuntu`
 - **branch**: `feature/devin-20260920-bootstrap-claude-harness`
 - **last_updated**: `2026-09-20`
@@ -50,10 +50,10 @@
 
 | # | ID | Dimension | Severity | Description | Risk Tier | Status |
 |---|----|-----------|----------|-------------|-----------|--------|
-| 1 | `GAP-001` | Security | P1 | `shellcheck.yml` pins `ludeeus/action-shellcheck@master` (mutable ref, supply-chain) — pin to a tag/SHA | T3 (workflow file → approval) | 🔴 open |
-| 2 | `GAP-002` | Hygiene | P4 | `update.sh` lacks exec bit (`chmod +x`); CI exec-bit warn-list doesn't cover it | T1 Auto | 🔴 open |
-| 3 | `GAP-003` | Hygiene | P4 | `.vscode/settings.json` excludes `SC2034`/`SC2154` but CI shellcheck does not — editor/CI divergence | T1 Auto | 🔴 open |
-| 4 | `GAP-004` | Hygiene | P4 | `""${W}` double-quote artifacts in `remove.sh` echo lines (harmless, sloppy) | T1 Auto | 🔴 open |
+| 1 | `GAP-001` | Security | P1 | `shellcheck.yml` pins `ludeeus/action-shellcheck@master` (mutable ref, supply-chain) — pinned to SHA `00cae50` (2.0.0) | T3 approved by user | 🟢 done |
+| 2 | `GAP-002` | Hygiene | P4 | `update.sh` lacked exec bit — `chmod +x` applied | T1 Auto | 🟢 done |
+| 3 | `GAP-003` | Hygiene | P4 | `.vscode/settings.json` excluded `SC2034`/`SC2154`, CI did not — exclusions removed, editor now matches CI | T1 Auto | 🟢 done |
+| 4 | `GAP-004` | Hygiene | P4 | `""${W}` double-quote artifacts in `remove.sh` — 8 lines fixed | T1 Auto | 🟢 done |
 | 5 | `GAP-005` | Docs | P4 | No `docs/architecture/` ADRs; architectural decisions live only in git history/README | T2 Batchable | 🔴 open |
 
 ## Verified clean

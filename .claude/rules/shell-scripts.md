@@ -30,4 +30,4 @@ shellcheck -S warning <changed-files>   # skip distro/proot-distro.sh, distro/zs
 xmllint --noout <changed-xml>           # for distro/xfce-config/**
 ```
 
-`.vscode/settings.json` runs shellcheck onSave with severity `warning` and excludes `SC2034`/`SC2154` — keep new code clean under that profile too.
+`.vscode/settings.json` runs shellcheck onSave with severity `warning` and no rule exclusions — identical to the CI profile.
