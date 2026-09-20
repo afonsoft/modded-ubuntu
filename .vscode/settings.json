@@ -1,9 +1,0 @@
-{
-    "shellcheck.enable": true,
-    "shellcheck.executablePath": "shellcheck",
-    "shellcheck.run": "onSave",
-    "shellcheck.severity": "warning",
-    "files.associations": {
-        "*.sh": "shellscript"
-    }
-}

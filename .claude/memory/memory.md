@@ -9,3 +9,4 @@
 - **Blockers**: none
 - **Next action**: commit, push, open PR, watch CI.
 - **Notes**: Termux mirror flakes (bfsu.edu.cn Packages.bz2 mismatch) caused PR #66 E2E failure — retry added to workflow. Convention: Conventional Commits; `.github/workflows/` edits flagged in PR body.
+- **Upstream sync**: SPEC-20260920-upstream-sync.md on `feature/devin-20260920-upstream-sync` — selective port of upstream v2.1.0 deltas (ubuntu:26.04 pin, sudoers.d, set -u/pipefail, chromium .desktop glob, apt --fix-broken, .vscode removal, code.desktop whitespace). Rejected: firefox→packages.mozilla.org, standalone vscode/sublime scripts, ~/softwares, version banner.
