@@ -29,10 +29,15 @@ is_root() {
 }
 
 # Garante que a barra superior emita struts para que janelas maximizadas não
-# fiquem com a titlebar sob o painel (o canal ativo pode não ter a propriedade).
+# fiquem com a titlebar sob o painel. Struts só são emitidos com o snap numa
+# borda válida para painel horizontal: p=11 é SNAP_POSITION_N (p=1 é a borda
+# direita, que nunca emite struts). enable-struts é o nome em xfce4-panel
+# >=4.19; disable-struts=false cobre as versões anteriores.
 ensure_panel_struts() {
 	[ -n "${DISPLAY:-}" ] || return 0
 	command -v xfconf-query >/dev/null 2>&1 || return 0
+	xfconf-query -c xfce4-panel -p /panels/panel-1/position --create -t string -s "p=11;x=0;y=0" 2>/dev/null || true
+	xfconf-query -c xfce4-panel -p /panels/panel-1/enable-struts --create -t bool -s true 2>/dev/null || true
 	xfconf-query -c xfce4-panel -p /panels/panel-1/disable-struts --create -t bool -s false 2>/dev/null || true
 }
 
@@ -40,14 +45,28 @@ reload_panel() {
 	command -v xfce4-panel >/dev/null 2>&1 || return 0
 	[ -n "${DISPLAY:-}" ] || return 0
 	ensure_panel_struts
-	# Recarrega a configuração; se o painel estiver rodando, reinicia para
-	# que o segundo painel (dock) seja criado na sessão atual. O restart
-	# embutido re-executa a própria instância, que derruba e recria as
-	# janelas dos plugins — sem vazar a janela do dock nem deixar <defunct>.
 	if pgrep -x xfce4-panel >/dev/null 2>&1; then
-		xfce4-panel -r 2>/dev/null || true
+		# O restart embutido re-executa a própria instância — sem vazar janelas
+		# nem deixar <defunct>. Mas quando a chamada falha (ex.: barramento de
+		# sessão inalcançável) ele abre um diálogo GTK e bloqueia; por isso a
+		# espera é limitada e, em timeout, cai para quit forçado + respawn
+		# (somente quando o barramento permite reerguer o painel).
+		timeout 5 xfce4-panel -r >/dev/null 2>&1
+		if [ "$?" -eq 124 ] && xfconf-query -l >/dev/null 2>&1; then
+			# Sem barramento de sessão utilizável o respawn morre no xfconf_init
+			# e a área fica sem painéis — melhor deixar o painel atual vivo;
+			# a config nova já está no arquivo e vale no próximo login.
+			pkill -x xfce4-panel 2>/dev/null || true
+			for _ in $(seq 20); do
+				pgrep -x xfce4-panel >/dev/null 2>&1 || break
+				sleep 0.5
+			done
+			pkill -9 -x xfce4-panel 2>/dev/null || true
+			sleep 1
+			(setsid xfce4-panel >/dev/null 2>&1 &)
+		fi
 	else
-		(setsid xfce4-panel >/dev/null 2>&1 &)
+		xfconf-query -l >/dev/null 2>&1 && (setsid xfce4-panel >/dev/null 2>&1 &)
 	fi
 }
 
