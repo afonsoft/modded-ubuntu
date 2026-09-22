@@ -28,17 +28,26 @@ is_root() {
 	[ "$(id -u)" -eq 0 ]
 }
 
+# Garante que a barra superior emita struts para que janelas maximizadas não
+# fiquem com a titlebar sob o painel (o canal ativo pode não ter a propriedade).
+ensure_panel_struts() {
+	[ -n "${DISPLAY:-}" ] || return 0
+	command -v xfconf-query >/dev/null 2>&1 || return 0
+	xfconf-query -c xfce4-panel -p /panels/panel-1/disable-struts --create -t bool -s false 2>/dev/null || true
+}
+
 reload_panel() {
 	command -v xfce4-panel >/dev/null 2>&1 || return 0
 	[ -n "${DISPLAY:-}" ] || return 0
+	ensure_panel_struts
 	# Recarrega a configuração; se o painel estiver rodando, reinicia para
-	# que o segundo painel (dock) seja criado na sessão atual
+	# que o segundo painel (dock) seja criado na sessão atual. O restart
+	# embutido re-executa a própria instância, que derruba e recria as
+	# janelas dos plugins — sem vazar a janela do dock nem deixar <defunct>.
 	if pgrep -x xfce4-panel >/dev/null 2>&1; then
-		xfce4-panel --quit 2>/dev/null || true
-		sleep 1
-		(setsid xfce4-panel >/dev/null 2>&1 &)
-	else
 		xfce4-panel -r 2>/dev/null || true
+	else
+		(setsid xfce4-panel >/dev/null 2>&1 &)
 	fi
 }
 
