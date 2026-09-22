@@ -7,8 +7,10 @@
     <value type="int" value="2"/>
     <property name="dark-mode" type="bool" value="true"/>
     <!-- panel-1: barra superior (menu, janelas, bandeja, relogio) -->
+    <!-- p=11 = SNAP_POSITION_N: struts so sao emitidos com snap numa borda -->
+    <!-- horizontal valida; p=1 mapeia para a borda direita e nao gera struts. -->
     <property name="panel-1" type="empty">
-      <property name="position" type="string" value="p=1;x=0;y=0"/>
+      <property name="position" type="string" value="p=11;x=0;y=0"/>
       <property name="length" type="double" value="100"/>
       <property name="length-adjust" type="bool" value="true"/>
       <property name="position-locked" type="bool" value="true"/>
