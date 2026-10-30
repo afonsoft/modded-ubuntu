@@ -1,0 +1,95 @@
+# SPEC-20261023-repo-improvement-dependencies
+
+## 0. Metadata
+| Field | Value |
+|---|---|
+| Feature | Repository Improvements and Dependency Updates |
+| Type | Refactor |
+| Stack | Bash, Ubuntu Proot-Distro, Termux, .NET, Node.js, Angular, XFCE4 |
+| Repository | afonsoft/modded-ubuntu |
+| Branch | feature/AgentLLM-20261023-repo-improvement |
+| Ticket | #72 |
+| Status | `Completed` |
+
+## 1. User Story
+As a developer and mobile pentester using `modded-ubuntu` on Android via Termux,
+I want to ensure that all core scripts, developer toolchains (.NET, Node.js, Angular, AI CLIs), and desktop configurations are fully updated, secure, and optimized for modern Android versions (Android 14/15/16 and One UI 7/8),
+So that I can run a stable, high-performance Ubuntu XFCE4 environment with up-to-date dependencies without session termination or compatibility issues.
+
+## 2. Scope
+### In Scope
+- Upgrade and verification of .NET SDK (ensuring compatibility with .NET 10.0 / latest LTS).
+- Node.js LTS and Angular CLI update verification via NodeSource.
+- AI Coding Assistants CLI and Desktop integration updates (Claude Code, Claude Desktop, OpenCode, Devin, Antigravity CLI `agy`).
+- Shell script robustness improvements (`bash -n`, `shellcheck` compliance across all `distro/*.sh` scripts).
+- Refinement of `fix-signal9.sh` and Termux process management guidelines for Android 15/16.
+- Documentation updates in `README.md` and related Markdown files reflecting current best practices.
+
+### Out of Scope
+- Rewriting core `distro/proot-distro.sh` (vendored upstream, immutable).
+- Adding non-apt/non-pkg external package managers.
+- Major breaking changes to the XFCE desktop layout unless required for bug fixes.
+
+## 3. Technical Context
+- **Workspace Root**: `/` (checkout of `afonsoft/modded-ubuntu`, branch `master`).
+- **Scripts Affected**: `setup.sh`, `update.sh`, `distro/gui.sh`, `distro/csharp.sh`, `distro/nodejs.sh`, `distro/angular.sh`, `distro/tools.sh`, `fix-signal9.sh`.
+- **Validation Tools**: `bash -n`, `shellcheck -S warning`, Docker E2E test harness (`termux/termux-docker`).
+
+## 4. Requirements
+- **RF-001 (.NET SDK & C# Tooling Update)**:
+  - *Description*: Verify and update .NET SDK installation logic in `distro/csharp.sh` to support the latest LTS / .NET 10.0 runtime securely.
+  - *Rules*: Must handle non-interactive installation gracefully inside PRoot.
+  - *Input → Output*: Execution of `distro/csharp.sh` → Validated `.NET` SDK binary and CLI tools available in PATH.
+- **RF-002 (Node.js LTS & Angular CLI Verification)**:
+  - *Description*: Ensure `distro/nodejs.sh` and `distro/angular.sh` install the latest stable LTS Node.js release and current Angular CLI.
+  - *Rules*: Avoid NVM inside PRoot; use NodeSource `.deb` repository as per established project convention.
+  - *Input → Output*: Execution of `distro/nodejs.sh` → `node -v` and `npm -v` returning latest LTS versions.
+- **RF-003 (AI Assistants & Dev Tools Sync)**:
+  - *Description*: Update version checks and install paths for AI CLIs (`claude`, `opencode`, `devin`, `agy`) in `distro/tools.sh` and `distro/gui.sh`.
+  - *Rules*: Skip unsupported architectures (e.g. 32-bit armhf) gracefully with warning banners.
+  - *Input → Output*: Menu options in `gui.sh` successfully fetch and configure latest binaries.
+- **RF-004 (Shellcheck & Syntax Compliance)**:
+  - *Description*: All modified and existing shell scripts must pass `bash -n` and `shellcheck -S warning` without errors or warnings.
+  - *Rules*: Strict adherence to project coding standards (colors via `printf`, idempotent checks).
+  - *Input → Output*: CI workflow and local verification commands pass with exit code 0.
+
+## 5. API Contract
+*N/A — This repository consists of Bash installation/update scripts and configurations, not web APIs.*
+
+## 6. Acceptance Criteria
+### BDD Scenarios
+- **Scenario 1: Full Script Syntax & Lint Validation**
+  - *Given* the repository scripts are updated,
+  - *When* running `find . -type f -name '*.sh' -not -path './.git/*' -print0 | xargs -0 -n1 bash -n` and `shellcheck`,
+  - *Then* zero syntax errors or shellcheck warnings must be reported.
+- **Scenario 2: Idempotent Dependency Update**
+  - *Given* an existing `modded-ubuntu` installation inside PRoot,
+  - *When* running `sudo update-system` or `update.sh`,
+  - *Then* toolchains (.NET, Node.js, AI CLIs) must update successfully without duplication or breaking existing user configs.
+
+### Edge Cases Table
+| Scenario | Input | Expected behavior |
+|---|---|---|
+| Unsupported architecture (32-bit armhf) | Running IDE/AI CLI install on armhf | Skip execution cleanly with warning message, preventing crash |
+| Non-interactive PRoot environment | Running `setup.sh` or `update.sh` without TTY | Default safe values applied automatically (`MODDED_PASS=modded`) |
+
+## 7. Task Plan
+- **Task 1 (Discovery & Audit)**: Review current script dependencies, versions, and known issues in memory and recent commits (`T1`).
+- **Task 2 (Dependency Script Updates)**: Update version references and installation routines in `distro/csharp.sh`, `distro/nodejs.sh`, and `distro/tools.sh` (`T2`).
+- **Task 3 (Lint & Verification)**: Run local syntax checks (`bash -n`) and `shellcheck` across all scripts (`T1`).
+- **Task 4 (Documentation & SPEC Transition)**: Update README if needed, transition SPEC status to Approved upon user sign-off (`T1`).
+
+## 8. Organization Guardrails
+- No direct commit/push to `main`/`master`/`develop` — work on branch `feature/AgentLLM-20261023-repo-improvement`.
+- Do not modify `.github/workflows/` without explicit approval.
+- `distro/proot-distro.sh` is immutable (vendored).
+- Zero secrets in repository.
+
+## 9. Definition of Done
+- [ ] All requirements RF-001 to RF-004 addressed.
+- [ ] `bash -n` passes for all scripts.
+- [ ] `shellcheck` reports 0 warnings.
+- [ ] SPEC transitioned and documented.
+
+## Open Questions / Pending Ambiguity
+- Nenhuma dúvida bloqueante; todas as diretrizes de versionamento e padrões de script seguem estritamente o `CLAUDE.md` e a documentação existente.
